@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام حجز المواعيد للموظفين</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-calendar-alt"></i> نظام حجز المواعيد للموظفين</h1>
+            <p>Employee Scheduling System</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="employee">
+                <i class="fas fa-user"></i> حجز موعد جديد
+            </button>
+            <button class="tab-btn" data-tab="admin">
+                <i class="fas fa-user-shield"></i> لوحة الإدارة
+            </button>
+            <button class="tab-btn" data-tab="dashboard">
+                <i class="fas fa-chart-bar"></i> الإحصائيات
+            </button>
+        </nav>
+
+        <!-- Employee Booking Tab -->
+        <div class="tab-content active" id="employee-tab">
+            <div class="booking-form">
+                <h2><i class="fas fa-plus-circle"></i> حجز موعد جديد</h2>
+                <form id="appointmentForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeName">اسم الموظف *</label>
+                            <input type="text" id="employeeName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="employeeId">رقم الموظف *</label>
+                            <input type="text" id="employeeId" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department">القسم *</label>
+                            <select id="department" required>
+                                <option value="">اختر القسم</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="location">الموقع *</label>
+                            <select id="location" required>
+                                <option value="">اختر الموقع</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">عنوان الموعد *</label>
+                        <input type="text" id="title" placeholder="مثال: اجتماع فريق العمل" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">وصف الموعد</label>
+                        <textarea id="description" rows="3" placeholder="تفاصيل إضافية عن الموعد..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="requestedDate">التاريخ المطلوب *</label>
+                            <input type="date" id="requestedDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="requestedTime">الوقت المطلوب *</label>
+                            <input type="time" id="requestedTime" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> إرسال الطلب
+                    </button>
+                </form>
+            </div>
+
+            <div class="my-appointments">
+                <h3><i class="fas fa-list"></i> مواعيدي</h3>
+                <div id="myAppointmentsList" class="appointments-list">
+                    <!-- Appointments will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel Tab -->
+        <div class="tab-content" id="admin-tab">
+            <div class="admin-header">
+                <h2><i class="fas fa-user-shield"></i> لوحة الإدارة</h2>
+                <div class="status-filters">
+                    <button class="status-btn active" data-status="all">الكل</button>
+                    <button class="status-btn" data-status="pending">في الانتظار</button>
+                    <button class="status-btn" data-status="approved">مقبول</button>
+                    <button class="status-btn" data-status="rejected">مرفوض</button>
+                    <button class="status-btn" data-status="done">مكتمل</button>
+                    <button class="status-btn" data-status="missed">فات</button>
+                </div>
+            </div>
+
+            <div class="appointments-container">
+                <div id="adminAppointmentsList" class="appointments-list">
+                    <!-- Admin appointments will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content" id="dashboard-tab">
+            <div class="dashboard-header">
+                <h2><i class="fas fa-chart-bar"></i> لوحة الإحصائيات</h2>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="pendingCount">0</h3>
+                        <p>في الانتظار</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon approved">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="approvedCount">0</h3>
+                        <p>مقبول</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon rejected">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="rejectedCount">0</h3>
+                        <p>مرفوض</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon done">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="doneCount">0</h3>
+                        <p>مكتمل</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-appointments">
+                <h3><i class="fas fa-history"></i> آخر المواعيد</h3>
+                <div id="recentAppointmentsList" class="appointments-list">
+                    <!-- Recent appointments will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for appointment details -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modalContent">
+                <!-- Modal content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for admin approval/rejection -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="adminModalTitle">تحديث حالة الموعد</h3>
+            <form id="adminForm">
+                <input type="hidden" id="appointmentId">
+                <div class="form-group">
+                    <label for="statusSelect">الحالة</label>
+                    <select id="statusSelect" required>
+                        <option value="approved">قبول</option>
+                        <option value="rejected">رفض</option>
+                        <option value="done">مكتمل</option>
+                        <option value="missed">فات</option>
+                    </select>
+                </div>
+                <div class="form-group hidden" id="approvedDateGroup">
+                    <label for="approvedDate">التاريخ المعتمد</label>
+                    <input type="date" id="approvedDate">
+                </div>
+                <div class="form-group hidden" id="approvedTimeGroup">
+                    <label for="approvedTime">الوقت المعتمد</label>
+                    <input type="time" id="approvedTime">
+                </div>
+                <div class="form-group hidden" id="rejectionReasonGroup">
+                    <label for="rejectionReason">سبب الرفض</label>
+                    <textarea id="rejectionReason" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="adminNotes">ملاحظات الإدارة</label>
+                    <textarea id="adminNotes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">تحديث الحالة</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
