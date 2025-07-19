@@ -16,7 +16,7 @@ const getLocationById = asyncHandler(async (req, res) => {
 
     const location = await dbManager.get('SELECT * FROM locations WHERE id = ?', [id]);
     if (!location) {
-        throw new NotFoundError('Location');
+        throw new NotFoundError(req.t('location.notfound'));
     }
 
     return ResponseHandler.success(res, location, req.t('location.fetched'));
@@ -56,7 +56,7 @@ const updateLocation = asyncHandler(async (req, res) => {
     // Check if location exists
     const existingLocation = await dbManager.get('SELECT * FROM locations WHERE id = ?', [id]);
     if (!existingLocation) {
-        throw new NotFoundError('Location');
+        throw new NotFoundError(req.t('location.notfound'));
     }
 
     // Check if new name conflicts with existing location
@@ -73,7 +73,7 @@ const updateLocation = asyncHandler(async (req, res) => {
     );
 
     if (result.changes === 0) {
-        throw new NotFoundError('Location');
+        throw new NotFoundError(req.t('location.notfound'));
     }
 
     const updatedLocation = await dbManager.get('SELECT * FROM locations WHERE id = ?', [id]);
@@ -93,7 +93,7 @@ const deleteLocation = asyncHandler(async (req, res) => {
     // Check if location exists
     const location = await dbManager.get('SELECT * FROM locations WHERE id = ?', [id]);
     if (!location) {
-        throw new NotFoundError('Location');
+        throw new NotFoundError(req.t('location.notfound'));
     }
 
     // Check if location has appointments
@@ -114,7 +114,7 @@ const deleteLocation = asyncHandler(async (req, res) => {
     const result = await dbManager.run('DELETE FROM locations WHERE id = ?', [id]);
 
     if (result.changes === 0) {
-        throw new NotFoundError('Location');
+        throw new NotFoundError(req.t('location.notfound'));
     }
 
     logger.info('Location deleted', { 

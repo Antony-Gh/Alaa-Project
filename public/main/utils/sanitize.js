@@ -95,7 +95,7 @@ function validateDateTime(date, time) {
     if (selectedDateTime <= now) {
         return {
             valid: false,
-            message: 'التاريخ والوقت يجب أن يكونا في المستقبل'
+            message: 'validation.date_time_future'
         };
     }
     
@@ -106,7 +106,7 @@ function validateDateTime(date, time) {
     if (selectedDateTime > oneYearFromNow) {
         return {
             valid: false,
-            message: 'التاريخ يجب أن لا يتجاوز سنة من الآن'
+            message: 'validation.date_time_max_year'
         };
     }
     
@@ -119,7 +119,7 @@ function validateEmployeeId(employeeId) {
     if (!pattern.test(employeeId)) {
         return {
             valid: false,
-            message: 'رقم الموظف يجب أن يكون 3-10 أحرف وأرقام'
+            message: 'validation.employee_id_format'
         };
     }
     return { valid: true };
@@ -132,21 +132,21 @@ function validateArabicText(text, minLength = 2, maxLength = 100) {
     if (!text || text.length < minLength) {
         return {
             valid: false,
-            message: `النص يجب أن يكون على الأقل ${minLength} أحرف`
+            message: `validation.text_min_length_${minLength}`
         };
     }
     
     if (text.length > maxLength) {
         return {
             valid: false,
-            message: `النص يجب أن لا يتجاوز ${maxLength} حرف`
+            message: `validation.text_max_length_${maxLength}`
         };
     }
     
     if (!arabicPattern.test(text)) {
         return {
             valid: false,
-            message: 'النص يجب أن يكون باللغة العربية'
+            message: 'validation.arabic_text_required'
         };
     }
     

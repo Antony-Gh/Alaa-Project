@@ -29,16 +29,16 @@ const createAppointment = asyncHandler(async (req, res) => {
 
     const appointment_id = uuidv4();
 
-    // Check if department exists
+    // Validate department exists
     const department = await dbManager.get('SELECT id FROM departments WHERE id = ?', [department_id]);
     if (!department) {
-        throw new NotFoundError('Department');
+        throw new NotFoundError(req.t('department.notfound'));
     }
 
-    // Check if location exists
+    // Validate location exists
     const location = await dbManager.get('SELECT id FROM locations WHERE id = ?', [location_id]);
     if (!location) {
-        throw new NotFoundError('Location');
+        throw new NotFoundError(req.t('location.notfound'));
     }
 
     // Check for location conflicts
@@ -333,26 +333,20 @@ const getAppointmentById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     const appointment = await dbManager.get(`
-        SELECT 
-            a.*,
-            d.name as department_name,
-            l.name as location_name,
-            u.full_name as user_full_name,
-            u.email as user_email
+        SELECT a.*, d.name as department_name, l.name as location_name
         FROM appointments a
         LEFT JOIN departments d ON a.department_id = d.id
         LEFT JOIN locations l ON a.location_id = l.id
-        LEFT JOIN users u ON a.user_id = u.id
         WHERE a.id = ?
     `, [id]);
 
     if (!appointment) {
-        throw new NotFoundError('Appointment');
+        throw new NotFoundError(req.t('appointment.notfound'));
     }
 
-    // Check authorization
-    if (req.user.role !== 'admin' && appointment.user_id !== req.user.id) {
-        throw new AuthorizationError('Access denied to this appointment');
+    // Check if user has access to this appointment
+    if (req.user.role !== 'admin' && appointment.employee_id !== req.user.username) {
+        throw new AuthorizationError(req.t('error.forbidden'));
     }
 
     // Parse JSON fields
@@ -377,70 +371,41 @@ const getAppointmentById = asyncHandler(async (req, res) => {
 // Update appointment status (admin only)
 const updateAppointmentStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { status, approved_date, approved_time, admin_notes, rejection_reason } = req.body;
+    const { status, approved_date, approved_time, rejection_reason, admin_notes } = req.body;
 
     // Check if appointment exists
     const appointment = await dbManager.get('SELECT * FROM appointments WHERE id = ?', [id]);
     if (!appointment) {
-        throw new NotFoundError('Appointment');
+        throw new NotFoundError(req.t('appointment.notfound'));
     }
 
-    const oldStatus = appointment.status;
+    // Update appointment status
+    const updateFields = ['status = ?', 'admin_notes = ?', 'updated_at = CURRENT_TIMESTAMP'];
+    const params = [status, admin_notes];
 
-    let sql, params;
-
-    if (status === 'approved') {
-        sql = `UPDATE appointments 
-               SET status = ?, approved_date = ?, approved_time = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP 
-               WHERE id = ?`;
-        params = [status, approved_date, approved_time, admin_notes, id];
-    } else if (status === 'rejected') {
-        sql = `UPDATE appointments 
-               SET status = ?, rejection_reason = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP 
-               WHERE id = ?`;
-        params = [status, rejection_reason, admin_notes, id];
-    } else {
-        sql = `UPDATE appointments 
-               SET status = ?, updated_at = CURRENT_TIMESTAMP 
-               WHERE id = ?`;
-        params = [status, id];
+    if (status === 'approved' && approved_date && approved_time) {
+        updateFields.push('approved_date = ?', 'approved_time = ?');
+        params.push(approved_date, approved_time);
     }
 
-    const result = await dbManager.run(sql, params);
+    if (status === 'rejected' && rejection_reason) {
+        updateFields.push('rejection_reason = ?');
+        params.push(rejection_reason);
+    }
+
+    params.push(id);
+
+    const result = await dbManager.run(
+        `UPDATE appointments SET ${updateFields.join(', ')} WHERE id = ?`,
+        params
+    );
 
     if (result.changes === 0) {
-        throw new NotFoundError('Appointment');
+        throw new NotFoundError(req.t('appointment.notfound'));
     }
 
     // Get updated appointment
-    const updatedAppointment = await dbManager.get(`
-        SELECT 
-            a.*,
-            d.name as department_name,
-            l.name as location_name
-        FROM appointments a
-        LEFT JOIN departments d ON a.department_id = d.id
-        LEFT JOIN locations l ON a.location_id = l.id
-        WHERE a.id = ?
-    `, [id]);
-
-    // Send real-time notification
-    realtimeService.sendAppointmentUpdated(updatedAppointment, req.user, oldStatus, status);
-
-    // Send email notification
-    if (config.notifications.email.enabled && oldStatus !== status) {
-        const user = await dbManager.get('SELECT * FROM users WHERE id = ?', [appointment.user_id]);
-        if (user && user.email) {
-            emailService.sendStatusUpdate(updatedAppointment, user, oldStatus, status);
-        }
-    }
-
-    // Log analytics
-    await logAnalytics('appointment_status_changed', 1, { 
-        old_status: oldStatus, 
-        new_status: status,
-        department_id: appointment.department_id 
-    });
+    const updatedAppointment = await dbManager.get('SELECT * FROM appointments WHERE id = ?', [id]);
 
     logger.info('Appointment status updated', { 
         appointmentId: id, 
@@ -451,37 +416,31 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
     return ResponseHandler.success(res, updatedAppointment, req.t('appointment.status_updated'));
 });
 
-// Delete appointment
+// Delete appointment (admin only)
 const deleteAppointment = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     // Check if appointment exists
     const appointment = await dbManager.get('SELECT * FROM appointments WHERE id = ?', [id]);
     if (!appointment) {
-        throw new NotFoundError('Appointment');
+        throw new NotFoundError(req.t('appointment.notfound'));
     }
 
-    // Check authorization
-    if (req.user.role !== 'admin' && appointment.user_id !== req.user.id) {
-        throw new AuthorizationError('Access denied to delete this appointment');
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+        throw new AuthorizationError(req.t('error.forbidden'));
     }
 
     // Delete appointment
     const result = await dbManager.run('DELETE FROM appointments WHERE id = ?', [id]);
 
     if (result.changes === 0) {
-        throw new NotFoundError('Appointment');
+        throw new NotFoundError(req.t('appointment.notfound'));
     }
-
-    // Log analytics
-    await logAnalytics('appointment_deleted', 1, { 
-        department_id: appointment.department_id,
-        location_id: appointment.location_id 
-    });
 
     logger.info('Appointment deleted', { 
         appointmentId: id, 
-        userId: req.user.id 
+        adminId: req.user.id 
     });
 
     return ResponseHandler.success(res, null, req.t('appointment.deleted'));

@@ -51,14 +51,14 @@ const changePassword = asyncHandler(async (req, res) => {
 
 // List all users (admin only)
 const listUsers = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError('Forbidden');
+    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
     const users = await dbManager.query('SELECT id, username, email, full_name, phone, avatar, role, department_id, language, is_active, email_verified, created_at, updated_at FROM users');
     return res.json({ success: true, data: users });
 });
 
 // Get user by ID (admin only)
 const getUserById = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError('Forbidden');
+    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
     const { id } = req.params;
     const user = await dbManager.get('SELECT id, username, email, full_name, phone, avatar, role, department_id, language, is_active, email_verified, created_at, updated_at FROM users WHERE id = ?', [id]);
     if (!user) {
@@ -69,7 +69,7 @@ const getUserById = asyncHandler(async (req, res) => {
 
 // Update user (admin only)
 const updateUser = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError('Forbidden');
+    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
     const { id } = req.params;
     const { full_name, email, phone, avatar, role, department_id, language, is_active, email_verified } = req.body;
     const updateFields = [];
@@ -95,7 +95,7 @@ const updateUser = asyncHandler(async (req, res) => {
 
 // Delete user (admin only)
 const deleteUser = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError('Forbidden');
+    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
     const { id } = req.params;
     if (parseInt(id) === req.user.id) {
         return res.status(400).json({ success: false, message: req.t('user.cannot_delete_self') });
@@ -111,7 +111,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 
 // User statistics (admin only)
 const userStats = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError('Forbidden');
+    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
     const stats = await dbManager.get(`
         SELECT 
             COUNT(*) as total_users,

@@ -9,18 +9,18 @@ const appointmentSchema = Joi.object({
         .pattern(/^[\u0600-\u06FF\s]+$/) // Arabic text only
         .required()
         .messages({
-            'string.pattern.base': 'اسم الموظف يجب أن يكون باللغة العربية',
-            'string.min': 'اسم الموظف يجب أن يكون على الأقل حرفين',
-            'string.max': 'اسم الموظف يجب أن لا يتجاوز 100 حرف',
-            'any.required': 'اسم الموظف مطلوب'
+            'string.pattern.base': 'validation.arabic_text_required',
+            'string.min': 'validation.text_min_length_2',
+            'string.max': 'validation.text_max_length_100',
+            'any.required': 'validation.field_required'
         }),
     
     employee_id: Joi.string()
         .pattern(/^[A-Z0-9]{3,10}$/)
         .required()
         .messages({
-            'string.pattern.base': 'رقم الموظف يجب أن يكون 3-10 أحرف وأرقام',
-            'any.required': 'رقم الموظف مطلوب'
+            'string.pattern.base': 'validation.employee_id_format',
+            'any.required': 'validation.field_required'
         }),
     
     department_id: Joi.number()
@@ -28,10 +28,10 @@ const appointmentSchema = Joi.object({
         .positive()
         .required()
         .messages({
-            'number.base': 'معرف القسم يجب أن يكون رقماً',
-            'number.integer': 'معرف القسم يجب أن يكون رقماً صحيحاً',
-            'number.positive': 'معرف القسم يجب أن يكون موجباً',
-            'any.required': 'معرف القسم مطلوب'
+            'number.base': 'validation.field_required',
+            'number.integer': 'validation.field_required',
+            'number.positive': 'validation.field_required',
+            'any.required': 'validation.field_required'
         }),
     
     location_id: Joi.number()
@@ -39,10 +39,10 @@ const appointmentSchema = Joi.object({
         .positive()
         .required()
         .messages({
-            'number.base': 'معرف الموقع يجب أن يكون رقماً',
-            'number.integer': 'معرف الموقع يجب أن يكون رقماً صحيحاً',
-            'number.positive': 'معرف الموقع يجب أن يكون موجباً',
-            'any.required': 'معرف الموقع مطلوب'
+            'number.base': 'validation.field_required',
+            'number.integer': 'validation.field_required',
+            'number.positive': 'validation.field_required',
+            'any.required': 'validation.field_required'
         }),
     
     title: Joi.string()
@@ -50,9 +50,9 @@ const appointmentSchema = Joi.object({
         .max(200)
         .required()
         .messages({
-            'string.min': 'عنوان الموعد يجب أن يكون على الأقل 5 أحرف',
-            'string.max': 'عنوان الموعد يجب أن لا يتجاوز 200 حرف',
-            'any.required': 'عنوان الموعد مطلوب'
+            'string.min': 'title_validation_length',
+            'string.max': 'validation.text_max_length_200',
+            'any.required': 'validation.field_required'
         }),
     
     description: Joi.string()
@@ -60,24 +60,24 @@ const appointmentSchema = Joi.object({
         .optional()
         .allow('')
         .messages({
-            'string.max': 'وصف الموعد يجب أن لا يتجاوز 1000 حرف'
+            'string.max': 'validation.text_max_length_1000'
         }),
     
     requested_date: Joi.date()
         .min('now')
         .required()
         .messages({
-            'date.base': 'التاريخ المطلوب يجب أن يكون تاريخاً صحيحاً',
-            'date.min': 'التاريخ المطلوب يجب أن يكون في المستقبل',
-            'any.required': 'التاريخ المطلوب مطلوب'
+            'date.base': 'validation.date_format',
+            'date.min': 'validation.date_time_future',
+            'any.required': 'validation.field_required'
         }),
     
     requested_time: Joi.string()
         .pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
         .required()
         .messages({
-            'string.pattern.base': 'الوقت المطلوب يجب أن يكون بتنسيق HH:MM',
-            'any.required': 'الوقت المطلوب مطلوب'
+            'string.pattern.base': 'validation.time_format',
+            'any.required': 'validation.field_required'
         })
 });
 
@@ -86,8 +86,8 @@ const appointmentStatusSchema = Joi.object({
         .valid('pending', 'approved', 'rejected', 'done', 'missed')
         .required()
         .messages({
-            'any.only': 'الحالة يجب أن تكون: pending, approved, rejected, done, أو missed',
-            'any.required': 'الحالة مطلوبة'
+            'any.only': 'validation.status_invalid',
+            'any.required': 'validation.field_required'
         }),
     
     approved_date: Joi.when('status', {
@@ -95,9 +95,9 @@ const appointmentStatusSchema = Joi.object({
         then: Joi.date().min('now').required(),
         otherwise: Joi.date().optional()
     }).messages({
-        'date.base': 'التاريخ المعتمد يجب أن يكون تاريخاً صحيحاً',
-        'date.min': 'التاريخ المعتمد يجب أن يكون في المستقبل',
-        'any.required': 'التاريخ المعتمد مطلوب للمواعيد المقبولة'
+        'date.base': 'validation.date_format',
+        'date.min': 'validation.date_time_future',
+        'any.required': 'validation.field_required'
     }),
     
     approved_time: Joi.when('status', {
@@ -105,18 +105,17 @@ const appointmentStatusSchema = Joi.object({
         then: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).required(),
         otherwise: Joi.string().optional()
     }).messages({
-        'string.pattern.base': 'الوقت المعتمد يجب أن يكون بتنسيق HH:MM',
-        'any.required': 'الوقت المعتمد مطلوب للمواعيد المقبولة'
+        'string.pattern.base': 'validation.time_format',
+        'any.required': 'validation.field_required'
     }),
     
     rejection_reason: Joi.when('status', {
         is: 'rejected',
-        then: Joi.string().min(10).max(500).required(),
+        then: Joi.string().min(10).required(),
         otherwise: Joi.string().optional()
     }).messages({
-        'string.min': 'سبب الرفض يجب أن يكون على الأقل 10 أحرف',
-        'string.max': 'سبب الرفض يجب أن لا يتجاوز 500 حرف',
-        'any.required': 'سبب الرفض مطلوب للمواعيد المرفوضة'
+        'string.min': 'validation.rejection_reason_min',
+        'any.required': 'validation.field_required'
     }),
     
     admin_notes: Joi.string()
@@ -124,7 +123,7 @@ const appointmentStatusSchema = Joi.object({
         .optional()
         .allow('')
         .messages({
-            'string.max': 'ملاحظات الإدارة يجب أن لا تتجاوز 500 حرف'
+            'string.max': 'validation.text_max_length_500'
         })
 });
 
@@ -134,17 +133,17 @@ const loginSchema = Joi.object({
         .max(50)
         .required()
         .messages({
-            'string.min': 'اسم المستخدم يجب أن يكون على الأقل 3 أحرف',
-            'string.max': 'اسم المستخدم يجب أن لا يتجاوز 50 حرف',
-            'any.required': 'اسم المستخدم مطلوب'
+            'string.min': 'validation.username_min',
+            'string.max': 'validation.username_max',
+            'any.required': 'validation.field_required'
         }),
     
     password: Joi.string()
         .min(6)
         .required()
         .messages({
-            'string.min': 'كلمة المرور يجب أن تكون على الأقل 6 أحرف',
-            'any.required': 'كلمة المرور مطلوبة'
+            'string.min': 'validation.password_min',
+            'any.required': 'validation.field_required'
         })
 });
 
@@ -155,32 +154,32 @@ const userSchema = Joi.object({
         .pattern(/^[a-zA-Z0-9_]+$/)
         .required()
         .messages({
-            'string.pattern.base': 'اسم المستخدم يجب أن يحتوي على أحرف وأرقام وشرطة سفلية فقط',
-            'string.min': 'اسم المستخدم يجب أن يكون على الأقل 3 أحرف',
-            'string.max': 'اسم المستخدم يجب أن لا يتجاوز 50 حرف',
-            'any.required': 'اسم المستخدم مطلوب'
+            'string.pattern.base': 'validation.username_pattern',
+            'string.min': 'validation.username_min',
+            'string.max': 'validation.username_max',
+            'any.required': 'validation.field_required'
         }),
     
     password: Joi.string()
         .min(6)
         .required()
         .messages({
-            'string.min': 'كلمة المرور يجب أن تكون على الأقل 6 أحرف',
-            'any.required': 'كلمة المرور مطلوبة'
+            'string.min': 'validation.password_min',
+            'any.required': 'validation.field_required'
         }),
     
     email: Joi.string()
         .email()
         .optional()
         .messages({
-            'string.email': 'البريد الإلكتروني يجب أن يكون صحيحاً'
+            'string.email': 'validation.email_format'
         }),
     
     role: Joi.string()
         .valid('employee', 'admin')
         .default('employee')
         .messages({
-            'any.only': 'الدور يجب أن يكون employee أو admin'
+            'any.only': 'validation.role_invalid'
         }),
     
     department_id: Joi.number()
@@ -188,9 +187,9 @@ const userSchema = Joi.object({
         .positive()
         .optional()
         .messages({
-            'number.base': 'معرف القسم يجب أن يكون رقماً',
-            'number.integer': 'معرف القسم يجب أن يكون رقماً صحيحاً',
-            'number.positive': 'معرف القسم يجب أن يكون موجباً'
+            'number.base': 'validation.field_required',
+            'number.integer': 'validation.field_required',
+            'number.positive': 'validation.field_required'
         })
 });
 
@@ -199,8 +198,8 @@ const recurringAppointmentSchema = Joi.object({
         .valid('daily', 'weekly', 'monthly', 'yearly')
         .required()
         .messages({
-            'any.only': 'نوع التكرار يجب أن يكون: daily, weekly, monthly, أو yearly',
-            'any.required': 'نوع التكرار مطلوب'
+            'any.only': 'validation.recurring_type_invalid',
+            'any.required': 'validation.field_required'
         }),
     
     interval: Joi.number()
@@ -209,10 +208,10 @@ const recurringAppointmentSchema = Joi.object({
         .max(52)
         .default(1)
         .messages({
-            'number.base': 'الفاصل الزمني يجب أن يكون رقماً',
-            'number.integer': 'الفاصل الزمني يجب أن يكون رقماً صحيحاً',
-            'number.min': 'الفاصل الزمني يجب أن يكون على الأقل 1',
-            'number.max': 'الفاصل الزمني يجب أن لا يتجاوز 52'
+            'number.base': 'validation.field_required',
+            'number.integer': 'validation.field_required',
+            'number.min': 'validation.interval_min',
+            'number.max': 'validation.interval_max'
         }),
     
     daysOfWeek: Joi.when('type', {
@@ -220,25 +219,25 @@ const recurringAppointmentSchema = Joi.object({
         then: Joi.array().items(Joi.number().min(0).max(6)).min(1).required(),
         otherwise: Joi.array().optional()
     }).messages({
-        'array.min': 'يجب تحديد يوم واحد على الأقل للأسبوع',
-        'any.required': 'أيام الأسبوع مطلوبة للتكرار الأسبوعي'
+        'array.min': 'validation.days_of_week_min',
+        'any.required': 'validation.field_required'
     }),
     
     startDate: Joi.date()
         .min('now')
         .required()
         .messages({
-            'date.base': 'تاريخ البداية يجب أن يكون تاريخاً صحيحاً',
-            'date.min': 'تاريخ البداية يجب أن يكون في المستقبل',
-            'any.required': 'تاريخ البداية مطلوب'
+            'date.base': 'validation.date_format',
+            'date.min': 'validation.date_time_future',
+            'any.required': 'validation.field_required'
         }),
     
     endDate: Joi.date()
         .min(Joi.ref('startDate'))
         .optional()
         .messages({
-            'date.base': 'تاريخ النهاية يجب أن يكون تاريخاً صحيحاً',
-            'date.min': 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية'
+            'date.base': 'validation.date_format',
+            'date.min': 'validation.end_date_after_start'
         }),
     
     maxOccurrences: Joi.number()
@@ -247,10 +246,10 @@ const recurringAppointmentSchema = Joi.object({
         .max(100)
         .optional()
         .messages({
-            'number.base': 'الحد الأقصى للتكرار يجب أن يكون رقماً',
-            'number.integer': 'الحد الأقصى للتكرار يجب أن يكون رقماً صحيحاً',
-            'number.min': 'الحد الأقصى للتكرار يجب أن يكون على الأقل 1',
-            'number.max': 'الحد الأقصى للتكرار يجب أن لا يتجاوز 100'
+            'number.base': 'validation.field_required',
+            'number.integer': 'validation.field_required',
+            'number.min': 'validation.max_occurrences_min',
+            'number.max': 'validation.max_occurrences_max'
         })
 });
 
@@ -275,7 +274,7 @@ const validate = (schema) => {
 
             return res.status(400).json({
                 success: false,
-                message: 'Validation failed',
+                message: 'error.validation',
                 errors: errorMessages,
                 errorCode: 'VALIDATION_ERROR'
             });

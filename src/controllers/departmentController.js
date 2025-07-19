@@ -16,7 +16,7 @@ const getDepartmentById = asyncHandler(async (req, res) => {
 
     const department = await dbManager.get('SELECT * FROM departments WHERE id = ?', [id]);
     if (!department) {
-        throw new NotFoundError('Department');
+        throw new NotFoundError(req.t('department.notfound'));
     }
 
     return ResponseHandler.success(res, department, req.t('department.fetched'));
@@ -56,7 +56,7 @@ const updateDepartment = asyncHandler(async (req, res) => {
     // Check if department exists
     const existingDepartment = await dbManager.get('SELECT * FROM departments WHERE id = ?', [id]);
     if (!existingDepartment) {
-        throw new NotFoundError('Department');
+        throw new NotFoundError(req.t('department.notfound'));
     }
 
     // Check if new name conflicts with existing department
@@ -73,7 +73,7 @@ const updateDepartment = asyncHandler(async (req, res) => {
     );
 
     if (result.changes === 0) {
-        throw new NotFoundError('Department');
+        throw new NotFoundError(req.t('department.notfound'));
     }
 
     const updatedDepartment = await dbManager.get('SELECT * FROM departments WHERE id = ?', [id]);
@@ -93,7 +93,7 @@ const deleteDepartment = asyncHandler(async (req, res) => {
     // Check if department exists
     const department = await dbManager.get('SELECT * FROM departments WHERE id = ?', [id]);
     if (!department) {
-        throw new NotFoundError('Department');
+        throw new NotFoundError(req.t('department.notfound'));
     }
 
     // Check if department has users
@@ -129,7 +129,7 @@ const deleteDepartment = asyncHandler(async (req, res) => {
     const result = await dbManager.run('DELETE FROM departments WHERE id = ?', [id]);
 
     if (result.changes === 0) {
-        throw new NotFoundError('Department');
+        throw new NotFoundError(req.t('department.notfound'));
     }
 
     logger.info('Department deleted', { 

@@ -103,7 +103,7 @@ const getProfile = asyncHandler(async (req, res) => {
     );
 
     if (!user) {
-        throw new NotFoundError('User');
+        throw new NotFoundError(req.t('user.notfound'));
     }
 
     // Get department name if user has department
@@ -137,7 +137,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     );
 
     if (result.changes === 0) {
-        throw new NotFoundError('User');
+        throw new NotFoundError(req.t('user.notfound'));
     }
 
     // Get updated user
@@ -155,10 +155,10 @@ const updateProfile = asyncHandler(async (req, res) => {
 const changePassword = asyncHandler(async (req, res) => {
     const { currentPassword, newPassword } = req.body;
 
-    // Get current user with password
-    const user = await dbManager.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
+    // Get current user with password hash
+    const user = await dbManager.get('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
     if (!user) {
-        throw new NotFoundError('User');
+        throw new NotFoundError(req.t('user.notfound'));
     }
 
     // Verify current password
@@ -171,10 +171,14 @@ const changePassword = asyncHandler(async (req, res) => {
     const newPasswordHash = await hashPassword(newPassword);
 
     // Update password
-    await dbManager.run(
+    const result = await dbManager.run(
         'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [newPasswordHash, req.user.id]
     );
+
+    if (result.changes === 0) {
+        throw new NotFoundError(req.t('user.notfound'));
+    }
 
     logger.info('User password changed', { userId: req.user.id });
 
