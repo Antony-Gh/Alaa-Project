@@ -219,12 +219,12 @@ function handleLogout() {
 
 function showAuthSection() {
     authSection.style.display = 'block';
-    appSection.style.display = 'none';
+    appSection.classList.add('app-section-hidden');
 }
 
 function showAppSection() {
     authSection.style.display = 'none';
-    appSection.style.display = 'block';
+    appSection.classList.remove('app-section-hidden');
     
     // Update user info
     if (currentUser) {
@@ -233,9 +233,9 @@ function showAppSection() {
         
         // Show/hide admin tab based on role
         if (currentUser.role === 'admin') {
-            adminTab.style.display = 'inline-flex';
+            adminTab.classList.remove('admin-tab-hidden');
         } else {
-            adminTab.style.display = 'none';
+            adminTab.classList.add('admin-tab-hidden');
         }
     }
 }

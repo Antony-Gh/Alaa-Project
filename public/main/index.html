@@ -41,7 +41,7 @@
                             <label for="loginPassword" data-i18n="password"></label>
                             <input type="password" id="loginPassword" required placeholder="password" data-i18n-placeholder="password_placeholder">
                         </div>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" title="login">
                             <i class="fas fa-sign-in-alt"></i> <span data-i18n="login"></span>
                         </button>
                     </form>
@@ -69,7 +69,7 @@
                                 <option value="admin" data-i18n="admin"></option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" title="register_account">
                             <i class="fas fa-user-plus"></i> <span data-i18n="register_account"></span>
                         </button>
                     </form>
@@ -78,29 +78,29 @@
         </div>
 
         <!-- Main Application Section (hidden until authenticated) -->
-        <div id="app-section" class="app-section" style="display: none;">
+        <div id="app-section" class="app-section app-section-hidden">
             <!-- User Info Bar -->
             <div class="user-info-bar">
                 <div class="user-info">
-                    <span id="userDisplayName" data-i18n="welcome_user">مرحباً</span>
+                    <span id="userDisplayName" data-i18n="welcome_user">Hello</span>
                     <span id="userRole" class="user-role"></span>
                 </div>
-                <button id="logoutBtn" class="btn btn-danger">
+                <button id="logoutBtn" class="btn btn-danger" title="logout">
                     <i class="fas fa-sign-out-alt"></i> <span data-i18n="logout"></span>
                 </button>
             </div>
 
             <nav class="nav-tabs">
-                <button class="tab-btn active" data-tab="employee">
+                <button class="tab-btn active" data-tab="employee" title="new_appointment">
                     <i class="fas fa-user"></i> <span data-i18n="new_appointment"></span>
                 </button>
-                <button class="tab-btn" data-tab="admin" id="adminTab" style="display: none;">
+                <button class="tab-btn admin-tab-hidden" data-tab="admin" id="adminTab" title="admin_panel">
                     <i class="fas fa-user-shield"></i> <span data-i18n="admin_panel"></span>
                 </button>
-                <button class="tab-btn" data-tab="dashboard">
+                <button class="tab-btn" data-tab="dashboard" title="dashboard">
                     <i class="fas fa-chart-bar"></i> <span data-i18n="dashboard"></span>
                 </button>
-                <button class="tab-btn" data-tab="profile">
+                <button class="tab-btn" data-tab="profile" title="profile">
                     <i class="fas fa-user-cog"></i> <span data-i18n="profile"></span>
                 </button>
             </nav>
@@ -149,15 +149,15 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="requestedDate" data-i18n="requested_date"></label>
-                                <input type="date" id="requestedDate" required>
+                                <input type="date" id="requestedDate" required placeholder="requested_date" title="requested_date">
                             </div>
                             <div class="form-group">
                                 <label for="requestedTime" data-i18n="requested_time"></label>
-                                <input type="time" id="requestedTime" required>
+                                <input type="time" id="requestedTime" required placeholder="requested_time" title="requested_time">
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" title="submit_request">
                             <i class="fas fa-paper-plane"></i> <span data-i18n="submit_request"></span>
                         </button>
                     </form>
@@ -258,11 +258,11 @@
                     <form id="profileForm" class="profile-form">
                         <div class="form-group">
                             <label for="profileUsername" data-i18n="username"></label>
-                            <input type="text" id="profileUsername" readonly>
+                            <input type="text" id="profileUsername" readonly placeholder="username" title="username">
                         </div>
                         <div class="form-group">
                             <label for="profileEmail" data-i18n="email"></label>
-                            <input type="email" id="profileEmail">
+                            <input type="email" id="profileEmail" placeholder="email" title="email">
                         </div>
                         <div class="form-group">
                             <label for="profileDepartment" data-i18n="department"></label>
@@ -270,7 +270,7 @@
                                 <option value="" data-i18n="select_department"></option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" title="save_changes">
                             <i class="fas fa-save"></i> <span data-i18n="save_changes"></span>
                         </button>
                     </form>
@@ -280,17 +280,17 @@
                         <form id="changePasswordForm" class="password-form">
                             <div class="form-group">
                                 <label for="currentPassword" data-i18n="current_password"></label>
-                                <input type="password" id="currentPassword" required>
+                                <input type="password" id="currentPassword" required placeholder="current_password" title="current_password">
                             </div>
                             <div class="form-group">
                                 <label for="newPassword" data-i18n="new_password"></label>
-                                <input type="password" id="newPassword" required>
+                                <input type="password" id="newPassword" required placeholder="new_password" title="new_password">
                             </div>
                             <div class="form-group">
                                 <label for="confirmPassword" data-i18n="confirm_password"></label>
-                                <input type="password" id="confirmPassword" required>
+                                <input type="password" id="confirmPassword" required placeholder="confirm_password" title="confirm_password">
                             </div>
-                            <button type="submit" class="btn btn-warning">
+                            <button type="submit" class="btn btn-warning" title="change_password">
                                 <i class="fas fa-key"></i> <span data-i18n="change_password"></span>
                             </button>
                         </form>
@@ -319,7 +319,7 @@
                 <input type="hidden" id="appointmentId">
                 <div class="form-group">
                     <label for="statusSelect" data-i18n="status"></label>
-                    <select id="statusSelect" required>
+                    <select id="statusSelect" required title="status">
                         <option value="approved" data-i18n="accept">قبول</option>
                         <option value="rejected" data-i18n="reject">رفض</option>
                         <option value="done" data-i18n="complete">مكتمل</option>
@@ -328,22 +328,22 @@
                 </div>
                 <div class="form-group hidden" id="approvedDateGroup">
                     <label for="approvedDate" data-i18n="approved_date"></label>
-                    <input type="date" id="approvedDate">
+                    <input type="date" id="approvedDate" placeholder="approved_date" title="approved_date">
                 </div>
                 <div class="form-group hidden" id="approvedTimeGroup">
                     <label for="approvedTime" data-i18n="approved_time"></label>
-                    <input type="time" id="approvedTime">
+                    <input type="time" id="approvedTime" placeholder="approved_time" title="approved_time">
                 </div>
                 <div class="form-group hidden" id="rejectionReasonGroup">
-                    <label for="rejectionReason" data-i18n="rejection_reason"></label>
-                    <textarea id="rejectionReason" rows="3"></textarea>
+                    <label for="rejectionReason" data-i18n="rejection_reason" class="visually-hidden">Rejection Reason</label>
+                    <textarea id="rejectionReason" rows="3" placeholder="rejection_reason" title="rejection_reason"></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="adminNotes" data-i18n="admin_notes"></label>
-                    <textarea id="adminNotes" rows="3"></textarea>
+                    <label for="adminNotes" data-i18n="admin_notes" class="visually-hidden">Admin Notes</label>
+                    <textarea id="adminNotes" rows="3" placeholder="admin_notes" title="admin_notes"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">
-                    <span data-i18n="update_status"></span>
+                <button type="submit" class="btn btn-primary" title="update_status">
+                    <i class="fas fa-sync-alt"></i> <span data-i18n="update_status"></span>
                 </button>
             </form>
         </div>
