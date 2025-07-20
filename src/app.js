@@ -10,7 +10,13 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 const expressSanitizer = require('express-sanitizer');
 const expressRequestId = require('express-request-id');
-const statusMonitor = require('express-status-monitor');
+// Status monitor disabled due to event-loop-stats compatibility issues
+// let statusMonitor;
+// try {
+//   statusMonitor = require('express-status-monitor');
+// } catch (error) {
+//   statusMonitor = null;
+// }
 const http = require('http');
 
 // i18n setup
@@ -28,6 +34,7 @@ const { generalLimiter } = require('./middleware/rateLimiter');
 // Import services
 // const emailService = require('./services/emailService');
 const realtimeService = require('./services/realtimeService');
+const simpleMonitor = require('./utils/simpleMonitor');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -37,6 +44,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
 const userManagementRoutes = require('./routes/userManagementRoutes');
+const rbacRoutes = require('./routes/rbacRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -143,27 +151,10 @@ app.use(expressSanitizer());
 // Request ID middleware
 app.use(expressRequestId());
 
-// Status monitoring (admin only)
+// Status monitoring replaced with simple monitor
 if (config.nodeEnv === 'development') {
-  app.use(
-    statusMonitor({
-      title: 'Scheduling System Status',
-      path: '/status',
-      spans: [
-        {
-          interval: 1,
-          retention: 60,
-        },
-        {
-          interval: 5,
-          retention: 60,
-        },
-        {
-          interval: 15,
-          retention: 60,
-        },
-      ],
-    })
+  logger.info(
+    '✅ Simple monitoring system enabled (replaces express-status-monitor)'
   );
 }
 
@@ -213,6 +204,9 @@ app.use((req, res, next) => {
     const statusColor =
       res.statusCode >= 400 ? '🔴' : res.statusCode >= 300 ? '🟡' : '🟢';
 
+    // Record request in simple monitor
+    simpleMonitor.recordRequest(duration, res.statusCode >= 400);
+
     logger.info(`${statusColor} Request Completed`, {
       method: req.method,
       url: req.url,
@@ -246,6 +240,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Simple monitoring endpoint (replaces express-status-monitor)
+app.get('/api/monitor', (req, res) => {
+  res.json({
+    success: true,
+    data: simpleMonitor.getFormattedMetrics(),
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
@@ -254,6 +256,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/user-management', userManagementRoutes);
+app.use('/api/rbac', rbacRoutes);
 
 // Real-time endpoint
 app.get('/api/realtime/status', (req, res) => {
@@ -330,6 +333,9 @@ const startServer = async () => {
         environment: config.nodeEnv,
         timestamp: new Date().toISOString(),
       });
+
+      // Start simple monitoring
+      simpleMonitor.startPeriodicLogging(300000); // Log metrics every 5 minutes
 
       logger.info('📋 System Information', {
         service: 'Advanced Employee Scheduling System',

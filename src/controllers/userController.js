@@ -72,7 +72,8 @@ const validatePassword = password => {
 // Role hierarchy validation
 const validateRoleHierarchy = (currentUserRole, targetRole) => {
   const roleHierarchy = {
-    admin: 3,
+    admin: 4,
+    manager: 3,
     moderator: 2,
     employee: 1,
   };
@@ -87,7 +88,8 @@ const validateRoleHierarchy = (currentUserRole, targetRole) => {
 // Check if user can manage target user
 const canManageUser = (currentUserRole, targetUserRole) => {
   const roleHierarchy = {
-    admin: 3,
+    admin: 4,
+    manager: 3,
     moderator: 2,
     employee: 1,
   };
@@ -114,6 +116,9 @@ const getAllUsers = asyncHandler(async (req, res) => {
   // Filter by role permissions
   if (currentUser.role === 'admin') {
     // Admin can see all users
+    query += ' AND u.role != "manager" ORDER BY u.role DESC, u.created_at DESC';
+  } else if (currentUser.role === 'manager') {
+    // Manager can see all users except super_admin
     query += ' ORDER BY u.role DESC, u.created_at DESC';
   } else if (currentUser.role === 'moderator') {
     // Moderator can only see employees

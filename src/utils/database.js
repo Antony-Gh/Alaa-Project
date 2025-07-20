@@ -27,7 +27,7 @@ class DatabaseManager {
 
   async initializeTables() {
     const tables = [
-      // Users table with enhanced fields
+      // Users table with enhanced RBAC fields
       `CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
@@ -38,6 +38,8 @@ class DatabaseManager {
                 avatar TEXT,
                 role TEXT DEFAULT 'employee',
                 department_id INTEGER,
+                departments TEXT DEFAULT '[]', -- JSON array of department roles
+                temporary_role TEXT, -- JSON object for temporary role elevation
                 is_active BOOLEAN DEFAULT 1,
                 email_verified BOOLEAN DEFAULT 0,
                 two_factor_enabled BOOLEAN DEFAULT 0,
@@ -128,15 +130,14 @@ class DatabaseManager {
                 FOREIGN KEY (appointment_id) REFERENCES appointments (id)
             )`,
 
-      // Audit logs table
+      // Enhanced Audit logs table for RBAC
       `CREATE TABLE IF NOT EXISTS audit_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
                 action TEXT NOT NULL,
-                table_name TEXT,
-                record_id TEXT,
-                old_values TEXT, -- JSON string
-                new_values TEXT, -- JSON string
+                target_type TEXT, -- user, department, role, permission, etc.
+                target_id TEXT,
+                details TEXT, -- JSON string for additional details
                 ip_address TEXT,
                 user_agent TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

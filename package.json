@@ -12,8 +12,18 @@
     "format": "prettier --write \"src/**/*.{js,json}\"",
     "format:check": "prettier --check \"src/**/*.{js,json}\"",
     "migrate": "node src/utils/migrate.js",
+    "migrate:rbac": "node src/utils/rbacMigration.js",
     "backup": "node src/utils/backup.js",
-    "seed": "node src/utils/seedData.js"
+    "seed": "node src/utils/seedData.js",
+    "test:rbac": "node tests/test-rbac.js",
+    "test:validation": "node test-enhanced-validation.js",
+    "test:registration": "node test-enhanced-registration.js",
+    "test:form": "node test-registration-form.js",
+    "test:translations": "node test-new-translations.js",
+    "test:registration-fix": "node test-registration-fix.js",
+    "test:frontend-fixes": "node test-frontend-fixes.js",
+    "test:manager-role": "node test-manager-role.js",
+    "test:backend-manager-role": "node test-backend-manager-role.js"
   },
   "keywords": [
     "scheduling",
@@ -46,7 +56,6 @@
     "express-sanitizer": "^1.0.6",
     "express-session": "^1.17.3",
     "express-slow-down": "^2.0.1",
-    "express-status-monitor": "^1.3.4",
     "express-validator": "^7.0.1",
     "express-ws": "^5.0.2",
     "helmet": "^7.1.0",

@@ -40,12 +40,6 @@ function setTextContent(element, text) {
   }
 }
 
-function setInnerHTML(element, html) {
-  if (element) {
-    element.innerHTML = escapeHtml(html) || '';
-  }
-}
-
 function createElement(tag, attributes = {}, textContent = '') {
   const element = document.createElement(tag);
 
@@ -114,9 +108,9 @@ function validateDateTime(date, time) {
 }
 
 // Validate employee ID format
-function validateEmployeeId(employeeId) {
+function validateEmployeeId(employee_id) {
   const pattern = /^[A-Z0-9]{3,10}$/;
-  if (!pattern.test(employeeId)) {
+  if (!pattern.test(employee_id)) {
     return {
       valid: false,
       message: 'validation.employee_id_format',
@@ -153,14 +147,49 @@ function validateArabicText(text, minLength = 2, maxLength = 100) {
   return { valid: true };
 }
 
+// Validate full name (letters and spaces, 2-100 chars, supports Arabic)
+function validateEmployeeName(full_name) {
+  if (!full_name || full_name.trim() === '') {
+    return {
+      valid: false,
+      message: 'validation.field_required',
+    };
+  }
+
+  if (full_name.length < 2) {
+    return {
+      valid: false,
+      message: 'validation.name_min_length',
+    };
+  }
+
+  if (full_name.length > 100) {
+    return {
+      valid: false,
+      message: 'validation.name_max_length',
+    };
+  }
+
+  // Only letters (English/Arabic) and spaces
+  const nameRegex = /^[a-zA-Z\u0600-\u06FF\s]+$/;
+  if (!nameRegex.test(full_name)) {
+    return {
+      valid: false,
+      message: 'validation.name_pattern',
+    };
+  }
+
+  return { valid: true };
+}
+
 export {
   escapeHtml,
   sanitizeObject,
   setTextContent,
-  setInnerHTML,
   createElement,
   sanitizeFormData,
   validateDateTime,
   validateEmployeeId,
   validateArabicText,
+  validateEmployeeName,
 };

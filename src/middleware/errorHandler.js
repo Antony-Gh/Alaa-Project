@@ -80,13 +80,13 @@ const errorHandler = (err, req, res, _next) => {
 
   if (err.name === 'JsonWebTokenError') {
     error = new AuthenticationError(
-      req.t ? req.t('error.unauthorized') : 'Invalid token'
+      req.t ? req.t('error.invalid_token') : 'Invalid token'
     );
   }
 
   if (err.name === 'TokenExpiredError') {
     error = new AuthenticationError(
-      req.t ? req.t('error.unauthorized') : 'Token expired'
+      req.t ? req.t('error.token_expired') : 'Token expired'
     );
   }
 
@@ -99,14 +99,18 @@ const errorHandler = (err, req, res, _next) => {
 
   if (err.code === 'SQLITE_BUSY') {
     error = new DatabaseError(
-      req.t ? req.t('error.internal') : 'Database is busy, please try again',
+      req.t
+        ? req.t('error.database_busy')
+        : 'Database is busy, please try again',
       err
     );
   }
 
   if (err.code === 'SQLITE_LOCKED') {
     error = new DatabaseError(
-      req.t ? req.t('error.internal') : 'Database is locked, please try again',
+      req.t
+        ? req.t('error.database_locked')
+        : 'Database is locked, please try again',
       err
     );
   }
@@ -114,14 +118,16 @@ const errorHandler = (err, req, res, _next) => {
   // Handle SQLite foreign key constraint errors
   if (err.message && err.message.includes('FOREIGN KEY constraint failed')) {
     error = new ValidationError(
-      req.t ? req.t('error.validation') : 'Referenced record does not exist'
+      req.t
+        ? req.t('error.referenced_record_not_found')
+        : 'Referenced record does not exist'
     );
   }
 
   // Handle SQLite unique constraint errors
   if (err.message && err.message.includes('UNIQUE constraint failed')) {
     error = new ValidationError(
-      req.t ? req.t('error.conflict') : 'Record already exists'
+      req.t ? req.t('error.record_already_exists') : 'Record already exists'
     );
   }
 
@@ -168,7 +174,7 @@ const errorHandler = (err, req, res, _next) => {
 // 404 handler for undefined routes
 const notFoundHandler = (req, res, _next) => {
   // Use i18n for not found message, don't double up "not found"
-  const message = req.t ? req.t('error.notfound') : 'Route not found';
+  const message = req.t ? req.t('error.route_not_found') : 'Route not found';
   const error = new AppError(message, 404, 'NOT_FOUND');
   _next(error);
 };

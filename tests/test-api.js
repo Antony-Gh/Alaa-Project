@@ -68,7 +68,7 @@ async function testAPI() {
     const registerData = {
       username: 'testuser',
       password: 'testpass123',
-      confirmPassword: 'testpass123',
+      password_confirmation: 'testpass123',
       email: 'test@example.com',
       department_id: 1,
     };

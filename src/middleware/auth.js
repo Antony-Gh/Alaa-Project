@@ -33,7 +33,9 @@ const authenticateToken = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Access token required',
+        message: req.t
+          ? req.t('error.access_token_required')
+          : 'Access token required',
         errorCode: 'TOKEN_MISSING',
       });
     }
@@ -47,7 +49,7 @@ const authenticateToken = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'User not found',
+        message: req.t ? req.t('error.user_not_found') : 'User not found',
         errorCode: 'USER_NOT_FOUND',
       });
     }
@@ -68,13 +70,13 @@ const authenticateToken = async (req, res, next) => {
     if (error.name === 'JsonWebTokenError') {
       return res.status(403).json({
         success: false,
-        message: 'Invalid token',
+        message: req.t ? req.t('error.invalid_token') : 'Invalid token',
         errorCode: 'INVALID_TOKEN',
       });
     } else if (error.name === 'TokenExpiredError') {
       return res.status(403).json({
         success: false,
-        message: 'Token expired',
+        message: req.t ? req.t('error.token_expired') : 'Token expired',
         errorCode: 'TOKEN_EXPIRED',
       });
     }
@@ -82,15 +84,17 @@ const authenticateToken = async (req, res, next) => {
     logger.error('Authentication error:', { error: error.message });
     return res.status(500).json({
       success: false,
-      message: 'Authentication failed',
+      message: req.t
+        ? req.t('error.authentication_failed')
+        : 'Authentication failed',
       errorCode: 'AUTH_ERROR',
     });
   }
 };
 
-// Require admin role
+// Require admin or manager role
 const requireAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin' && req.user.role !== 'manager') {
     logger.warn('Unauthorized admin access attempt', {
       userId: req.user.id,
       username: req.user.username,
@@ -99,16 +103,22 @@ const requireAdmin = (req, res, next) => {
 
     return res.status(403).json({
       success: false,
-      message: 'Admin access required',
+      message: req.t
+        ? req.t('error.admin_required')
+        : 'Admin or manager access required',
       errorCode: 'ADMIN_REQUIRED',
     });
   }
   next();
 };
 
-// Require employee role or admin
+// Require employee role, admin, or manager
 const requireEmployee = (req, res, next) => {
-  if (req.user.role !== 'employee' && req.user.role !== 'admin') {
+  if (
+    req.user.role !== 'employee' &&
+    req.user.role !== 'admin' &&
+    req.user.role !== 'manager'
+  ) {
     logger.warn('Unauthorized employee access attempt', {
       userId: req.user.id,
       username: req.user.username,
@@ -117,7 +127,9 @@ const requireEmployee = (req, res, next) => {
 
     return res.status(403).json({
       success: false,
-      message: 'Employee access required',
+      message: req.t
+        ? req.t('error.employee_required')
+        : 'Employee, admin, or manager access required',
       errorCode: 'EMPLOYEE_REQUIRED',
     });
   }

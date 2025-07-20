@@ -1,15 +1,16 @@
 const Joi = require('joi');
 const logger = require('../utils/logger');
+const i18next = require('i18next');
 
 // Validation schemas
 const appointmentSchema = Joi.object({
   employee_name: Joi.string()
     .min(2)
     .max(100)
-    .pattern(/^[\u0600-\u06FF\s]+$/) // Arabic text only
+    .pattern(/^[\u0600-\u06FFa-zA-Z\s]+$/) // Arabic and English text
     .required()
     .messages({
-      'string.pattern.base': 'validation.arabic_text_required',
+      'string.pattern.base': 'validation.name_pattern',
       'string.min': 'validation.text_min_length_2',
       'string.max': 'validation.text_max_length_100',
       'any.required': 'validation.field_required',
@@ -24,28 +25,40 @@ const appointmentSchema = Joi.object({
     }),
 
   department_id: Joi.number().integer().positive().required().messages({
-    'number.base': 'validation.field_required',
-    'number.integer': 'validation.field_required',
-    'number.positive': 'validation.field_required',
+    'number.base': 'validation.department_id_invalid',
+    'number.integer': 'validation.department_id_invalid',
+    'number.positive': 'validation.department_id_invalid',
     'any.required': 'validation.field_required',
   }),
 
   location_id: Joi.number().integer().positive().required().messages({
-    'number.base': 'validation.field_required',
-    'number.integer': 'validation.field_required',
-    'number.positive': 'validation.field_required',
+    'number.base': 'validation.location_id_invalid',
+    'number.integer': 'validation.location_id_invalid',
+    'number.positive': 'validation.location_id_invalid',
     'any.required': 'validation.field_required',
   }),
 
-  title: Joi.string().min(5).max(200).required().messages({
-    'string.min': 'title_validation_length',
-    'string.max': 'validation.text_max_length_200',
-    'any.required': 'validation.field_required',
-  }),
+  title: Joi.string()
+    .min(5)
+    .max(200)
+    .pattern(/^[\u0600-\u06FFa-zA-Z0-9\s\-_.,!?()]+$/) // Arabic, English, and common punctuation
+    .required()
+    .messages({
+      'string.pattern.base': 'validation.title_pattern',
+      'string.min': 'validation.title_min_length',
+      'string.max': 'validation.text_max_length_200',
+      'any.required': 'validation.field_required',
+    }),
 
-  description: Joi.string().max(1000).optional().allow('').messages({
-    'string.max': 'validation.text_max_length_1000',
-  }),
+  description: Joi.string()
+    .max(1000)
+    .pattern(/^[\u0600-\u06FFa-zA-Z0-9\s\-_.,!?()\n\r]*$/) // Allow line breaks
+    .optional()
+    .allow('')
+    .messages({
+      'string.pattern.base': 'validation.description_pattern',
+      'string.max': 'validation.text_max_length_1000',
+    }),
 
   requested_date: Joi.date().min('now').required().messages({
     'date.base': 'validation.date_format',
@@ -60,6 +73,22 @@ const appointmentSchema = Joi.object({
       'string.pattern.base': 'validation.time_format',
       'any.required': 'validation.field_required',
     }),
+
+  priority: Joi.string()
+    .valid('low', 'medium', 'high', 'urgent')
+    .default('medium')
+    .messages({
+      'any.only': 'validation.priority_invalid',
+    }),
+
+  category: Joi.string().min(2).max(50).optional().messages({
+    'string.min': 'validation.category_min_length',
+    'string.max': 'validation.category_max_length',
+  }),
+
+  attachments: Joi.array().items(Joi.string()).max(5).optional().messages({
+    'array.max': 'validation.attachments_max_5',
+  }),
 });
 
 const appointmentStatusSchema = Joi.object({
@@ -107,16 +136,96 @@ const appointmentStatusSchema = Joi.object({
 });
 
 const loginSchema = Joi.object({
-  username: Joi.string().min(3).max(50).required().messages({
-    'string.min': 'validation.username_min',
-    'string.max': 'validation.username_max',
+  username: Joi.string()
+    .min(3)
+    .max(50)
+    .pattern(/^[a-zA-Z0-9_]+$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'validation.username_pattern',
+      'string.min': 'validation.username_min',
+      'string.max': 'validation.username_max',
+      'any.required': 'validation.field_required',
+    }),
+
+  password: Joi.string().min(1).required().messages({
+    'string.min': 'validation.password_required',
     'any.required': 'validation.field_required',
   }),
 
-  password: Joi.string().min(6).required().messages({
-    'string.min': 'validation.password_min',
+  remember_me: Joi.boolean().default(false).messages({
+    'boolean.base': 'validation.remember_me_invalid',
+  }),
+});
+
+const passwordChangeSchema = Joi.object({
+  current_password: Joi.string().min(1).required().messages({
+    'string.min': 'validation.current_password_required',
     'any.required': 'validation.field_required',
   }),
+
+  new_password: Joi.string()
+    .min(8)
+    .max(128)
+    .pattern(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%*?&+=])[A-Za-z\d!@#$%*?&+=]/
+    )
+    .required()
+    .messages({
+      'string.pattern.base': 'validation.password_complexity',
+      'string.min': 'validation.password_min_8',
+      'string.max': 'validation.password_max_128',
+      'any.required': 'validation.field_required',
+    }),
+
+  new_password_confirmation: Joi.string()
+    .valid(Joi.ref('new_password'))
+    .required()
+    .messages({
+      'any.only': 'validation.password_mismatch',
+      'any.required': 'validation.password_confirmation_required',
+    }),
+});
+
+const passwordResetSchema = Joi.object({
+  email: Joi.string()
+    .email({ tlds: { allow: false } })
+    .max(255)
+    .required()
+    .messages({
+      'string.email': 'validation.email_format',
+      'string.max': 'validation.email_max_length',
+      'any.required': 'validation.field_required',
+    }),
+});
+
+const passwordResetConfirmSchema = Joi.object({
+  token: Joi.string().min(1).required().messages({
+    'string.min': 'validation.token_required',
+    'any.required': 'validation.field_required',
+  }),
+
+  new_password: Joi.string()
+    .min(8)
+    .max(128)
+    .pattern(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%*?&+=])[A-Za-z\d!@#$%*?&+=]/
+    )
+    .required()
+    .messages({
+      'string.pattern.base': 'validation.password_complexity',
+      'string.min': 'validation.password_min_8',
+      'string.max': 'validation.password_max_128',
+      'any.required': 'validation.field_required',
+    }),
+
+  new_password_confirmation: Joi.string()
+    .valid(Joi.ref('new_password'))
+    .required()
+    .messages({
+      'any.only': 'validation.password_mismatch',
+      'any.required': 'validation.password_confirmation_required',
+    }),
 });
 
 const userSchema = Joi.object({
@@ -132,23 +241,75 @@ const userSchema = Joi.object({
       'any.required': 'validation.field_required',
     }),
 
-  password: Joi.string().min(6).required().messages({
-    'string.min': 'validation.password_min',
-    'any.required': 'validation.field_required',
-  }),
+  password: Joi.string()
+    .min(8)
+    .max(128)
+    .pattern(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%*?&+=])[A-Za-z\d!@#$%*?&+=]/
+    )
+    .required()
+    .messages({
+      'string.pattern.base': 'validation.password_complexity',
+      'string.min': 'validation.password_min_8',
+      'string.max': 'validation.password_max_128',
+      'any.required': 'validation.field_required',
+    }),
 
-  email: Joi.string().email().optional().messages({
-    'string.email': 'validation.email_format',
-  }),
+  password_confirmation: Joi.string()
+    .valid(Joi.ref('password'))
+    .required()
+    .messages({
+      'any.only': 'validation.password_mismatch',
+      'any.required': 'validation.password_confirmation_required',
+    }),
 
-  role: Joi.string().valid('employee', 'admin').default('employee').messages({
-    'any.only': 'validation.role_invalid',
-  }),
+  email: Joi.string()
+    .email({ tlds: { allow: false } })
+    .max(255)
+    .optional()
+    .messages({
+      'string.email': 'validation.email_format',
+      'string.max': 'validation.email_max_length',
+    }),
+
+  full_name: Joi.string()
+    .min(2)
+    .max(100)
+    .pattern(/^[\u0600-\u06FFa-zA-Z\s]+$/) // Arabic and English text
+    .required()
+    .messages({
+      'string.pattern.base': 'validation.name_pattern',
+      'string.min': 'validation.name_min_length',
+      'string.max': 'validation.name_max_length',
+      'any.required': 'validation.field_required',
+    }),
+
+  phone: Joi.string()
+    .pattern(/^[+]?[0-9\s\-()]{8,20}$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'validation.phone_format',
+    }),
+
+  role: Joi.string()
+    .valid('employee', 'admin', 'manager', 'moderator')
+    .default('employee')
+    .messages({
+      'any.only': 'validation.role_invalid',
+    }),
 
   department_id: Joi.number().integer().positive().optional().messages({
-    'number.base': 'validation.field_required',
-    'number.integer': 'validation.field_required',
-    'number.positive': 'validation.field_required',
+    'number.base': 'validation.department_id_invalid',
+    'number.integer': 'validation.department_id_invalid',
+    'number.positive': 'validation.department_id_invalid',
+  }),
+
+  is_active: Joi.boolean().default(true).messages({
+    'boolean.base': 'validation.is_active_invalid',
+  }),
+
+  permissions: Joi.array().items(Joi.string()).optional().messages({
+    'array.base': 'validation.permissions_invalid',
   }),
 });
 
@@ -205,19 +366,34 @@ const validate = schema => {
     });
 
     if (error) {
-      const errorMessages = error.details.map(detail => ({
-        field: detail.path.join('.'),
-        message: detail.message,
-      }));
+      // Get user's preferred language from request headers or default to 'en'
+      const userLanguage = req.get('Accept-Language')?.startsWith('ar')
+        ? 'ar'
+        : 'en';
+
+      const errorMessages = error.details.map(detail => {
+        const field = detail.path.join('.');
+        const messageKey = detail.message;
+
+        // Translate the message key to user's language
+        const translatedMessage = i18next.t(messageKey, { lng: userLanguage });
+
+        return {
+          field,
+          message: messageKey, // Keep the key for frontend reference
+          translatedMessage, // Add translated message
+        };
+      });
 
       logger.warn('Validation failed', {
         errors: errorMessages,
         body: req.body,
+        language: userLanguage,
       });
 
       return res.status(400).json({
         success: false,
-        message: 'error.validation',
+        message: i18next.t('error.validation', { lng: userLanguage }),
         errors: errorMessages,
         errorCode: 'VALIDATION_ERROR',
       });
@@ -229,6 +405,110 @@ const validate = schema => {
   };
 };
 
+// Additional validation schemas
+const departmentSchema = Joi.object({
+  name: Joi.string()
+    .min(2)
+    .max(100)
+    .pattern(/^[\u0600-\u06FFa-zA-Z0-9\s\-_]+$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'validation.department_name_pattern',
+      'string.min': 'validation.department_name_min',
+      'string.max': 'validation.department_name_max',
+      'any.required': 'validation.field_required',
+    }),
+
+  description: Joi.string()
+    .max(500)
+    .pattern(/^[\u0600-\u06FFa-zA-Z0-9\s\-_.,!?()\n\r]*$/)
+    .optional()
+    .allow('')
+    .messages({
+      'string.pattern.base': 'validation.description_pattern',
+      'string.max': 'validation.description_max_length',
+    }),
+
+  manager_id: Joi.number().integer().positive().optional().messages({
+    'number.base': 'validation.manager_id_invalid',
+    'number.integer': 'validation.manager_id_invalid',
+    'number.positive': 'validation.manager_id_invalid',
+  }),
+
+  is_active: Joi.boolean().default(true).messages({
+    'boolean.base': 'validation.is_active_invalid',
+  }),
+});
+
+const locationSchema = Joi.object({
+  name: Joi.string()
+    .min(2)
+    .max(100)
+    .pattern(/^[\u0600-\u06FFa-zA-Z0-9\s\-_]+$/)
+    .required()
+    .messages({
+      'string.pattern.base': 'validation.location_name_pattern',
+      'string.min': 'validation.location_name_min',
+      'string.max': 'validation.location_name_max',
+      'any.required': 'validation.field_required',
+    }),
+
+  address: Joi.string()
+    .max(255)
+    .pattern(/^[\u0600-\u06FFa-zA-Z0-9\s\-_.,!?()]+$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'validation.address_pattern',
+      'string.max': 'validation.address_max_length',
+    }),
+
+  capacity: Joi.number().integer().min(1).max(1000).optional().messages({
+    'number.base': 'validation.capacity_invalid',
+    'number.integer': 'validation.capacity_invalid',
+    'number.min': 'validation.capacity_min',
+    'number.max': 'validation.capacity_max',
+  }),
+
+  is_active: Joi.boolean().default(true).messages({
+    'boolean.base': 'validation.is_active_invalid',
+  }),
+});
+
+const profileUpdateSchema = Joi.object({
+  full_name: Joi.string()
+    .min(2)
+    .max(100)
+    .pattern(/^[\u0600-\u06FFa-zA-Z\s]+$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'validation.name_pattern',
+      'string.min': 'validation.name_min_length',
+      'string.max': 'validation.name_max_length',
+    }),
+
+  email: Joi.string()
+    .email({ tlds: { allow: false } })
+    .max(255)
+    .optional()
+    .messages({
+      'string.email': 'validation.email_format',
+      'string.max': 'validation.email_max_length',
+    }),
+
+  phone: Joi.string()
+    .pattern(/^[+]?[0-9\s\-()]{8,20}$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'validation.phone_format',
+    }),
+
+  department_id: Joi.number().integer().positive().optional().messages({
+    'number.base': 'validation.department_id_invalid',
+    'number.integer': 'validation.department_id_invalid',
+    'number.positive': 'validation.department_id_invalid',
+  }),
+});
+
 // Export validation functions
 module.exports = {
   validateAppointment: validate(appointmentSchema),
@@ -236,6 +516,12 @@ module.exports = {
   validateRecurringAppointment: validate(recurringAppointmentSchema),
   validateLogin: validate(loginSchema),
   validateUser: validate(userSchema),
+  validatePasswordChange: validate(passwordChangeSchema),
+  validatePasswordReset: validate(passwordResetSchema),
+  validatePasswordResetConfirm: validate(passwordResetConfirmSchema),
+  validateDepartment: validate(departmentSchema),
+  validateLocation: validate(locationSchema),
+  validateProfileUpdate: validate(profileUpdateSchema),
 
   // Export schemas for testing
   appointmentSchema,
@@ -243,4 +529,10 @@ module.exports = {
   recurringAppointmentSchema,
   loginSchema,
   userSchema,
+  passwordChangeSchema,
+  passwordResetSchema,
+  passwordResetConfirmSchema,
+  departmentSchema,
+  locationSchema,
+  profileUpdateSchema,
 };

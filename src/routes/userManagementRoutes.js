@@ -7,7 +7,11 @@ const { validateRole } = require('../middleware/validation');
 
 // Middleware to check if user is admin or moderator
 const requireAdminOrModerator = (req, res, next) => {
-  if (req.user.role !== 'admin' && req.user.role !== 'moderator') {
+  if (
+    req.user.role !== 'manager' &&
+    req.user.role !== 'admin' &&
+    req.user.role !== 'moderator'
+  ) {
     return res.status(403).json({
       success: false,
       message: 'Insufficient permissions. Admin or moderator access required.',
@@ -18,7 +22,18 @@ const requireAdminOrModerator = (req, res, next) => {
 
 // Middleware to check if user is admin only
 const requireAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'manager' && req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Insufficient permissions. Admin access required.',
+    });
+  }
+  next();
+};
+
+// Middleware to check if user is manager only
+const requireManager = (req, res, next) => {
+  if (req.user.role !== 'manager') {
     return res.status(403).json({
       success: false,
       message: 'Insufficient permissions. Admin access required.',

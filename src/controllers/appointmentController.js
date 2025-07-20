@@ -136,7 +136,7 @@ const createAppointment = asyncHandler(async (req, res) => {
 
   logger.info('Appointment created', {
     appointmentId: appointment_id,
-    employeeId: employee_id,
+    employee_id,
     userId: req.user.id,
   });
 
@@ -248,6 +248,15 @@ const generateRecurringInstances = pattern => {
   return instances;
 };
 
+// Helper to normalize requested_date to YYYY-MM-DD string
+function normalizeRequestedDate(appointment) {
+  if (appointment.requested_date) {
+    const d = new Date(Number(appointment.requested_date));
+    appointment.requested_date = d.toISOString().slice(0, 10);
+  }
+  return appointment;
+}
+
 // Get all appointments with advanced filtering
 const getAllAppointments = asyncHandler(async (req, res) => {
   const {
@@ -340,8 +349,8 @@ const getAllAppointments = asyncHandler(async (req, res) => {
     });
   }
 
-  // For non-admin users, only show their own appointments
-  if (req.user.role !== 'admin') {
+  // For non-admin and non-manager users, only show their own appointments
+  if (req.user.role !== 'admin' && req.user.role !== 'manager') {
     conditions.push('a.user_id = ?');
     params.push(req.user.id);
   }
@@ -367,7 +376,7 @@ const getAllAppointments = asyncHandler(async (req, res) => {
     countParams.push(...params.slice(0, -2)); // Remove LIMIT and OFFSET
   }
 
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin' && req.user.role !== 'manager') {
     const whereClause =
       conditions.length > 0 ? ' AND a.user_id = ?' : ' WHERE a.user_id = ?';
     countSql += whereClause;
@@ -393,6 +402,7 @@ const getAllAppointments = asyncHandler(async (req, res) => {
         appointment.attachments = [];
       }
     }
+    normalizeRequestedDate(appointment);
   });
 
   const pagination = {
@@ -433,6 +443,7 @@ const getAppointmentById = asyncHandler(async (req, res) => {
   // Check if user has access to this appointment
   if (
     req.user.role !== 'admin' &&
+    req.user.role !== 'manager' &&
     appointment.employee_id !== req.user.username
   ) {
     throw new AuthorizationError(req.t('error.forbidden'));
@@ -453,6 +464,7 @@ const getAppointmentById = asyncHandler(async (req, res) => {
       appointment.attachments = [];
     }
   }
+  normalizeRequestedDate(appointment);
 
   return ResponseHandler.success(
     res,
@@ -542,8 +554,8 @@ const deleteAppointment = asyncHandler(async (req, res) => {
     throw new NotFoundError(req.t('appointment.notfound'));
   }
 
-  // Check if user is admin
-  if (req.user.role !== 'admin') {
+  // Check if user is admin or manager
+  if (req.user.role !== 'admin' && req.user.role !== 'manager') {
     throw new AuthorizationError(req.t('error.forbidden'));
   }
 
@@ -584,8 +596,8 @@ const getAppointmentStats = asyncHandler(async (req, res) => {
     params.push(department_id);
   }
 
-  // For non-admin users, only show their own stats
-  if (req.user.role !== 'admin') {
+  // For non-admin and non-manager users, only show their own stats
+  if (req.user.role !== 'admin' && req.user.role !== 'manager') {
     whereClause += ' AND user_id = ?';
     params.push(req.user.id);
   }
@@ -639,10 +651,28 @@ const getAppointmentStats = asyncHandler(async (req, res) => {
     params
   );
 
+  // Get recent appointments (last 5)
+  const recentAppointments = await dbManager.query(
+    `
+      SELECT 
+        a.*, d.name as department_name, l.name as location_name
+      FROM appointments a
+      LEFT JOIN departments d ON a.department_id = d.id
+      LEFT JOIN locations l ON a.location_id = l.id
+      WHERE 1=1 ${whereClause}
+      ORDER BY a.created_at DESC
+      LIMIT 5
+    `,
+    params
+  );
+
+  recentAppointments.forEach(normalizeRequestedDate);
+
   const result = {
     overview: stats,
     byDepartment: departmentStats,
     byLocation: locationStats,
+    recentAppointments,
   };
 
   return ResponseHandler.success(

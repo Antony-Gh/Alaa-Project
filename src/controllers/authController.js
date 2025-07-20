@@ -96,19 +96,64 @@ const validatePassword = password => {
   }
 };
 
-const validatePasswordConfirmation = (password, confirmPassword) => {
-  if (!confirmPassword || confirmPassword.trim() === '') {
+const validatePasswordConfirmation = (password, password_confirmation) => {
+  if (!password_confirmation || password_confirmation.trim() === '') {
     throw new ValidationError(
       'Password confirmation is required',
       'auth.confirm_password_required'
     );
   }
 
-  if (password !== confirmPassword) {
+  if (password !== password_confirmation) {
     throw new ValidationError(
       'Passwords do not match',
       'auth.passwords_not_match'
     );
+  }
+};
+
+const validateFullName = full_name => {
+  if (!full_name || full_name.trim() === '') {
+    throw new ValidationError(
+      'Full name is required',
+      'validation.field_required'
+    );
+  }
+
+  if (full_name.length < 2) {
+    throw new ValidationError(
+      'Full name must be at least 2 characters long',
+      'validation.name_min_length'
+    );
+  }
+
+  if (full_name.length > 100) {
+    throw new ValidationError(
+      'Full name cannot exceed 100 characters',
+      'validation.name_max_length'
+    );
+  }
+
+  // Check if full name contains only letters and spaces
+  const nameRegex = /^[a-zA-Z\u0600-\u06FF\s]+$/;
+  if (!nameRegex.test(full_name)) {
+    throw new ValidationError(
+      'Full name must contain only letters and spaces',
+      'validation.name_pattern'
+    );
+  }
+};
+
+const validatePhone = phone => {
+  if (phone && phone.trim() !== '') {
+    // Check if phone number is valid (basic validation)
+    const phoneRegex = /^[+]?[0-9\s\-()]{8,15}$/;
+    if (!phoneRegex.test(phone)) {
+      throw new ValidationError(
+        'Please enter a valid phone number',
+        'validation.phone_format'
+      );
+    }
   }
 };
 
@@ -166,6 +211,8 @@ const login = asyncHandler(async (req, res) => {
     id: user.id,
     username: user.username,
     email: user.email,
+    full_name: user.full_name,
+    phone: user.phone,
     role: user.role,
     department_id: user.department_id,
   };
@@ -182,13 +229,23 @@ const login = asyncHandler(async (req, res) => {
 
 // Register new user
 const register = asyncHandler(async (req, res) => {
-  const { username, password, confirmPassword, email, department_id } = req.body;
+  const {
+    username,
+    password,
+    password_confirmation,
+    email,
+    full_name,
+    phone,
+    department_id,
+  } = req.body;
 
   // Validate input
   validateUsername(username);
   validateEmail(email);
+  validateFullName(full_name);
+  validatePhone(phone);
   validatePassword(password);
-  validatePasswordConfirmation(password, confirmPassword);
+  validatePasswordConfirmation(password, password_confirmation);
 
   // Check if username already exists
   const existingUser = await dbManager.get(
@@ -219,14 +276,22 @@ const register = asyncHandler(async (req, res) => {
 
   // Insert new user
   const result = await dbManager.run(
-    'INSERT INTO users (username, password_hash, email, role, department_id) VALUES (?, ?, ?, ?, ?)',
-    [username, passwordHash, email, role, department_id || null]
+    'INSERT INTO users (username, password_hash, email, full_name, phone, role, department_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [
+      username,
+      passwordHash,
+      email,
+      full_name || null,
+      phone || null,
+      role,
+      department_id || null,
+    ]
   );
 
   logger.debug('User insert result:', { result, username, email, role });
 
   // Check if insert was successful
-  if (!result || !result.id) {
+  if (!result || !result.lastID) {
     logger.error('Failed to insert new user', {
       username,
       email,
@@ -238,15 +303,15 @@ const register = asyncHandler(async (req, res) => {
 
   // Get the created user
   const newUser = await dbManager.get('SELECT * FROM users WHERE id = ?', [
-    result.id,
+    result.lastID,
   ]);
 
-  logger.debug('Retrieved new user:', { newUser, userId: result.id });
+  logger.debug('Retrieved new user:', { newUser, userId: result.lastID });
 
   // Check if user was retrieved successfully
   if (!newUser) {
     logger.error('Failed to retrieve newly created user', {
-      userId: result.id,
+      userId: result.lastID,
     });
     throw new Error('Failed to retrieve user account');
   }
@@ -265,6 +330,8 @@ const register = asyncHandler(async (req, res) => {
     id: newUser.id,
     username: newUser.username,
     email: newUser.email,
+    full_name: newUser.full_name,
+    phone: newUser.phone,
     role: newUser.role,
     department_id: newUser.department_id,
   };
@@ -282,7 +349,7 @@ const register = asyncHandler(async (req, res) => {
 // Get current user profile
 const getProfile = asyncHandler(async (req, res) => {
   const user = await dbManager.get(
-    'SELECT id, username, email, role, department_id, created_at FROM users WHERE id = ?',
+    'SELECT id, username, email, full_name, phone, role, department_id, created_at FROM users WHERE id = ?',
     [req.user.id]
   );
 

@@ -2,12 +2,11 @@
 import {
   escapeHtml,
   setTextContent,
-  setInnerHTML,
   createElement,
   sanitizeFormData,
   validateDateTime,
   validateEmployeeId,
-  validateArabicText,
+  validateEmployeeName,
 } from './utils/sanitize.js';
 
 // Fallback for createElement in case import fails
@@ -92,13 +91,49 @@ function validatePassword(password) {
   return { isValid: true, message: t('auth.password_valid') };
 }
 
-function validatePasswordConfirmation(password, confirmPassword) {
-  if (!confirmPassword || confirmPassword.trim() === '') {
+function validatePasswordConfirmation(password, password_confirmation) {
+  if (!password_confirmation || password_confirmation.trim() === '') {
     return { isValid: false, message: t('auth.confirm_password_required') };
   }
 
-  if (password !== confirmPassword) {
+  if (password !== password_confirmation) {
     return { isValid: false, message: t('auth.passwords_not_match') };
+  }
+
+  return { isValid: true, message: '' };
+}
+
+function validateFullName(full_name) {
+  if (!full_name || full_name.trim() === '') {
+    return { isValid: false, message: t('validation.field_required') };
+  }
+
+  if (full_name.length < 2) {
+    return { isValid: false, message: t('validation.name_min_length') };
+  }
+
+  if (full_name.length > 100) {
+    return { isValid: false, message: t('validation.name_max_length') };
+  }
+
+  // Check if full_name contains only Arabic/English letters and spaces
+  const namePattern = /^[\u0600-\u06FFa-zA-Z\s]+$/;
+  if (!namePattern.test(full_name)) {
+    return { isValid: false, message: t('validation.name_pattern') };
+  }
+
+  return { isValid: true, message: '' };
+}
+
+function validatePhone(phone) {
+  if (!phone || phone.trim() === '') {
+    return { isValid: true, message: '' }; // Phone is optional
+  }
+
+  // Check if phone matches international format
+  const phonePattern = /^[+]?[0-9\s\-()]{8,20}$/;
+  if (!phonePattern.test(phone)) {
+    return { isValid: false, message: t('validation.phone_format') };
   }
 
   return { isValid: true, message: '' };
@@ -236,11 +271,11 @@ function updatePasswordStrengthIndicator(password) {
   strengthIndicator.className = `password-strength ${strength}`;
 }
 
-function updatePasswordMatchIndicator(password, confirmPassword) {
+function updatePasswordMatchIndicator(password, password_confirmation) {
   const matchIndicator = document.getElementById('passwordMatch');
   if (!matchIndicator) return;
 
-  if (!confirmPassword) {
+  if (!password_confirmation) {
     matchIndicator.textContent = '';
     matchIndicator.className = 'password-match empty';
     return;
@@ -251,17 +286,17 @@ function updatePasswordMatchIndicator(password, confirmPassword) {
     {
       id: 'length',
       text: t('password.match.length'),
-      valid: confirmPassword.length === password.length,
+      valid: password_confirmation.length === password.length,
     },
     {
       id: 'exact',
       text: t('password.match.exact'),
-      valid: password === confirmPassword,
+      valid: password === password_confirmation,
     },
     {
       id: 'not_empty',
       text: t('password.match.not_empty'),
-      valid: confirmPassword.length > 0,
+      valid: password_confirmation.length > 0,
     },
   ];
 
@@ -284,7 +319,7 @@ function updatePasswordMatchIndicator(password, confirmPassword) {
 
   matchIndicator.innerHTML = html;
 
-  if (password === confirmPassword && confirmPassword.length > 0) {
+  if (password === password_confirmation && password_confirmation.length > 0) {
     matchIndicator.className = 'password-match match';
   } else {
     matchIndicator.className = 'password-match no-match';
@@ -295,7 +330,7 @@ function generateStrongPassword() {
   const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lowercase = 'abcdefghijklmnopqrstuvwxyz';
   const numbers = '0123456789';
-  const special = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+  const special = '!@#$%*?&+=';
 
   let password = '';
 
@@ -327,7 +362,7 @@ function setupPasswordGenerator() {
   generatorBtn.addEventListener('click', function () {
     const passwordInput = document.getElementById('registerPassword');
     const passwordConfirmationInput = document.getElementById(
-      'registerConfirmPassword'
+      'registerpassword_confirmation'
     );
     if (!passwordInput) return;
     if (!passwordConfirmationInput) return;
@@ -422,21 +457,24 @@ function setupFormValidation() {
       }
 
       // Update password match indicator if confirm password exists
-      const confirmPasswordInput = document.getElementById(
-        'registerConfirmPassword'
+      const password_confirmationInput = document.getElementById(
+        'registerpassword_confirmation'
       );
-      if (confirmPasswordInput && confirmPasswordInput.value) {
-        updatePasswordMatchIndicator(this.value, confirmPasswordInput.value);
+      if (password_confirmationInput && password_confirmationInput.value) {
+        updatePasswordMatchIndicator(
+          this.value,
+          password_confirmationInput.value
+        );
       }
     });
   }
 
   // Password confirmation validation
-  const confirmPasswordInput = document.getElementById(
-    'registerConfirmPassword'
+  const password_confirmationInput = document.getElementById(
+    'registerpassword_confirmation'
   );
-  if (confirmPasswordInput) {
-    confirmPasswordInput.addEventListener('input', function () {
+  if (password_confirmationInput) {
+    password_confirmationInput.addEventListener('input', function () {
       const passwordInput = document.getElementById('registerPassword');
       const validation = validatePasswordConfirmation(
         passwordInput.value,
@@ -712,10 +750,12 @@ async function handleRegister(e) {
   // Client-side validation
   const usernameValidation = validateUsername(registerData.username);
   const emailValidation = validateEmail(registerData.email);
+  const fullNameValidation = validateFullName(registerData.full_name);
+  const phoneValidation = validatePhone(registerData.phone);
   const passwordValidation = validatePassword(registerData.password);
-  const confirmPasswordValidation = validatePasswordConfirmation(
+  const password_confirmationValidation = validatePasswordConfirmation(
     registerData.password,
-    registerData.confirmPassword
+    registerData.password_confirmation
   );
 
   if (!usernameValidation.isValid) {
@@ -728,23 +768,35 @@ async function handleRegister(e) {
     return;
   }
 
+  if (!fullNameValidation.isValid) {
+    showMessage(fullNameValidation.message, 'error');
+    return;
+  }
+
+  if (!phoneValidation.isValid) {
+    showMessage(phoneValidation.message, 'error');
+    return;
+  }
+
   if (!passwordValidation.isValid) {
     showMessage(passwordValidation.message, 'error');
     return;
   }
 
-  if (!confirmPasswordValidation.isValid) {
-    showMessage(confirmPasswordValidation.message, 'error');
+  if (!password_confirmationValidation.isValid) {
+    showMessage(password_confirmationValidation.message, 'error');
     return;
   }
 
   console.log('Register data:', registerData);
 
   try {
+    const currentLang = localStorage.getItem('language') || 'ar';
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept-Language': currentLang,
       },
       body: JSON.stringify(registerData),
     });
@@ -809,18 +861,21 @@ function showAppSection() {
 
   // Update user info
   if (currentUser) {
-    setTextContent(userDisplayName, `مرحباً ${currentUser.username}`);
+    const displayName = currentUser.full_name || currentUser.username;
+    setTextContent(userDisplayName, displayName);
     setTextContent(
       userRole,
       currentUser.role === 'admin'
-        ? 'مدير'
-        : currentUser.role === 'moderator'
-          ? 'مشرف'
-          : 'موظف'
+        ? t('admin')
+        : currentUser.role === 'manager'
+          ? t('manager')
+          : currentUser.role === 'moderator'
+            ? t('moderator')
+            : t('employee')
     );
 
     // Show/hide admin tab based on role
-    if (currentUser.role === 'admin') {
+    if (currentUser.role === 'admin' || currentUser.role === 'manager') {
       adminTab.classList.remove('admin-tab-hidden');
     } else {
       adminTab.classList.add('admin-tab-hidden');
@@ -829,7 +884,11 @@ function showAppSection() {
     // Show/hide user management tab based on role
     const userManagementTab = document.getElementById('userManagementTab');
     if (userManagementTab) {
-      if (currentUser.role === 'admin' || currentUser.role === 'moderator') {
+      if (
+        currentUser.role === 'admin' ||
+        currentUser.role === 'manager' ||
+        currentUser.role === 'moderator'
+      ) {
         userManagementTab.classList.remove('admin-moderator-tab-hidden');
       } else {
         userManagementTab.classList.add('admin-moderator-tab-hidden');
@@ -882,9 +941,9 @@ async function handlePasswordChange(e) {
   e.preventDefault();
 
   const passwordData = sanitizeFormData(new FormData(changePasswordForm));
-  const confirmPassword = passwordData.confirmPassword;
+  const password_confirmation = passwordData.password_confirmation;
 
-  if (passwordData.newPassword !== confirmPassword) {
+  if (passwordData.newPassword !== password_confirmation) {
     showMessage('password_mismatch', 'error');
     return;
   }
@@ -947,15 +1006,8 @@ async function loadUserProfile() {
         const user = result.data;
 
         // Populate profile form
-        setTextContent(
-          document.getElementById('profileUsername'),
-          user.username
-        );
-        setTextContent(
-          document.getElementById('profileEmail'),
-          user.email || ''
-        );
-
+        document.getElementById('profileUsername').value = user.username || '';
+        document.getElementById('profileEmail').value = user.email || '';
         // Set department if available
         if (user.department_id) {
           document.getElementById('profileDepartment').value =
@@ -1006,11 +1058,22 @@ async function loadAppointments() {
     const result = await response.json();
 
     if (response.ok) {
-      appointments = result.data || result;
+      // Ensure appointments is always an array
+      const data = result.data || result;
+      appointments = Array.isArray(data.appointments) ? data.appointments : [];
+      displayMyAppointments();
+    } else {
+      console.error(
+        'Failed to load appointments:',
+        result.message || 'Unknown error'
+      );
+      appointments = [];
       displayMyAppointments();
     }
   } catch (error) {
     console.error(t('console.error.appointments'), error);
+    appointments = [];
+    displayMyAppointments();
   }
 }
 
@@ -1024,11 +1087,22 @@ async function loadAdminAppointments() {
     const result = await response.json();
 
     if (response.ok) {
-      appointments = result.data || result;
+      // Ensure appointments is always an array
+      const data = result.data || result;
+      appointments = Array.isArray(data.appointments) ? data.appointments : [];
+      displayAdminAppointments();
+    } else {
+      console.error(
+        'Failed to load admin appointments:',
+        result.message || 'Unknown error'
+      );
+      appointments = [];
       displayAdminAppointments();
     }
   } catch (error) {
     console.error(t('console.error.admin_appointments'), error);
+    appointments = [];
+    displayAdminAppointments();
   }
 }
 
@@ -1043,11 +1117,30 @@ async function loadDashboardStats() {
 
     if (response.ok) {
       const stats = result.data || result;
-      updateDashboardStats(stats.stats || stats);
-      displayRecentAppointments(stats.recentAppointments || []);
+      // Ensure stats is an array for updateDashboardStats
+      const statsArray = Array.isArray(stats.stats)
+        ? stats.stats
+        : Array.isArray(stats)
+          ? stats
+          : [];
+      updateDashboardStats(statsArray);
+      // Ensure recentAppointments is an array
+      const recentAppointments = Array.isArray(stats.recentAppointments)
+        ? stats.recentAppointments
+        : [];
+      displayRecentAppointments(recentAppointments);
+    } else {
+      console.error(
+        'Failed to load dashboard stats:',
+        result.message || 'Unknown error'
+      );
+      updateDashboardStats([]);
+      displayRecentAppointments([]);
     }
   } catch (error) {
     console.error(t('console.error.dashboard_stats'), error);
+    updateDashboardStats([]);
+    displayRecentAppointments([]);
   }
 }
 
@@ -1088,8 +1181,10 @@ async function handleAppointmentSubmit(e) {
   e.preventDefault();
 
   const appointmentData = sanitizeFormData(new FormData(appointmentForm));
-  appointmentData.department_id = parseInt(appointmentData.department_id);
-  appointmentData.location_id = parseInt(appointmentData.location_id);
+  appointmentData.department_id = parseInt(appointmentData.department);
+  appointmentData.location_id = parseInt(appointmentData.location);
+
+  console.log(appointmentData);
 
   // Validate input
   const validation = validateAppointmentData(appointmentData);
@@ -1125,7 +1220,7 @@ async function handleAppointmentSubmit(e) {
 
 function validateAppointmentData(data) {
   // Validate employee name (Arabic text)
-  const nameValidation = validateArabicText(data.employee_name, 2, 100);
+  const nameValidation = validateEmployeeName(data.employee_name);
   if (!nameValidation.valid) {
     return nameValidation;
   }
@@ -1207,68 +1302,65 @@ async function handleAdminFormSubmit(e) {
 function displayMyAppointments() {
   const container = document.getElementById('myAppointmentsList');
 
-  if (appointments.length === 0) {
-    setInnerHTML(
-      container,
-      `
-            <div class="empty-state">
+  // Ensure appointments is an array
+  const appointmentsArray = Array.isArray(appointments) ? appointments : [];
+
+  if (appointmentsArray.length === 0) {
+    container.innerHTML = `<div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
                 <h3>${t('no_appointments')}</h3>
                 <p>${t('start_booking')}</p>
-            </div>
-        `
-    );
+            </div>`;
     return;
   }
 
-  const appointmentCards = appointments
+  const appointmentCards = appointmentsArray
     .filter(
       apt =>
-        apt.employee_id === currentUser.username || currentUser.role === 'admin'
+        apt.employee_id === currentUser.username ||
+        currentUser.role === 'admin' ||
+        currentUser.role === 'manager'
     )
     .map(appointment => createAppointmentCard(appointment, false))
     .join('');
 
-  setInnerHTML(container, appointmentCards);
+  container.innerHTML = appointmentCards;
 }
 
 function displayAdminAppointments() {
   const container = document.getElementById('adminAppointmentsList');
 
-  if (appointments.length === 0) {
-    setInnerHTML(
-      container,
-      `
+  // Ensure appointments is an array
+  const appointmentsArray = Array.isArray(appointments) ? appointments : [];
+
+  if (appointmentsArray.length === 0) {
+    container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
                 <h3>${t('no_appointments')}</h3>
                 <p>${t('no_appointments_created')}</p>
             </div>
-        `
-    );
+        `;
     return;
   }
 
-  const appointmentCards = appointments
+  const appointmentCards = appointmentsArray
     .map(appointment => createAppointmentCard(appointment, true))
     .join('');
 
-  setInnerHTML(container, appointmentCards);
+  container.innerHTML = appointmentCards;
 }
 
 function displayRecentAppointments(recentAppointments = []) {
   const container = document.getElementById('recentAppointmentsList');
 
   if (recentAppointments.length === 0) {
-    setInnerHTML(
-      container,
-      `
+    container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
                 <h3>${t('no_recent_appointments')}</h3>
             </div>
-        `
-    );
+        `;
     return;
   }
 
@@ -1276,7 +1368,7 @@ function displayRecentAppointments(recentAppointments = []) {
     .map(appointment => createAppointmentCard(appointment, false))
     .join('');
 
-  setInnerHTML(container, appointmentCards);
+  container.innerHTML = appointmentCards;
 }
 
 function createAppointmentCard(appointment, isAdmin = false) {
@@ -1287,20 +1379,20 @@ function createAppointmentCard(appointment, isAdmin = false) {
   const statusClass = `status-${appointment.status}`;
 
   const card = `
-        <div class="appointment-card" data-id="${appointment.id}">
+        <div class="appointment-card ${statusClass}" data-id="${appointment.id}">
             <div class="appointment-header">
                 <div>
                     <div class="appointment-title">${escapeHtml(
                       appointment.title
                     )}</div>
-                    <span class="appointment-status ${statusClass}">${escapeHtml(
+                    <span class="appointment-status ${statusClass}">${t(
                       statusText
                     )}</span>
                 </div>
                 ${
                   isAdmin
                     ? `
-                    <button class="btn btn-primary admin-modal-btn" data-appointment-id="${
+                    <button class="btn btn-primary admin-modal-btn mt-1" data-appointment-id="${
                       appointment.id
                     }">
                         <i class="fas fa-edit"></i> ${t('update_status')}
@@ -1342,7 +1434,7 @@ function createAppointmentCard(appointment, isAdmin = false) {
                 <div class="detail-item">
                     <i class="fas fa-clock"></i>
                     <span class="detail-label">${t('requested_time')}:</span>
-                    <span class="detail-value">${escapeHtml(
+                    <span class="detail-value">${formatTime(
                       appointment.requested_time
                     )}</span>
                 </div>
@@ -1416,7 +1508,7 @@ function createAppointmentCard(appointment, isAdmin = false) {
                 : ''
             }
             
-            <div class="appointment-actions">
+            <div class="appointment-actions mb-1">
                 <button class="btn btn-primary view-details-btn" data-appointment-id="${
                   appointment.id
                 }">
@@ -1468,18 +1560,13 @@ function filterAppointments(status) {
   );
 
   if (filteredAppointments.length === 0) {
-    setInnerHTML(
-      container,
-      `
+    container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-filter"></i>
                 <h3>${t('no_appointments_with_status')}</h3>
-                <p>${t('no_appointments_with_status_message', {
-                  status: t(getStatusText(status)),
-                })}</p>
+                <p>${tStatusMessage('no_appointments_with_status_message', status)}</p>
             </div>
-        `
-    );
+        `;
     return;
   }
 
@@ -1487,7 +1574,7 @@ function filterAppointments(status) {
     .map(appointment => createAppointmentCard(appointment, true))
     .join('');
 
-  setInnerHTML(container, appointmentCards);
+  container.innerHTML = appointmentCards;
 }
 
 // Modal functions
@@ -1553,7 +1640,7 @@ function viewAppointmentDetails(appointmentId) {
             <div class="detail-item">
                 <i class="fas fa-clock"></i>
                 <span class="detail-label">${t('requested_time')}:</span>
-                <span class="detail-value">${escapeHtml(
+                <span class="detail-value">${formatTime(
                   appointment.requested_time
                 )}</span>
             </div>
@@ -1580,7 +1667,7 @@ function viewAppointmentDetails(appointmentId) {
         </div>
     `;
 
-  setInnerHTML(modalContent, modalHtml);
+  modalContent.innerHTML = modalHtml;
   appointmentModal.style.display = 'block';
 }
 
@@ -1612,10 +1699,15 @@ function handleStatusChange() {
 
 // Update dashboard statistics
 function updateDashboardStats(stats) {
-  const pendingCount = stats.find(s => s.status === 'pending')?.count || 0;
-  const approvedCount = stats.find(s => s.status === 'approved')?.count || 0;
-  const rejectedCount = stats.find(s => s.status === 'rejected')?.count || 0;
-  const doneCount = stats.find(s => s.status === 'done')?.count || 0;
+  // Ensure stats is an array
+  const statsArray = Array.isArray(stats) ? stats : [];
+
+  const pendingCount = statsArray.find(s => s.status === 'pending')?.count || 0;
+  const approvedCount =
+    statsArray.find(s => s.status === 'approved')?.count || 0;
+  const rejectedCount =
+    statsArray.find(s => s.status === 'rejected')?.count || 0;
+  const doneCount = statsArray.find(s => s.status === 'done')?.count || 0;
 
   setTextContent(document.getElementById('pendingCount'), pendingCount);
   setTextContent(document.getElementById('approvedCount'), approvedCount);
@@ -1638,13 +1730,87 @@ function getStatusText(status) {
 function formatDate(dateString) {
   if (!dateString) return t('not_specified');
   const date = new Date(dateString);
-  return date.toLocaleDateString('ar-SA');
+  const lang = localStorage.getItem('language') || 'ar';
+  if (isNaN(date.getTime())) return t('not_specified');
+  if (lang === 'en') {
+    // USA: MM/DD/YYYY
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  } else {
+    // Egypt/Arabic: DD/MM/YYYY
+    return new Intl.DateTimeFormat('ar-EG', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  }
 }
 
 function formatDateTime(dateTimeString) {
   if (!dateTimeString) return t('not_specified');
   const date = new Date(dateTimeString);
-  return date.toLocaleString('ar-SA');
+  const lang = localStorage.getItem('language') || 'ar';
+  if (isNaN(date.getTime())) return t('not_specified');
+
+  // Convert UTC to Egypt time (UTC+3)
+  const egyptDate = new Date(date.getTime() + 3 * 60 * 60 * 1000);
+
+  if (lang === 'en') {
+    // USA: MM/DD/YYYY, HH:mm AM/PM (12-hour)
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).format(egyptDate);
+  } else {
+    // Egypt/Arabic: DD/MM/YYYY, HH:mm (24-hour)
+    return new Intl.DateTimeFormat('ar-EG', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(egyptDate);
+  }
+}
+
+function formatTime(timeString) {
+  if (!timeString) return t('not_specified');
+  const lang = localStorage.getItem('language') || 'ar';
+
+  // Create a date object with the time string
+  const today = new Date();
+  const [hours, minutes] = timeString.split(':');
+  const timeDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    hours,
+    minutes
+  );
+
+  if (lang === 'en') {
+    // USA: HH:mm AM/PM (12-hour)
+    return new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).format(timeDate);
+  } else {
+    // Egypt/Arabic: HH:mm (24-hour)
+    return new Intl.DateTimeFormat('ar-EG', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(timeDate);
+  }
 }
 
 // Language switcher and translation system
@@ -1690,12 +1856,11 @@ function updateAllTranslatableElements() {
   // Update user profile language if logged in
   if (currentUser && authToken) {
     fetch('/api/auth/profile', {
-      method: 'PUT',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify({ language: lang }),
     }).catch(error => {
       console.error(t('console.error.language_preference'), error);
     });
@@ -1808,17 +1973,36 @@ function showApiErrors(errors) {
     if (Array.isArray(errors)) {
       errorContent += '<ul style="margin: 0; padding-right: 1rem;">';
       errors.forEach(err => {
-        if (err && err.message) {
-          // Map Arabic validation messages to translation keys
-          const mappedMessage = mapValidationMessage(err.message);
-          const displayMessage = t(mappedMessage);
-          errorContent += `<li>${escapeHtml(displayMessage)}</li>`;
+        if (err && (err.message || err.translatedMessage)) {
+          // Use translatedMessage if available, otherwise translate the message key
+          let displayMessage;
+          if (err.translatedMessage) {
+            displayMessage = err.translatedMessage;
+          } else if (err.message) {
+            // Handle both old format (Arabic text) and new format (translation keys)
+            if (err.message.startsWith('validation.')) {
+              // New format: translation key
+              displayMessage = t(err.message);
+            } else {
+              // Old format: Arabic text - map to translation key
+              const mappedMessage = err.message;
+              displayMessage = t(mappedMessage);
+            }
+          }
 
-          // Optionally highlight the field
+          if (displayMessage) {
+            errorContent += `<li>${escapeHtml(displayMessage)}</li>`;
+          }
+
+          // Highlight the field
           if (err.field) {
             const field = document.querySelector(`[name="${err.field}"]`);
             if (field) {
               field.style.borderColor = 'red';
+              // Remove red border after 5 seconds
+              setTimeout(() => {
+                field.style.borderColor = '';
+              }, 5000);
             }
           }
         }
@@ -1830,20 +2014,20 @@ function showApiErrors(errors) {
         if (Array.isArray(fieldErrors)) {
           fieldErrors.forEach(error => {
             if (error) {
-              const mappedMessage = mapValidationMessage(error);
+              const mappedMessage = error;
               const displayMessage = t(mappedMessage);
               errorContent += `<li>${escapeHtml(displayMessage)}</li>`;
             }
           });
         } else if (fieldErrors) {
-          const mappedMessage = mapValidationMessage(fieldErrors);
+          const mappedMessage = fieldErrors;
           const displayMessage = t(mappedMessage);
           errorContent += `<li>${escapeHtml(displayMessage)}</li>`;
         }
       });
       errorContent += '</ul>';
     } else if (typeof errors === 'string') {
-      const mappedMessage = mapValidationMessage(errors);
+      const mappedMessage = errors;
       const displayMessage = t(mappedMessage);
       errorContent += escapeHtml(displayMessage);
     } else {
@@ -1972,23 +2156,6 @@ function t(key) {
   }
 }
 
-// Helper to map backend Arabic validation messages to translation keys
-function mapValidationMessage(message) {
-  const arabicToKeyMap = {
-    'اسم المستخدم يجب أن يحتوي على أحرف وأرقام وشرطة سفلية فقط':
-      'validation.username_pattern',
-    'اسم المستخدم يجب أن يكون على الأقل 3 أحرف': 'validation.username_min',
-    'اسم المستخدم يجب أن لا يتجاوز 50 حرف': 'validation.username_max',
-    'كلمة المرور يجب أن تكون على الأقل 6 أحرف': 'validation.password_min',
-    'البريد الإلكتروني يجب أن يكون صحيحاً': 'validation.email_format',
-    'الدور يجب أن يكون employee أو admin': 'validation.role_invalid',
-    'اسم المستخدم مطلوب': 'validation.field_required',
-    'كلمة المرور مطلوبة': 'validation.field_required',
-  };
-
-  return arabicToKeyMap[message] || message;
-}
-
 // Initialize language system
 (async () => {
   try {
@@ -2021,7 +2188,12 @@ function setupUserManagement() {
   const userId = document.getElementById('userId');
 
   // Show/hide moderator option based on current user role
-  if (currentUser && currentUser.role === 'admin') {
+  if (
+    currentUser &&
+    (currentUser.role === 'admin' ||
+      currentUser.role === 'manager' ||
+      currentUser.role === 'moderator')
+  ) {
     moderatorOption.style.display = 'block';
   } else {
     moderatorOption.style.display = 'none';
@@ -2333,4 +2505,10 @@ async function changeUserPassword(userId) {
     console.error('Error changing password:', error);
     showMessage('Failed to change password', 'error');
   }
+}
+
+// Helper to translate status and interpolate into a message
+function tStatusMessage(key, status) {
+  const statusText = t(`${status}_status`);
+  return t(key).replace('{status}', statusText);
 }

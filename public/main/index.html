@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
@@ -12,11 +12,7 @@
       type="image/svg+xml"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>"
     /> -->
-    <link
-      rel="icon"
-      type="image/x-icon"
-      href="favicon.ico"
-    />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="stylesheet" href="style.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
@@ -93,7 +89,12 @@
                     placeholder="password"
                     data-i18n-placeholder="password_placeholder"
                   />
-                  <button type="button" class="password-toggle-btn" id="loginPasswordToggle" title="Toggle password visibility">
+                  <button
+                    type="button"
+                    class="password-toggle-btn"
+                    id="loginPasswordToggle"
+                    title="Toggle password visibility"
+                  >
                     <i class="fas fa-eye"></i>
                   </button>
                 </div>
@@ -130,7 +131,33 @@
                 />
               </div>
               <div class="form-group">
-                <label for="registerPassword" data-i18n="password_title"></label>
+                <label for="registerFullName" data-i18n="full_name"
+                  >Full Name</label
+                >
+                <input
+                  type="text"
+                  id="registerFullName"
+                  name="full_name"
+                  required
+                  placeholder="full_name"
+                  data-i18n-placeholder="full_name_placeholder"
+                />
+              </div>
+              <div class="form-group">
+                <label for="registerPhone" data-i18n="phone">Phone</label>
+                <input
+                  type="tel"
+                  id="registerPhone"
+                  name="phone"
+                  placeholder="phone"
+                  data-i18n-placeholder="phone_placeholder"
+                />
+              </div>
+              <div class="form-group">
+                <label
+                  for="registerPassword"
+                  data-i18n="password_title"
+                ></label>
                 <div class="password-field-container">
                   <input
                     type="password"
@@ -140,27 +167,48 @@
                     placeholder="password"
                     data-i18n-placeholder="password_placeholder"
                   />
-                  <button type="button" class="password-generator-btn" id="passwordGeneratorBtn" title="Generate strong password">
+                  <button
+                    type="button"
+                    class="password-generator-btn"
+                    id="passwordGeneratorBtn"
+                    title="Generate strong password"
+                  >
                     <i class="fas fa-magic"></i>
                   </button>
-                  <button type="button" class="password-toggle-btn" id="registerPasswordToggle" title="Toggle password visibility">
+                  <button
+                    type="button"
+                    class="password-toggle-btn"
+                    id="registerPasswordToggle"
+                    title="Toggle password visibility"
+                  >
                     <i class="fas fa-eye"></i>
                   </button>
                 </div>
-                <div class="password-strength empty" id="passwordStrength"></div>
+                <div
+                  class="password-strength empty"
+                  id="passwordStrength"
+                ></div>
               </div>
               <div class="form-group">
-                <label for="registerConfirmPassword" data-i18n="confirm_password"></label>
+                <label
+                  for="registerpassword_confirmation"
+                  data-i18n="confirm_password"
+                ></label>
                 <div class="password-field-container">
                   <input
                     type="password"
-                    id="registerConfirmPassword"
-                    name="confirmPassword"
+                    id="registerpassword_confirmation"
+                    name="password_confirmation"
                     required
                     placeholder="confirm_password"
                     data-i18n-placeholder="confirm_password_placeholder"
                   />
-                  <button type="button" class="password-toggle-btn" id="registerConfirmPasswordToggle" title="Toggle password visibility">
+                  <button
+                    type="button"
+                    class="password-toggle-btn"
+                    id="registerpassword_confirmationToggle"
+                    title="Toggle password visibility"
+                  >
                     <i class="fas fa-eye"></i>
                   </button>
                 </div>
@@ -202,7 +250,10 @@
         <!-- User Info Bar -->
         <div class="user-info-bar">
           <div class="user-info">
-            <span id="userDisplayName" data-i18n="welcome_user">Hello</span>
+            <div>
+              <span data-i18n="welcome_user">مرحباً {username}</span>
+              <span id="userDisplayName">Anthony</span>
+            </div>
             <span id="userRole" class="user-role"></span>
           </div>
           <button id="logoutBtn" class="btn btn-danger" title="logout">
@@ -255,22 +306,22 @@
             <form id="appointmentForm">
               <div class="form-row">
                 <div class="form-group">
-                  <label for="employeeName" data-i18n="employee_name"></label>
+                  <label for="employee_name" data-i18n="employee_name"></label>
                   <input
                     type="text"
-                    id="employeeName"
-                    name="employeeName"
+                    id="employee_name"
+                    name="employee_name"
                     required
                     placeholder="employee_name"
                     data-i18n-placeholder="employee_name_placeholder"
                   />
                 </div>
                 <div class="form-group">
-                  <label for="employeeId" data-i18n="employee_id"></label>
+                  <label for="employee_id" data-i18n="employee_id"></label>
                   <input
                     type="text"
-                    id="employeeId"
-                    name="employeeId"
+                    id="employee_id"
+                    name="employee_id"
                     required
                     placeholder="employee_id"
                     data-i18n-placeholder="employee_id_placeholder"
@@ -280,11 +331,7 @@
 
               <div class="form-row">
                 <div class="form-group">
-                  <label
-                    for="department"
-                    data-i18n="department"
-                    class="visually-hidden"
-                  ></label>
+                  <label for="department" data-i18n="department"></label>
                   <select
                     id="department"
                     name="department"
@@ -335,22 +382,28 @@
 
               <div class="form-row">
                 <div class="form-group">
-                  <label for="requestedDate" data-i18n="requested_date"></label>
+                  <label
+                    for="requested_date"
+                    data-i18n="requested_date"
+                  ></label>
                   <input
                     type="date"
-                    id="requestedDate"
-                    name="requestedDate"
+                    id="requested_date"
+                    name="requested_date"
                     required
                     placeholder="requested_date"
                     title="requested_date"
                   />
                 </div>
                 <div class="form-group">
-                  <label for="requestedTime" data-i18n="requested_time"></label>
+                  <label
+                    for="requested_time"
+                    data-i18n="requested_time"
+                  ></label>
                   <input
                     type="time"
-                    id="requestedTime"
-                    name="requestedTime"
+                    id="requested_time"
+                    name="requested_time"
                     required
                     placeholder="requested_time"
                     title="requested_time"
@@ -358,19 +411,21 @@
                 </div>
               </div>
 
-              <button
-                type="submit"
-                class="btn btn-primary"
-                title="submit_request"
-              >
-                <i class="fas fa-paper-plane"></i>
-                <span data-i18n="submit_request"></span>
-              </button>
+              <div class="centered-item-row mt-3">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  title="submit_request"
+                >
+                  <i class="fas fa-paper-plane"></i>
+                  <span data-i18n="submit_request"></span>
+                </button>
+              </div>
             </form>
           </div>
 
           <div class="my-appointments">
-            <h3>
+            <h3 class="mb-1">
               <i class="fas fa-list"></i>
               <span data-i18n="my_appointments"></span>
             </h3>
@@ -413,7 +468,11 @@
               <i class="fas fa-users-cog"></i>
               <span data-i18n="user_management"></span>
             </h2>
-            <button id="createUserBtn" class="btn btn-primary" title="create_user">
+            <button
+              id="createUserBtn"
+              class="btn btn-primary"
+              title="create_user"
+            >
               <i class="fas fa-user-plus"></i>
               <span data-i18n="create_user"></span>
             </button>
@@ -423,10 +482,18 @@
             <button class="role-filter-btn active" data-role="all">
               <span data-i18n="all_users">All Users</span>
             </button>
-            <button class="role-filter-btn" data-role="moderator" id="moderatorFilterBtn">
+            <button
+              class="role-filter-btn"
+              data-role="moderator"
+              id="moderatorFilterBtn"
+            >
               <span data-i18n="moderators">Moderators</span>
             </button>
-            <button class="role-filter-btn" data-role="employee" id="employeeFilterBtn">
+            <button
+              class="role-filter-btn"
+              data-role="employee"
+              id="employeeFilterBtn"
+            >
               <span data-i18n="employees">Employees</span>
             </button>
           </div>
@@ -509,48 +576,57 @@
           </div>
 
           <div class="profile-content">
-            <form id="profileForm" class="profile-form">
-              <div class="form-group">
-                <label for="profileUsername" data-i18n="username"></label>
-                <input
-                  type="text"
-                  id="profileUsername"
-                  name="username"
-                  readonly
-                  placeholder="username"
-                  title="username"
-                />
-              </div>
-              <div class="form-group">
-                <label for="profileEmail" data-i18n="email"></label>
-                <input
-                  type="email"
-                  id="profileEmail"
-                  name="email"
-                  placeholder="email"
-                  title="email"
-                />
-              </div>
-              <div class="form-group">
-                <label for="profileDepartment" data-i18n="department"></label>
-                <select
-                  id="profileDepartment"
-                  name="department"
-                  title="department"
-                >
-                  <option value="" data-i18n="select_department"></option>
-                </select>
-              </div>
-              <button
-                type="submit"
-                class="btn btn-primary"
-                title="save_changes"
-              >
-                <i class="fas fa-save"></i>
-                <span data-i18n="save_changes"></span>
-              </button>
-            </form>
-
+            <div class="change-password-section">
+              <h3>
+                <i class="fas fa-user"></i>
+                <span data-i18n="your_information"></span>
+              </h3>
+              <form id="profileForm" class="profile-form">
+                <div class="form-group">
+                  <label for="profileUsername" data-i18n="username"></label>
+                  <input
+                    type="text"
+                    id="profileUsername"
+                    name="username"
+                    readonly
+                    placeholder="username"
+                    data-i18n-placeholder="username_placeholder"
+                    title="username"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="profileEmail" data-i18n="email"></label>
+                  <input
+                    type="email"
+                    id="profileEmail"
+                    name="email"
+                    placeholder="email"
+                    data-i18n-placeholder="email_placeholder"
+                    title="email"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="profileDepartment" data-i18n="department"></label>
+                  <select
+                    id="profileDepartment"
+                    name="department"
+                    title="department"
+                  >
+                    <option value="0" data-i18n="select_department"></option>
+                  </select>
+                </div>
+                <div class="centered-item-row mt-2">
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    title="save_changes"
+                  >
+                    <i class="fas fa-save"></i>
+                    <span data-i18n="save_changes"></span>
+                  </button>
+                </div>
+              </form>
+            </div>
             <div class="change-password-section">
               <h3>
                 <i class="fas fa-key"></i>
@@ -568,10 +644,16 @@
                       id="currentPassword"
                       name="currentPassword"
                       required
-                      placeholder="current_password"
+                      placeholder="current_password_placeholder"
+                      data-i18n-placeholder="current_password_placeholder"
                       title="current_password"
                     />
-                    <button type="button" class="password-toggle-btn" id="currentPasswordToggle" title="Toggle password visibility">
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      id="currentPasswordToggle"
+                      title="Toggle password visibility"
+                    >
                       <i class="fas fa-eye"></i>
                     </button>
                   </div>
@@ -584,33 +666,46 @@
                       id="newPassword"
                       name="newPassword"
                       required
-                      placeholder="new_password"
+                      placeholder="new_password_placeholder"
+                      data-i18n-placeholder="new_password_placeholder"
                       title="new_password"
                     />
-                    <button type="button" class="password-toggle-btn" id="newPasswordToggle" title="Toggle password visibility">
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      id="newPasswordToggle"
+                      title="Toggle password visibility"
+                    >
                       <i class="fas fa-eye"></i>
                     </button>
                   </div>
                 </div>
                 <div class="form-group">
                   <label
-                    for="confirmPassword"
+                    for="password_confirmation"
                     data-i18n="confirm_password"
                   ></label>
                   <div class="password-field-container">
                     <input
                       type="password"
-                      id="confirmPassword"
-                      name="confirmPassword"
+                      id="password_confirmation"
+                      name="password_confirmation"
                       required
-                      placeholder="confirm_password"
+                      placeholder="confirm_password_placeholder"
+                      data-i18n-placeholder="confirm_password_placeholder"
                       title="confirm_password"
                     />
-                    <button type="button" class="password-toggle-btn" id="confirmPasswordToggle" title="Toggle password visibility">
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      id="password_confirmationToggle"
+                      title="Toggle password visibility"
+                    >
                       <i class="fas fa-eye"></i>
                     </button>
                   </div>
                 </div>
+                <div class="centered-item-row mt-2">
                 <button
                   type="submit"
                   class="btn btn-warning"
@@ -619,6 +714,7 @@
                   <i class="fas fa-key"></i>
                   <span data-i18n="change_password"></span>
                 </button>
+              </div>
               </form>
             </div>
           </div>
@@ -754,13 +850,18 @@
             <label for="userRole" data-i18n="role"></label>
             <select id="userRole" name="role" required title="role">
               <option value="employee" data-i18n="employee"></option>
-              <option value="moderator" data-i18n="moderator" id="moderatorOption"></option>
+              <option value="manager" data-i18n="manager"></option>
+              <option
+                value="moderator"
+                data-i18n="moderator"
+                id="moderatorOption"
+              ></option>
             </select>
           </div>
           <div class="form-group">
             <label for="userDepartment" data-i18n="department"></label>
             <select id="userDepartment" name="department_id" title="department">
-              <option value="" data-i18n="select_department"></option>
+              <option value="0" data-i18n="select_department"></option>
             </select>
           </div>
           <div class="form-group" id="userPasswordGroup">
@@ -773,7 +874,12 @@
                 placeholder="password"
                 title="password"
               />
-              <button type="button" class="password-toggle-btn" id="userPasswordToggle" title="Toggle password visibility">
+              <button
+                type="button"
+                class="password-toggle-btn"
+                id="userPasswordToggle"
+                title="Toggle password visibility"
+              >
                 <i class="fas fa-eye"></i>
               </button>
             </div>

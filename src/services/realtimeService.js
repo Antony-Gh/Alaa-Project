@@ -8,6 +8,7 @@ class RealtimeService {
     this.io = null;
     this.connectedUsers = new Map(); // userId -> socket
     this.userRooms = new Map(); // userId -> rooms
+    this._warnedRealtimeDisabled = false;
   }
 
   initialize(server) {
@@ -125,6 +126,13 @@ class RealtimeService {
 
   // Send notification to specific user
   sendToUser(userId, event, data) {
+    if (!this.io) {
+      if (!this._warnedRealtimeDisabled) {
+        logger.warn('Real-time service not enabled, cannot send to user');
+        this._warnedRealtimeDisabled = true;
+      }
+      return;
+    }
     const socket = this.connectedUsers.get(userId);
     if (socket) {
       socket.emit(event, data);
@@ -140,18 +148,39 @@ class RealtimeService {
 
   // Send notification to all users with specific role
   sendToRole(role, event, data) {
+    if (!this.io) {
+      if (!this._warnedRealtimeDisabled) {
+        logger.warn('Real-time service not enabled, cannot send to role');
+        this._warnedRealtimeDisabled = true;
+      }
+      return;
+    }
     this.io.to(`role:${role}`).emit(event, data);
     logger.info('📡 Notification sent to role', { role, event });
   }
 
   // Send notification to all admin users
   sendToAdmins(event, data) {
+    if (!this.io) {
+      if (!this._warnedRealtimeDisabled) {
+        logger.warn('Real-time service not enabled, cannot send to admins');
+        this._warnedRealtimeDisabled = true;
+      }
+      return;
+    }
     this.io.to('admin').emit(event, data);
     logger.info('📡 Notification sent to admins', { event });
   }
 
   // Send notification to all connected users
   sendToAll(event, data) {
+    if (!this.io) {
+      if (!this._warnedRealtimeDisabled) {
+        logger.warn('Real-time service not enabled, cannot send to all users');
+        this._warnedRealtimeDisabled = true;
+      }
+      return;
+    }
     this.io.emit(event, data);
     logger.info('📡 Notification sent to all users', { event });
   }
@@ -272,12 +301,6 @@ class RealtimeService {
   // Get user's socket
   getUserSocket(userId) {
     return this.connectedUsers.get(userId);
-  }
-
-  // Broadcast to specific room
-  sendToRoom(room, event, data) {
-    this.io.to(room).emit(event, data);
-    logger.info('📡 Notification sent to room', { room, event });
   }
 
   // Join user to room

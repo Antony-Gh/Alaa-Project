@@ -6,7 +6,7 @@
 }
 
 body {
-  font-family: "Cairo", sans-serif;
+  font-family: 'Cairo', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   direction: rtl; /* Default RTL for Arabic */
@@ -14,78 +14,78 @@ body {
 }
 
 /* RTL/LTR Support */
-body[dir="rtl"] {
+body[dir='rtl'] {
   direction: rtl;
   text-align: right;
 }
 
-body[dir="ltr"] {
+body[dir='ltr'] {
   direction: ltr;
   text-align: left;
 }
 
 /* RTL-specific adjustments */
-body[dir="rtl"] .message .close-btn {
+body[dir='rtl'] .message .close-btn {
   left: 1rem;
   right: auto;
 }
 
-body[dir="rtl"] .message {
+body[dir='rtl'] .message {
   border-right: 4px solid;
 }
 
-body[dir="rtl"] .message.success {
+body[dir='rtl'] .message.success {
   border-right-color: #2e7d32;
 }
 
-body[dir="rtl"] .message.error {
+body[dir='rtl'] .message.error {
   border-right-color: #c62828;
 }
 
-body[dir="rtl"] .message.info {
+body[dir='rtl'] .message.info {
   border-right-color: #1565c0;
 }
 
-body[dir="rtl"] .message.warning {
+body[dir='rtl'] .message.warning {
   border-right-color: #ef6c00;
 }
 
 /* LTR-specific adjustments */
-body[dir="ltr"] .message .close-btn {
+body[dir='ltr'] .message .close-btn {
   right: 1rem;
   left: auto;
 }
 
-body[dir="ltr"] .message {
+body[dir='ltr'] .message {
   border-left: 4px solid;
 }
 
-body[dir="ltr"] .message.success {
+body[dir='ltr'] .message.success {
   border-left-color: #2e7d32;
 }
 
-body[dir="ltr"] .message.error {
+body[dir='ltr'] .message.error {
   border-left-color: #c62828;
 }
 
-body[dir="ltr"] .message.info {
+body[dir='ltr'] .message.info {
   border-left-color: #1565c0;
 }
 
-body[dir="ltr"] .message.warning {
+body[dir='ltr'] .message.warning {
   border-left-color: #ef6c00;
 }
 
 /* Form elements RTL/LTR support */
-body[dir="rtl"] .form-group input,
-body[dir="rtl"] .form-group select,
-body[dir="rtl"] .form-group textarea {
+body[dir='rtl'] .form-group input,
+body[dir='rtl'] .form-group select,
+body[dir='rtl'] .form-group textarea {
   text-align: right;
 }
 
-body[dir="ltr"] .form-group input,
-body[dir="ltr"] .form-group select,
-body[dir="ltr"] .form-group textarea {
+body[dir='ltr'] .form-group input,
+body[dir='ltr'] .form-group select,
+body[dir='ltr'] .form-group textarea {
   text-align: left;
 }
 
@@ -122,7 +122,7 @@ body[dir="ltr"] .form-group textarea {
 }
 
 .password-strength li::before {
-  content: "○";
+  content: '○';
   position: absolute;
   left: -1rem;
   color: #9e9e9e;
@@ -130,12 +130,12 @@ body[dir="ltr"] .form-group textarea {
 }
 
 .password-strength li.valid::before {
-  content: "●";
+  content: '●';
   color: #4caf50;
 }
 
 .password-strength li.invalid::before {
-  content: "○";
+  content: '○';
   color: #f44336;
 }
 
@@ -201,7 +201,7 @@ body[dir="ltr"] .form-group textarea {
 }
 
 .password-match li::before {
-  content: "○";
+  content: '○';
   position: absolute;
   left: -1rem;
   color: #9e9e9e;
@@ -209,53 +209,53 @@ body[dir="ltr"] .form-group textarea {
 }
 
 .password-match li.valid::before {
-  content: "●";
+  content: '●';
   color: #4caf50;
 }
 
 .password-match li.invalid::before {
-  content: "○";
+  content: '○';
   color: #f44336;
 }
 
 /* RTL support for password indicators */
-body[dir="rtl"] .password-strength ul {
+body[dir='rtl'] .password-strength ul {
   padding-left: 0;
   padding-right: 1.5rem;
 }
 
-body[dir="rtl"] .password-strength li::before {
+body[dir='rtl'] .password-strength li::before {
   left: auto;
   right: -1rem;
 }
 
-body[dir="ltr"] .password-strength ul {
+body[dir='ltr'] .password-strength ul {
   padding-left: 1.5rem;
   padding-right: 0;
 }
 
-body[dir="ltr"] .password-strength li::before {
+body[dir='ltr'] .password-strength li::before {
   left: -1rem;
   right: auto;
 }
 
 /* RTL support for password match indicators */
-body[dir="rtl"] .password-match ul {
+body[dir='rtl'] .password-match ul {
   padding-left: 0;
   padding-right: 1.5rem;
 }
 
-body[dir="rtl"] .password-match li::before {
+body[dir='rtl'] .password-match li::before {
   left: auto;
   right: -1rem;
 }
 
-body[dir="ltr"] .password-match ul {
+body[dir='ltr'] .password-match ul {
   padding-left: 1.5rem;
   padding-right: 0;
 }
 
-body[dir="ltr"] .password-match li::before {
+body[dir='ltr'] .password-match li::before {
   left: -1rem;
   right: auto;
 }
@@ -276,43 +276,43 @@ body[dir="ltr"] .password-match li::before {
 }
 
 /* Button and icon positioning */
-body[dir="rtl"] .btn i {
+body[dir='rtl'] .btn i {
   margin-left: 0.5rem;
   margin-right: 0;
 }
 
-body[dir="ltr"] .btn i {
+body[dir='ltr'] .btn i {
   margin-right: 0.5rem;
   margin-left: 0;
 }
 
 /* Tab and navigation support */
-body[dir="rtl"] .auth-tab-btn,
-body[dir="rtl"] .tab-btn {
+body[dir='rtl'] .auth-tab-btn,
+body[dir='rtl'] .tab-btn {
   text-align: right;
 }
 
-body[dir="ltr"] .auth-tab-btn,
-body[dir="ltr"] .tab-btn {
+body[dir='ltr'] .auth-tab-btn,
+body[dir='ltr'] .tab-btn {
   text-align: left;
 }
 
 /* Header content alignment */
-body[dir="rtl"] .header-content {
+body[dir='rtl'] .header-content {
   flex-direction: row;
 }
 
-body[dir="ltr"] .header-content {
+body[dir='ltr'] .header-content {
   flex-direction: row;
 }
 
 /* Language switcher positioning */
-body[dir="rtl"] .language-switcher {
+body[dir='rtl'] .language-switcher {
   margin-right: auto;
   margin-left: 0;
 }
 
-body[dir="ltr"] .language-switcher {
+body[dir='ltr'] .language-switcher {
   margin-left: auto;
   margin-right: 0;
 }
@@ -613,22 +613,34 @@ body[dir="ltr"] .language-switcher {
 }
 
 /* When both generator and toggle buttons are present */
-body[dir="rtl"] .password-field-container:has(.password-generator-btn):has(.password-toggle-btn) input {
+body[dir='rtl']
+  .password-field-container:has(.password-generator-btn):has(
+    .password-toggle-btn
+  )
+  input {
   padding-right: 4rem;
 }
 
-body[dir="ltr"] .password-field-container:has(.password-generator-btn):has(.password-toggle-btn) input {
+body[dir='ltr']
+  .password-field-container:has(.password-generator-btn):has(
+    .password-toggle-btn
+  )
+  input {
   padding-left: 4rem;
 }
 
 /* Position toggle button when generator is also present */
-body[dir="rtl"] .password-field-container:has(.password-generator-btn) .password-toggle-btn {
+body[dir='rtl']
+  .password-field-container:has(.password-generator-btn)
+  .password-toggle-btn {
   right: 1rem;
   left: auto;
 }
 
 /* LTR support for toggle button when generator is also present */
-body[dir="ltr"] .password-field-container:has(.password-generator-btn) .password-toggle-btn {
+body[dir='ltr']
+  .password-field-container:has(.password-generator-btn)
+  .password-toggle-btn {
   left: 1rem;
   right: auto;
 }
@@ -658,12 +670,12 @@ body[dir="ltr"] .password-field-container:has(.password-generator-btn) .password
 }
 
 /* RTL support for password generator */
-body[dir="rtl"] .password-field-container input {
+body[dir='rtl'] .password-field-container input {
   padding-right: 0.75rem;
   padding-left: 2.5rem;
 }
 
-body[dir="rtl"] .password-generator-btn {
+body[dir='rtl'] .password-generator-btn {
   right: auto;
   left: 0.5rem;
 }
@@ -694,14 +706,13 @@ body[dir="rtl"] .password-generator-btn {
 }
 
 /* RTL support for password toggle buttons */
-body[dir="rtl"] .password-toggle-btn {
+body[dir='rtl'] .password-toggle-btn {
   left: 0.5rem;
   right: auto;
-  
 }
 
 /* LTR support for password toggle buttons */
-body[dir="ltr"] .password-toggle-btn {
+body[dir='ltr'] .password-toggle-btn {
   right: 0.5rem;
   left: auto;
 }
@@ -819,6 +830,8 @@ body[dir="ltr"] .password-toggle-btn {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  text-align: center;
+  font-size: 1rem;
 }
 
 .tab-btn.active {
@@ -909,6 +922,65 @@ body[dir="ltr"] .password-toggle-btn {
 
 .appointment-card.missed {
   border-right-color: #9e9e9e;
+}
+
+/* Appointment card status backgrounds */
+.appointment-card.status-pending {
+  background: #fffbe6;
+  border-left: 5px solid #ffecb3;
+}
+.appointment-card.status-approved {
+  background: #e6ffed;
+  border-left: 5px solid #b2f2bb;
+}
+.appointment-card.status-rejected {
+  background: #ffe6e6;
+  border-left: 5px solid #ffb3b3;
+}
+.appointment-card.status-done {
+  background: #e6f0ff;
+  border-left: 5px solid #b3d1ff;
+}
+.appointment-card.status-missed {
+  background: #f5e6ff;
+  border-left: 5px solid #d1b3ff;
+}
+
+/* Status badge colors */
+.status-pending {
+  background: #ffecb3;
+  color: #b8860b;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-weight: 600;
+}
+.status-approved {
+  background: #b2f2bb;
+  color: #256029;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-weight: 600;
+}
+.status-rejected {
+  background: #ffb3b3;
+  color: #a94442;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-weight: 600;
+}
+.status-done {
+  background: #b3d1ff;
+  color: #1a237e;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-weight: 600;
+}
+.status-missed {
+  background: #d1b3ff;
+  color: #6a1b9a;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-weight: 600;
 }
 
 .appointment-header {
@@ -1155,7 +1227,7 @@ body[dir="ltr"] .password-toggle-btn {
 .profile-form,
 .password-form {
   background: #f9f9f9;
-  padding: 2rem;
+  /* padding: 2rem; */
   border-radius: 12px;
 }
 
@@ -1324,7 +1396,7 @@ body[dir="ltr"] .password-toggle-btn {
 }
 
 .loading::after {
-  content: "";
+  content: '';
   display: block;
   width: 100%;
   height: 100%;
@@ -1364,27 +1436,75 @@ body[dir="ltr"] .password-toggle-btn {
 }
 
 .centered-item-row {
-    align-self: center;
-    justify-self: center;
-    text-align: center;
-    justify-content: center;
-    justify-items: center;
-    align-items: center;
-    margin: auto;
-    display: flex;
-    flex-direction: row;
+  align-self: center;
+  justify-self: center;
+  text-align: center;
+  justify-content: center;
+  justify-items: center;
+  align-items: center;
+  margin: auto;
+  display: flex;
+  flex-direction: row;
 }
 
 .centered-item-column {
-    align-self: center;
-    justify-self: center;
-    text-align: center;
-    justify-content: center;
-    justify-items: center;
-    align-items: center;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
+  align-self: center;
+  justify-self: center;
+  text-align: center;
+  justify-content: center;
+  justify-items: center;
+  align-items: center;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.mt-3 {
+  margin-top: 1.5rem !important;
+}
+
+.mt-2 {
+  margin-top: 1rem !important;
+}
+
+.mt-1 {
+  margin-top: 0.5rem !important;
+}
+
+.mr-3 {
+  margin-right: 1.5rem !important;
+}
+
+.mr-2 {
+  margin-right: 1rem !important;
+}
+
+.mr-1 {
+  margin-right: 0.5rem !important;
+}
+
+.mb-3 {
+  margin-bottom: 1.5rem !important;
+}
+
+.mb-2 {
+  margin-bottom: 1rem !important;
+}
+
+.mb-1 {
+  margin-bottom: 0.5rem !important;
+}
+
+.ml-3 {
+  margin-left: 1.5rem !important;
+}
+
+.ml-2 {
+  margin-left: 1rem !important;
+}
+
+.ml-1 {
+  margin-left: 0.5rem !important;
 }
 
 /* Language transition effect */
@@ -1397,11 +1517,11 @@ body[dir="ltr"] .password-toggle-btn {
 }
 
 /* Smooth direction change animation */
-body[dir="rtl"] {
+body[dir='rtl'] {
   animation: slideInRTL 0.3s ease-out;
 }
 
-body[dir="ltr"] {
+body[dir='ltr'] {
   animation: slideInLTR 0.3s ease-out;
 }
 
@@ -1534,6 +1654,7 @@ body[dir="ltr"] {
   color: #666;
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
+  direction: ltr;
 }
 
 .user-role-badge {
@@ -1629,13 +1750,34 @@ body[dir="ltr"] {
 }
 
 /* Checkbox styling */
-.form-group input[type="checkbox"] {
+.form-group input[type='checkbox'] {
   width: auto;
   margin-right: 0.5rem;
 }
 
-.form-group label[for="userIsActive"] {
+.form-group label[for='userIsActive'] {
   display: flex;
   align-items: center;
   cursor: pointer;
+}
+
+/* Appointment card detail styles */
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #555;
+  margin-inline-end: 0.25rem;
+}
+
+.detail-value {
+  color: #222;
+  font-weight: 400;
+  word-break: break-word;
 }
