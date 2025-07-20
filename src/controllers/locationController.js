@@ -1,163 +1,148 @@
-const { asyncHandler } = require('../middleware/errorHandler');
-const { NotFoundError } = require('../middleware/errorHandler');
-const ResponseHandler = require('../utils/responseHandler');
-const dbManager = require('../utils/database');
-const logger = require('../utils/logger');
+const LocationService = require('../services/locationService');
 
 // Get all locations
-const getAllLocations = asyncHandler(async (req, res) => {
-    const locations = await dbManager.query('SELECT * FROM locations ORDER BY name');
-    return ResponseHandler.success(res, locations, req.t('location.fetched_all'));
-});
+const getAllLocations = async (req, res) => {
+    try {
+        const locations = await LocationService.getAllLocations();
+        res.json(locations);
+    } catch (error) {
+        console.error('Error getting locations:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 // Get location by ID
-const getLocationById = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+const getLocationById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const location = await LocationService.getLocationById(id);
+        
+        if (!location) {
+            return res.status(404).json({ error: 'الموقع غير موجود' });
+        }
 
-    const location = await dbManager.get('SELECT * FROM locations WHERE id = ?', [id]);
-    if (!location) {
-        throw new NotFoundError(req.t('location.notfound'));
+        res.json(location);
+    } catch (error) {
+        console.error('Error getting location by ID:', error);
+        res.status(500).json({ error: error.message });
     }
+};
 
-    return ResponseHandler.success(res, location, req.t('location.fetched'));
-});
+// Create new location
+const createLocation = async (req, res) => {
+    try {
+        const { name, capacity, description } = req.body;
 
-// Create new location (admin only)
-const createLocation = asyncHandler(async (req, res) => {
-    const { name, capacity, description } = req.body;
+        if (!name) {
+            return res.status(400).json({ error: 'اسم الموقع مطلوب' });
+        }
 
-    // Check if location name already exists
-    const existingLocation = await dbManager.get('SELECT id FROM locations WHERE name = ?', [name]);
-    if (existingLocation) {
-        return ResponseHandler.error(res, req.t('location.duplicate'), 400, 'DUPLICATE_LOCATION');
+        if (capacity && (isNaN(capacity) || capacity < 1)) {
+            return res.status(400).json({ error: 'السعة يجب أن تكون رقم موجب' });
+        }
+
+        const result = await LocationService.createLocation({ name, capacity, description });
+        res.status(201).json(result);
+    } catch (error) {
+        console.error('Error creating location:', error);
+        res.status(500).json({ error: error.message });
     }
+};
 
-    const result = await dbManager.run(
-        'INSERT INTO locations (name, capacity, description) VALUES (?, ?, ?)',
-        [name, capacity, description]
-    );
+// Update location
+const updateLocation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, capacity, description } = req.body;
 
-    const newLocation = await dbManager.get('SELECT * FROM locations WHERE id = ?', [result.id]);
+        if (!name) {
+            return res.status(400).json({ error: 'اسم الموقع مطلوب' });
+        }
 
-    logger.info('Location created', { 
-        locationId: result.id, 
-        name, 
-        adminId: req.user.id 
-    });
+        if (capacity && (isNaN(capacity) || capacity < 1)) {
+            return res.status(400).json({ error: 'السعة يجب أن تكون رقم موجب' });
+        }
 
-    return ResponseHandler.created(res, newLocation, req.t('location.created'));
-});
-
-// Update location (admin only)
-const updateLocation = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { name, capacity, description } = req.body;
-
-    // Check if location exists
-    const existingLocation = await dbManager.get('SELECT * FROM locations WHERE id = ?', [id]);
-    if (!existingLocation) {
-        throw new NotFoundError(req.t('location.notfound'));
-    }
-
-    // Check if new name conflicts with existing location
-    if (name && name !== existingLocation.name) {
-        const nameConflict = await dbManager.get('SELECT id FROM locations WHERE name = ? AND id != ?', [name, id]);
-        if (nameConflict) {
-            return ResponseHandler.error(res, req.t('location.duplicate'), 400, 'DUPLICATE_LOCATION');
+        const result = await LocationService.updateLocation(id, { name, capacity, description });
+        res.json(result);
+    } catch (error) {
+        console.error('Error updating location:', error);
+        if (error.message === 'الموقع غير موجود') {
+            res.status(404).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: error.message });
         }
     }
+};
 
-    const result = await dbManager.run(
-        'UPDATE locations SET name = ?, capacity = ?, description = ? WHERE id = ?',
-        [name, capacity, description, id]
-    );
-
-    if (result.changes === 0) {
-        throw new NotFoundError(req.t('location.notfound'));
+// Delete location
+const deleteLocation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await LocationService.deleteLocation(id);
+        res.json(result);
+    } catch (error) {
+        console.error('Error deleting location:', error);
+        if (error.message === 'الموقع غير موجود') {
+            res.status(404).json({ error: error.message });
+        } else if (error.message.includes('لا يمكن حذف الموقع')) {
+            res.status(400).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: error.message });
+        }
     }
+};
 
-    const updatedLocation = await dbManager.get('SELECT * FROM locations WHERE id = ?', [id]);
+// Get location availability
+const getLocationAvailability = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, time } = req.query;
 
-    logger.info('Location updated', { 
-        locationId: id, 
-        adminId: req.user.id 
-    });
+        if (!date || !time) {
+            return res.status(400).json({ error: 'التاريخ والوقت مطلوبان' });
+        }
 
-    return ResponseHandler.success(res, updatedLocation, req.t('location.updated'));
-});
+        const availability = await LocationService.getLocationAvailability(id, date, time);
+        
+        if (!availability) {
+            return res.status(404).json({ error: 'الموقع غير موجود' });
+        }
 
-// Delete location (admin only)
-const deleteLocation = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    // Check if location exists
-    const location = await dbManager.get('SELECT * FROM locations WHERE id = ?', [id]);
-    if (!location) {
-        throw new NotFoundError(req.t('location.notfound'));
+        res.json(availability);
+    } catch (error) {
+        console.error('Error getting location availability:', error);
+        res.status(500).json({ error: error.message });
     }
+};
 
-    // Check if location has appointments
-    const appointmentsWithLocation = await dbManager.get(
-        'SELECT COUNT(*) as count FROM appointments WHERE location_id = ?',
-        [id]
-    );
+// Get available locations
+const getAvailableLocations = async (req, res) => {
+    try {
+        const { date, time } = req.query;
 
-    if (appointmentsWithLocation.count > 0) {
-        return ResponseHandler.error(
-            res, 
-            req.t('location.delete_has_appointments'), 
-            400, 
-            'LOCATION_HAS_APPOINTMENTS'
-        );
+        if (!date || !time) {
+            return res.status(400).json({ error: 'التاريخ والوقت مطلوبان' });
+        }
+
+        const locations = await LocationService.getAvailableLocations(date, time);
+        res.json(locations);
+    } catch (error) {
+        console.error('Error getting available locations:', error);
+        res.status(500).json({ error: error.message });
     }
+};
 
-    const result = await dbManager.run('DELETE FROM locations WHERE id = ?', [id]);
-
-    if (result.changes === 0) {
-        throw new NotFoundError(req.t('location.notfound'));
+// Get location statistics
+const getLocationStats = async (req, res) => {
+    try {
+        const stats = await LocationService.getLocationStats();
+        res.json(stats);
+    } catch (error) {
+        console.error('Error getting location stats:', error);
+        res.status(500).json({ error: error.message });
     }
-
-    logger.info('Location deleted', { 
-        locationId: id, 
-        adminId: req.user.id 
-    });
-
-    return ResponseHandler.success(res, null, req.t('location.deleted'));
-});
-
-// Get location availability for a specific date and time
-const getLocationAvailability = asyncHandler(async (req, res) => {
-    const { date, time } = req.query;
-
-    if (!date || !time) {
-        return ResponseHandler.error(res, req.t('location.missing_parameters'), 400, 'MISSING_PARAMETERS');
-    }
-
-    // Get all locations
-    const locations = await dbManager.query('SELECT * FROM locations ORDER BY name');
-
-    // Check which locations are available at the specified date and time
-    const availability = await Promise.all(
-        locations.map(async (location) => {
-            const conflictingAppointments = await dbManager.get(`
-                SELECT COUNT(*) as count 
-                FROM appointments 
-                WHERE location_id = ? 
-                AND requested_date = ? 
-                AND requested_time = ? 
-                AND status IN ('pending', 'approved')
-            `, [location.id, date, time]);
-
-            return {
-                ...location,
-                available: conflictingAppointments.count === 0,
-                conflictingAppointments: conflictingAppointments.count
-            };
-        })
-    );
-
-    return ResponseHandler.success(res, availability, req.t('location.availability_fetched'));
-});
+};
 
 module.exports = {
     getAllLocations,
@@ -165,5 +150,7 @@ module.exports = {
     createLocation,
     updateLocation,
     deleteLocation,
-    getLocationAvailability
+    getLocationAvailability,
+    getAvailableLocations,
+    getLocationStats
 }; 

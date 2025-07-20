@@ -1,149 +1,106 @@
-const { asyncHandler } = require('../middleware/errorHandler');
-const { NotFoundError } = require('../middleware/errorHandler');
-const ResponseHandler = require('../utils/responseHandler');
-const dbManager = require('../utils/database');
-const logger = require('../utils/logger');
+const DepartmentService = require('../services/departmentService');
 
 // Get all departments
-const getAllDepartments = asyncHandler(async (req, res) => {
-    const departments = await dbManager.query('SELECT * FROM departments ORDER BY name');
-    return ResponseHandler.success(res, departments, req.t('department.fetched_all'));
-});
+const getAllDepartments = async (req, res) => {
+    try {
+        const departments = await DepartmentService.getAllDepartments();
+        res.json(departments);
+    } catch (error) {
+        console.error('Error getting departments:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 // Get department by ID
-const getDepartmentById = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+const getDepartmentById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const department = await DepartmentService.getDepartmentById(id);
+        
+        if (!department) {
+            return res.status(404).json({ error: 'القسم غير موجود' });
+        }
 
-    const department = await dbManager.get('SELECT * FROM departments WHERE id = ?', [id]);
-    if (!department) {
-        throw new NotFoundError(req.t('department.notfound'));
+        res.json(department);
+    } catch (error) {
+        console.error('Error getting department by ID:', error);
+        res.status(500).json({ error: error.message });
     }
+};
 
-    return ResponseHandler.success(res, department, req.t('department.fetched'));
-});
+// Create new department
+const createDepartment = async (req, res) => {
+    try {
+        const { name, description } = req.body;
 
-// Create new department (admin only)
-const createDepartment = asyncHandler(async (req, res) => {
-    const { name, description } = req.body;
+        if (!name) {
+            return res.status(400).json({ error: 'اسم القسم مطلوب' });
+        }
 
-    // Check if department name already exists
-    const existingDepartment = await dbManager.get('SELECT id FROM departments WHERE name = ?', [name]);
-    if (existingDepartment) {
-        return ResponseHandler.error(res, req.t('department.duplicate'), 400, 'DUPLICATE_DEPARTMENT');
+        const result = await DepartmentService.createDepartment({ name, description });
+        res.status(201).json(result);
+    } catch (error) {
+        console.error('Error creating department:', error);
+        res.status(500).json({ error: error.message });
     }
+};
 
-    const result = await dbManager.run(
-        'INSERT INTO departments (name, description) VALUES (?, ?)',
-        [name, description]
-    );
+// Update department
+const updateDepartment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description } = req.body;
 
-    const newDepartment = await dbManager.get('SELECT * FROM departments WHERE id = ?', [result.id]);
+        if (!name) {
+            return res.status(400).json({ error: 'اسم القسم مطلوب' });
+        }
 
-    logger.info('Department created', { 
-        departmentId: result.id, 
-        name, 
-        adminId: req.user.id 
-    });
-
-    return ResponseHandler.created(res, newDepartment, req.t('department.created'));
-});
-
-// Update department (admin only)
-const updateDepartment = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { name, description } = req.body;
-
-    // Check if department exists
-    const existingDepartment = await dbManager.get('SELECT * FROM departments WHERE id = ?', [id]);
-    if (!existingDepartment) {
-        throw new NotFoundError(req.t('department.notfound'));
-    }
-
-    // Check if new name conflicts with existing department
-    if (name && name !== existingDepartment.name) {
-        const nameConflict = await dbManager.get('SELECT id FROM departments WHERE name = ? AND id != ?', [name, id]);
-        if (nameConflict) {
-            return ResponseHandler.error(res, req.t('department.duplicate'), 400, 'DUPLICATE_DEPARTMENT');
+        const result = await DepartmentService.updateDepartment(id, { name, description });
+        res.json(result);
+    } catch (error) {
+        console.error('Error updating department:', error);
+        if (error.message === 'القسم غير موجود') {
+            res.status(404).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: error.message });
         }
     }
+};
 
-    const result = await dbManager.run(
-        'UPDATE departments SET name = ?, description = ? WHERE id = ?',
-        [name, description, id]
-    );
-
-    if (result.changes === 0) {
-        throw new NotFoundError(req.t('department.notfound'));
+// Delete department
+const deleteDepartment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await DepartmentService.deleteDepartment(id);
+        res.json(result);
+    } catch (error) {
+        console.error('Error deleting department:', error);
+        if (error.message === 'القسم غير موجود') {
+            res.status(404).json({ error: error.message });
+        } else if (error.message.includes('لا يمكن حذف القسم')) {
+            res.status(400).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: error.message });
+        }
     }
+};
 
-    const updatedDepartment = await dbManager.get('SELECT * FROM departments WHERE id = ?', [id]);
-
-    logger.info('Department updated', { 
-        departmentId: id, 
-        adminId: req.user.id 
-    });
-
-    return ResponseHandler.success(res, updatedDepartment, req.t('department.updated'));
-});
-
-// Delete department (admin only)
-const deleteDepartment = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    // Check if department exists
-    const department = await dbManager.get('SELECT * FROM departments WHERE id = ?', [id]);
-    if (!department) {
-        throw new NotFoundError(req.t('department.notfound'));
+// Get department statistics
+const getDepartmentStats = async (req, res) => {
+    try {
+        const stats = await DepartmentService.getDepartmentStats();
+        res.json(stats);
+    } catch (error) {
+        console.error('Error getting department stats:', error);
+        res.status(500).json({ error: error.message });
     }
-
-    // Check if department has users
-    const usersWithDepartment = await dbManager.get(
-        'SELECT COUNT(*) as count FROM users WHERE department_id = ?',
-        [id]
-    );
-
-    if (usersWithDepartment.count > 0) {
-        return ResponseHandler.error(
-            res, 
-            req.t('department.delete_has_users'), 
-            400, 
-            'DEPARTMENT_HAS_USERS'
-        );
-    }
-
-    // Check if department has appointments
-    const appointmentsWithDepartment = await dbManager.get(
-        'SELECT COUNT(*) as count FROM appointments WHERE department_id = ?',
-        [id]
-    );
-
-    if (appointmentsWithDepartment.count > 0) {
-        return ResponseHandler.error(
-            res, 
-            req.t('department.delete_has_appointments'), 
-            400, 
-            'DEPARTMENT_HAS_APPOINTMENTS'
-        );
-    }
-
-    const result = await dbManager.run('DELETE FROM departments WHERE id = ?', [id]);
-
-    if (result.changes === 0) {
-        throw new NotFoundError(req.t('department.notfound'));
-    }
-
-    logger.info('Department deleted', { 
-        departmentId: id, 
-        adminId: req.user.id 
-    });
-
-    return ResponseHandler.success(res, null, req.t('department.deleted'));
-});
+};
 
 module.exports = {
     getAllDepartments,
     getDepartmentById,
     createDepartment,
     updateDepartment,
-    deleteDepartment
+    deleteDepartment,
+    getDepartmentStats
 }; 

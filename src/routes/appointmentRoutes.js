@@ -1,33 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const appointmentController = require('../controllers/appointmentController');
-const departmentController = require('../controllers/departmentController');
-const locationController = require('../controllers/locationController');
-const { authenticateToken, requireAdmin, requireEmployee } = require('../middleware/auth');
-const { validateAppointment, validateAppointmentStatus } = require('../middleware/validation');
-const { appointmentLimiter, adminLimiter } = require('../middleware/rateLimiter');
+const {
+    createAppointment,
+    getAllAppointments,
+    getAppointmentsByStatus,
+    updateAppointmentStatus,
+    getAppointmentStats,
+    getAppointmentById,
+    deleteAppointment
+} = require('../controllers/appointmentController');
 
-// Public routes (for getting departments and locations)
-router.get('/departments', departmentController.getAllDepartments);
-router.get('/locations', locationController.getAllLocations);
+// Create new appointment
+router.post('/', createAppointment);
 
-// Protected routes - require authentication
-router.use(authenticateToken);
+// Get all appointments with optional filtering
+router.get('/', getAllAppointments);
 
-// Employee routes
-router.post('/', appointmentLimiter, requireEmployee, validateAppointment, appointmentController.createAppointment);
-router.get('/', appointmentController.getAllAppointments);
-router.get('/stats', appointmentController.getAppointmentStats);
-router.get('/:id', appointmentController.getAppointmentById);
+// Get appointments by status
+router.get('/status/:status', getAppointmentsByStatus);
 
-// Admin routes
-router.put('/:id/status', adminLimiter, requireAdmin, validateAppointmentStatus, appointmentController.updateAppointmentStatus);
-router.delete('/:id', adminLimiter, requireAdmin, appointmentController.deleteAppointment);
+// Get appointment statistics
+router.get('/stats', getAppointmentStats);
 
+// Get appointment by ID
+router.get('/:id', getAppointmentById);
 
+// Update appointment status
+router.put('/:id/status', updateAppointmentStatus);
 
-// Status-specific routes
-//router.get('/status/:status', appointmentController.getAppointmentsByStatus);
-// Status-specific routes - removed as it's now handled by getAllAppointments with status filter
+// Delete appointment
+router.delete('/:id', deleteAppointment);
 
-module.exports = router; 
+module.exports = router;
