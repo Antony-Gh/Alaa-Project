@@ -1,7 +1,7 @@
 // Language switcher implementation
 const translations = {
   en: {},
-  ar: {}
+  ar: {},
 };
 
 async function loadTranslations(lang) {
@@ -22,8 +22,11 @@ function setLanguage(lang) {
   if (window.currentUser) {
     fetch('/api/users/profile', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.currentUser.token },
-      body: JSON.stringify({ language: lang })
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${window.currentUser.token}`,
+      },
+      body: JSON.stringify({ language: lang }),
     });
   }
 }
@@ -31,7 +34,8 @@ function setLanguage(lang) {
 // Add language switcher dropdown
 const langSwitcher = document.createElement('select');
 langSwitcher.id = 'lang-switch';
-langSwitcher.innerHTML = '<option value="en">English</option><option value="ar">العربية</option>';
+langSwitcher.innerHTML =
+  '<option value="en">English</option><option value="ar">العربية</option>';
 document.body.prepend(langSwitcher);
 langSwitcher.addEventListener('change', e => setLanguage(e.target.value));
 
@@ -42,4 +46,4 @@ langSwitcher.addEventListener('change', e => setLanguage(e.target.value));
   const lang = localStorage.getItem('lang') || 'ar';
   langSwitcher.value = lang;
   setLanguage(lang);
-})(); 
+})();

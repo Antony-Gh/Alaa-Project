@@ -23,6 +23,9 @@ router.get('/locations/:id', locationController.getLocationById);
 router.post('/locations', locationController.createLocation);
 router.put('/locations/:id', locationController.updateLocation);
 router.delete('/locations/:id', locationController.deleteLocation);
-router.get('/locations/availability', locationController.getLocationAvailability);
+router.get(
+  '/locations/availability',
+  locationController.getLocationAvailability
+);
 
-module.exports = router; 
+module.exports = router;

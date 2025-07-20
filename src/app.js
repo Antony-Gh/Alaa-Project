@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const compression = require('compression');
-const rateLimit = require('express-rate-limit');
+// const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const xss = require('xss-clean');
 const hpp = require('hpp');
@@ -26,7 +26,7 @@ const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { generalLimiter } = require('./middleware/rateLimiter');
 
 // Import services
-const emailService = require('./services/emailService');
+// const emailService = require('./services/emailService');
 const realtimeService = require('./services/realtimeService');
 
 // Import routes
@@ -36,6 +36,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
+const userManagementRoutes = require('./routes/userManagementRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -50,28 +51,30 @@ i18next
     preload: supportedLngs,
     supportedLngs,
     backend: {
-      loadPath: path.join(__dirname, 'locales/{{lng}}/translation.json')
+      loadPath: path.join(__dirname, 'locales/{{lng}}/translation.json'),
     },
     detection: {
       order: ['querystring', 'header', 'cookie'],
       lookupQuerystring: 'lang',
       lookupHeader: 'accept-language',
       lookupCookie: 'lang',
-      caches: false
+      caches: false,
     },
     interpolation: { escapeValue: false },
-    debug: false
+    debug: false,
   });
 
 // i18n middleware
-app.use(i18nextMiddleware.handle(i18next, {
-  removeLngFromUrl: false
-}));
+app.use(
+  i18nextMiddleware.handle(i18next, {
+    removeLngFromUrl: false,
+  })
+);
 
 // Make i18n available in all requests (for controllers)
 app.use((req, res, next) => {
   req.language = req.language || req.lng || 'ar';
-  req.t = req.t || ((key) => i18next.t(key, { lng: req.language }));
+  req.t = req.t || (key => i18next.t(key, { lng: req.language }));
   next();
 });
 
@@ -79,38 +82,51 @@ app.use((req, res, next) => {
 realtimeService.initialize(server);
 
 // Security middleware
-app.use(helmet({
+app.use(
+  helmet({
     contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "ws:", "wss:"],
-            frameSrc: ["'none'"],
-            objectSrc: ["'none'"],
-            upgradeInsecureRequests: []
-        }
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          'https://fonts.googleapis.com',
+          'https://cdnjs.cloudflare.com',
+        ],
+        fontSrc: [
+          "'self'",
+          'https://fonts.gstatic.com',
+          'https://cdnjs.cloudflare.com',
+        ],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.socket.io'],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", 'ws:', 'wss:'],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
     },
     crossOriginEmbedderPolicy: false,
     hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-    }
-}));
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
 
 // Explicitly set X-Frame-Options header
 app.use(helmet.frameguard({ action: 'deny' }));
 
 // CORS configuration
-app.use(cors({
+app.use(
+  cors({
     origin: config.cors.origin,
     credentials: config.cors.credentials,
     methods: config.cors.methods,
-    allowedHeaders: config.cors.allowedHeaders
-}));
+    allowedHeaders: config.cors.allowedHeaders,
+  })
+);
 
 // Compression middleware
 app.use(compression());
@@ -129,20 +145,26 @@ app.use(expressRequestId());
 
 // Status monitoring (admin only)
 if (config.nodeEnv === 'development') {
-    app.use(statusMonitor({
-        title: 'Scheduling System Status',
-        path: '/status',
-        spans: [{
-            interval: 1,
-            retention: 60
-        }, {
-            interval: 5,
-            retention: 60
-        }, {
-            interval: 15,
-            retention: 60
-        }]
-    }));
+  app.use(
+    statusMonitor({
+      title: 'Scheduling System Status',
+      path: '/status',
+      spans: [
+        {
+          interval: 1,
+          retention: 60,
+        },
+        {
+          interval: 5,
+          retention: 60,
+        },
+        {
+          interval: 15,
+          retention: 60,
+        },
+      ],
+    })
+  );
 }
 
 // Rate limiting
@@ -150,12 +172,13 @@ app.use(generalLimiter);
 
 // Slow down middleware for brute force protection
 const speedLimiter = slowDown({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    delayAfter: 100, // Allow 100 requests per 15 minutes, then...
-    delayMs: (used, req) => { // Begin adding 500ms of delay per request above 100
-        const delayAfter = req.slowDown.limit;
-        return (used - delayAfter) * 500;
-    }
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  delayAfter: 100, // Allow 100 requests per 15 minutes, then...
+  delayMs: (used, req) => {
+    // Begin adding 500ms of delay per request above 100
+    const delayAfter = req.slowDown.limit;
+    return (used - delayAfter) * 500;
+  },
 });
 app.use(speedLimiter);
 
@@ -167,59 +190,60 @@ app.get('/', (req, res) => {
 
 // Request logging with pretty print
 app.use((req, res, next) => {
-    const startTime = Date.now();
-    
-    // Log request details
-    logger.info('🌐 Incoming Request', {
-        method: req.method,
-        url: req.url,
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-        requestId: req.id,
-        headers: {
-            'content-type': req.get('Content-Type'),
-            'authorization': req.get('Authorization') ? 'Bearer [HIDDEN]' : 'None',
-            'accept': req.get('Accept')
-        },
-        body: req.method !== 'GET' ? req.body : undefined
+  const startTime = Date.now();
+
+  // Log request details
+  logger.info('🌐 Incoming Request', {
+    method: req.method,
+    url: req.url,
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    requestId: req.id,
+    headers: {
+      'content-type': req.get('Content-Type'),
+      authorization: req.get('Authorization') ? 'Bearer [HIDDEN]' : 'None',
+      accept: req.get('Accept'),
+    },
+    body: req.method !== 'GET' ? req.body : undefined,
+  });
+
+  // Log response details
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    const statusColor =
+      res.statusCode >= 400 ? '🔴' : res.statusCode >= 300 ? '🟡' : '🟢';
+
+    logger.info(`${statusColor} Request Completed`, {
+      method: req.method,
+      url: req.url,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      contentLength: res.get('Content-Length') || '0',
+      requestId: req.id,
     });
-    
-    // Log response details
-    res.on('finish', () => {
-        const duration = Date.now() - startTime;
-        const statusColor = res.statusCode >= 400 ? '🔴' : res.statusCode >= 300 ? '🟡' : '🟢';
-        
-        logger.info(`${statusColor} Request Completed`, {
-            method: req.method,
-            url: req.url,
-            statusCode: res.statusCode,
-            duration: `${duration}ms`,
-            contentLength: res.get('Content-Length') || '0',
-            requestId: req.id
-        });
-    });
-    
-    next();
+  });
+
+  next();
 });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Server is healthy',
-        timestamp: new Date().toISOString(),
-        version: config.features.system_version || '2.0.0',
-        environment: config.nodeEnv,
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        realtime: {
-            enabled: config.realtime.enabled,
-            connectedUsers: realtimeService.getConnectedUsersCount()
-        },
-        email: {
-            enabled: config.email.enabled
-        }
-    });
+  res.json({
+    success: true,
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+    version: config.features.system_version || '2.0.0',
+    environment: config.nodeEnv,
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    realtime: {
+      enabled: config.realtime.enabled,
+      connectedUsers: realtimeService.getConnectedUsersCount(),
+    },
+    email: {
+      enabled: config.email.enabled,
+    },
+  });
 });
 
 // API Routes
@@ -229,17 +253,18 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/user-management', userManagementRoutes);
 
 // Real-time endpoint
 app.get('/api/realtime/status', (req, res) => {
-    res.json({
-        enabled: config.realtime.enabled,
-        connectedUsers: realtimeService.getConnectedUsersCount(),
-        usersByRole: {
-            admin: realtimeService.getConnectedUsersByRole('admin').length,
-            employee: realtimeService.getConnectedUsersByRole('employee').length
-        }
-    });
+  res.json({
+    enabled: config.realtime.enabled,
+    connectedUsers: realtimeService.getConnectedUsersCount(),
+    usersByRole: {
+      admin: realtimeService.getConnectedUsersByRole('admin').length,
+      employee: realtimeService.getConnectedUsersByRole('employee').length,
+    },
+  });
 });
 
 // 404 handler
@@ -250,105 +275,105 @@ app.use(errorHandler);
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-    logger.info('🛑 SIGTERM received, shutting down gracefully', {
-        signal: 'SIGTERM',
-        timestamp: new Date().toISOString()
-    });
-    await dbManager.close();
-    logger.info('✅ Database connection closed successfully');
-    process.exit(0);
+  logger.info('🛑 SIGTERM received, shutting down gracefully', {
+    signal: 'SIGTERM',
+    timestamp: new Date().toISOString(),
+  });
+  await dbManager.close();
+  logger.info('✅ Database connection closed successfully');
+  process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-    logger.info('🛑 SIGINT received, shutting down gracefully', {
-        signal: 'SIGINT',
-        timestamp: new Date().toISOString()
-    });
-    await dbManager.close();
-    logger.info('✅ Database connection closed successfully');
-    process.exit(0);
+  logger.info('🛑 SIGINT received, shutting down gracefully', {
+    signal: 'SIGINT',
+    timestamp: new Date().toISOString(),
+  });
+  await dbManager.close();
+  logger.info('✅ Database connection closed successfully');
+  process.exit(0);
 });
 
 // Unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-    logger.error('💥 Unhandled Promise Rejection', {
-        error: err.message,
-        stack: err.stack,
-        timestamp: new Date().toISOString()
-    });
-    process.exit(1);
+process.on('unhandledRejection', err => {
+  logger.error('💥 Unhandled Promise Rejection', {
+    error: err.message,
+    stack: err.stack,
+    timestamp: new Date().toISOString(),
+  });
+  process.exit(1);
 });
 
 // Uncaught exceptions
-process.on('uncaughtException', (err) => {
-    logger.error('💥 Uncaught Exception', {
-        error: err.message,
-        stack: err.stack,
-        timestamp: new Date().toISOString()
-    });
-    process.exit(1);
+process.on('uncaughtException', err => {
+  logger.error('💥 Uncaught Exception', {
+    error: err.message,
+    stack: err.stack,
+    timestamp: new Date().toISOString(),
+  });
+  process.exit(1);
 });
 
 // Initialize database and start server
 const startServer = async () => {
-    try {
-        // Initialize database
-        logger.info('🔧 Initializing database...');
-        await dbManager.initialize();
-        logger.info('✅ Database initialized successfully');
-        
-        // Start server
-        server.listen(config.port, () => {
-            logger.info('🚀 Server Started Successfully', {
-                port: config.port,
-                url: `http://localhost:${config.port}/`,
-                environment: config.nodeEnv,
-                timestamp: new Date().toISOString()
-            });
-            
-            logger.info('📋 System Information', {
-                service: 'Advanced Employee Scheduling System',
-                version: '2.0.0',
-                language: 'نظام حجز المواعيد المتقدم جاهز للاستخدام',
-                features: [
-                    'Advanced User Authentication & Authorization',
-                    'Real-time Notifications & Live Updates',
-                    'Email Notifications & Reminders',
-                    'Recurring Appointments',
-                    'Advanced Search & Filtering',
-                    'Comprehensive Analytics & Reporting',
-                    'Enhanced Security & Rate Limiting',
-                    'File Upload & Attachments',
-                    'Calendar Integration',
-                    'Mobile Responsive Design',
-                    'Dark Mode & Accessibility',
-                    'Audit Logging & Monitoring'
-                ]
-            });
+  try {
+    // Initialize database
+    logger.info('🔧 Initializing database...');
+    await dbManager.initialize();
+    logger.info('✅ Database initialized successfully');
 
-            logger.info('🔧 Enabled Features', {
-                emailNotifications: config.notifications.email.enabled,
-                realtimeNotifications: config.realtime.enabled,
-                recurringAppointments: config.features.recurringAppointments,
-                advancedSearch: config.features.advancedSearch,
-                calendarIntegration: config.features.calendarIntegration,
-                darkMode: config.features.darkMode,
-                accessibility: config.features.accessibility,
-                analytics: config.analytics.enabled,
-                twoFactorAuth: config.security.twoFactor.enabled
-            });
-        });
-    } catch (error) {
-        logger.error('❌ Failed to start server', {
-            error: error.message,
-            stack: error.stack,
-            timestamp: new Date().toISOString()
-        });
-        process.exit(1);
-    }
+    // Start server
+    server.listen(config.port, () => {
+      logger.info('🚀 Server Started Successfully', {
+        port: config.port,
+        url: `http://localhost:${config.port}/`,
+        environment: config.nodeEnv,
+        timestamp: new Date().toISOString(),
+      });
+
+      logger.info('📋 System Information', {
+        service: 'Advanced Employee Scheduling System',
+        version: '2.0.0',
+        language: 'نظام حجز المواعيد المتقدم جاهز للاستخدام',
+        features: [
+          'Advanced User Authentication & Authorization',
+          'Real-time Notifications & Live Updates',
+          'Email Notifications & Reminders',
+          'Recurring Appointments',
+          'Advanced Search & Filtering',
+          'Comprehensive Analytics & Reporting',
+          'Enhanced Security & Rate Limiting',
+          'File Upload & Attachments',
+          'Calendar Integration',
+          'Mobile Responsive Design',
+          'Dark Mode & Accessibility',
+          'Audit Logging & Monitoring',
+        ],
+      });
+
+      logger.info('🔧 Enabled Features', {
+        emailNotifications: config.notifications.email.enabled,
+        realtimeNotifications: config.realtime.enabled,
+        recurringAppointments: config.features.recurringAppointments,
+        advancedSearch: config.features.advancedSearch,
+        calendarIntegration: config.features.calendarIntegration,
+        darkMode: config.features.darkMode,
+        accessibility: config.features.accessibility,
+        analytics: config.analytics.enabled,
+        twoFactorAuth: config.security.twoFactor.enabled,
+      });
+    });
+  } catch (error) {
+    logger.error('❌ Failed to start server', {
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+    });
+    process.exit(1);
+  }
 };
 
 // Start the server
 startServer();
 
-module.exports = { app, server }; 
+module.exports = { app, server };

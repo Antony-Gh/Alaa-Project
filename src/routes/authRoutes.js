@@ -12,6 +12,10 @@ router.post('/register', authLimiter, validateUser, authController.register);
 // Protected routes
 router.get('/profile', authenticateToken, authController.getProfile);
 router.put('/profile', authenticateToken, authController.updateProfile);
-router.put('/change-password', authenticateToken, authController.changePassword);
+router.put(
+  '/change-password',
+  authenticateToken,
+  authController.changePassword
+);
 
-module.exports = router; 
+module.exports = router;

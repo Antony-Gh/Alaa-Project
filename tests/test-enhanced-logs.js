@@ -9,11 +9,11 @@ logger.error('❌ Error message test');
 
 // Test with metadata
 logger.info('📊 User registration', {
-    userId: 999,
-    username: 'testuser',
-    email: 'test@example.com',
-    timestamp: new Date().toISOString()
+  userId: 999,
+  username: 'testuser',
+  email: 'test@example.com',
+  timestamp: new Date().toISOString(),
 });
 
 console.log('\n✅ Enhanced logging test completed!');
-console.log('📁 Check the logs directory for new files with enhanced naming.'); 
+console.log('📁 Check the logs directory for new files with enhanced naming.');

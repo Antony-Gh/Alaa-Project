@@ -99,6 +99,50 @@ body[dir="ltr"] .form-group textarea {
   transition: all 0.3s ease;
 }
 
+/* Password strength with bullet list */
+.password-strength {
+  background-color: rgba(158, 158, 158, 0.1);
+  color: #9e9e9e;
+  border: 1px solid rgba(158, 158, 158, 0.3);
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.password-strength ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.password-strength li {
+  margin-bottom: 0.25rem;
+  position: relative;
+}
+
+.password-strength li::before {
+  content: "○";
+  position: absolute;
+  left: -1rem;
+  color: #9e9e9e;
+  font-size: 1rem;
+}
+
+.password-strength li.valid::before {
+  content: "●";
+  color: #4caf50;
+}
+
+.password-strength li.invalid::before {
+  content: "○";
+  color: #f44336;
+}
+
+.password-strength.empty {
+  display: none !important;
+}
+
 .password-strength.weak {
   background-color: rgba(244, 67, 54, 0.1);
   color: #f44336;
@@ -117,6 +161,7 @@ body[dir="ltr"] .form-group textarea {
   border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
+/* Password match with bullet points */
 .password-match.match {
   background-color: rgba(76, 175, 80, 0.1);
   color: #4caf50;
@@ -130,9 +175,89 @@ body[dir="ltr"] .form-group textarea {
 }
 
 .password-match.empty {
+  display: none;
+}
+
+/* Password match with bullet list like password strength */
+.password-match {
   background-color: rgba(158, 158, 158, 0.1);
   color: #9e9e9e;
   border: 1px solid rgba(158, 158, 158, 0.3);
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.password-match ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.password-match li {
+  margin-bottom: 0.25rem;
+  position: relative;
+}
+
+.password-match li::before {
+  content: "○";
+  position: absolute;
+  left: -1rem;
+  color: #9e9e9e;
+  font-size: 1rem;
+}
+
+.password-match li.valid::before {
+  content: "●";
+  color: #4caf50;
+}
+
+.password-match li.invalid::before {
+  content: "○";
+  color: #f44336;
+}
+
+/* RTL support for password indicators */
+body[dir="rtl"] .password-strength ul {
+  padding-left: 0;
+  padding-right: 1.5rem;
+}
+
+body[dir="rtl"] .password-strength li::before {
+  left: auto;
+  right: -1rem;
+}
+
+body[dir="ltr"] .password-strength ul {
+  padding-left: 1.5rem;
+  padding-right: 0;
+}
+
+body[dir="ltr"] .password-strength li::before {
+  left: -1rem;
+  right: auto;
+}
+
+/* RTL support for password match indicators */
+body[dir="rtl"] .password-match ul {
+  padding-left: 0;
+  padding-right: 1.5rem;
+}
+
+body[dir="rtl"] .password-match li::before {
+  left: auto;
+  right: -1rem;
+}
+
+body[dir="ltr"] .password-match ul {
+  padding-left: 1.5rem;
+  padding-right: 0;
+}
+
+body[dir="ltr"] .password-match li::before {
+  left: -1rem;
+  right: auto;
 }
 
 /* Form validation styles */
@@ -475,6 +600,112 @@ body[dir="ltr"] .language-switcher {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* Password field with generator icon */
+.password-field-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field-container input {
+  flex: 1;
+  padding-right: 2.5rem;
+}
+
+/* When both generator and toggle buttons are present */
+body[dir="rtl"] .password-field-container:has(.password-generator-btn):has(.password-toggle-btn) input {
+  padding-right: 4rem;
+}
+
+body[dir="ltr"] .password-field-container:has(.password-generator-btn):has(.password-toggle-btn) input {
+  padding-left: 4rem;
+}
+
+/* Position toggle button when generator is also present */
+body[dir="rtl"] .password-field-container:has(.password-generator-btn) .password-toggle-btn {
+  right: 1rem;
+  left: auto;
+}
+
+/* LTR support for toggle button when generator is also present */
+body[dir="ltr"] .password-field-container:has(.password-generator-btn) .password-toggle-btn {
+  left: 1rem;
+  right: auto;
+}
+
+.password-generator-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-generator-btn:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+  color: #5a6fd8;
+}
+
+/* RTL support for password generator */
+body[dir="rtl"] .password-field-container input {
+  padding-right: 0.75rem;
+  padding-left: 2.5rem;
+}
+
+body[dir="rtl"] .password-generator-btn {
+  right: auto;
+  left: 0.5rem;
+}
+
+/* Password toggle button styles */
+.password-toggle-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #667eea;
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  color: #5a6fd8;
+}
+
+/* RTL support for password toggle buttons */
+body[dir="rtl"] .password-toggle-btn {
+  left: 0.5rem;
+  right: auto;
+  
+}
+
+/* LTR support for password toggle buttons */
+body[dir="ltr"] .password-toggle-btn {
+  right: 0.5rem;
+  left: auto;
+}
+
 /* Buttons */
 .btn {
   padding: 0.75rem 1.5rem;
@@ -602,6 +833,10 @@ body[dir="ltr"] .language-switcher {
 }
 
 .admin-tab-hidden {
+  display: none;
+}
+
+.admin-moderator-tab-hidden {
   display: none;
 }
 
@@ -1190,4 +1425,217 @@ body[dir="ltr"] {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* User Management Styles */
+.user-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 12px;
+}
+
+.user-management-header h2 {
+  color: #333;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 0.5rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.role-filter-btn {
+  background: none;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  color: #666;
+}
+
+.role-filter-btn.active {
+  background: #667eea;
+  color: white;
+}
+
+.role-filter-btn:hover:not(.active) {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.users-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.user-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-left: 4px solid #ddd;
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.user-card.admin {
+  border-left-color: #f44336;
+}
+
+.user-card.moderator {
+  border-left-color: #ff9800;
+}
+
+.user-card.employee {
+  border-left-color: #4caf50;
+}
+
+.user-card.inactive {
+  opacity: 0.6;
+  border-left-color: #9e9e9e;
+}
+
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.user-username {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.user-role-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.user-role-badge.admin {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.user-role-badge.moderator {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
+
+.user-role-badge.employee {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.user-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.user-detail label {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.user-detail span {
+  color: #333;
+}
+
+.user-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.user-actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.user-actions .btn-edit {
+  background: #2196f3;
+  color: white;
+}
+
+.user-actions .btn-edit:hover {
+  background: #1976d2;
+}
+
+.user-actions .btn-delete {
+  background: #f44336;
+  color: white;
+}
+
+.user-actions .btn-delete:hover {
+  background: #d32f2f;
+}
+
+.user-actions .btn-password {
+  background: #ff9800;
+  color: white;
+}
+
+.user-actions .btn-password:hover {
+  background: #f57c00;
+}
+
+/* Checkbox styling */
+.form-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem;
+}
+
+.form-group label[for="userIsActive"] {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 }

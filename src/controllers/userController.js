@@ -1,137 +1,420 @@
-const { asyncHandler } = require('../middleware/errorHandler');
-const { NotFoundError, AuthorizationError, AuthenticationError } = require('../middleware/errorHandler');
-const dbManager = require('../utils/database');
-const logger = require('../utils/logger');
+const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcryptjs');
+const dbManager = require('../utils/database');
+const ResponseHandler = require('../utils/responseHandler');
+const { generateToken } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
-// Get user profile (with language)
-const getProfile = asyncHandler(async (req, res) => {
-    const user = await dbManager.get('SELECT id, username, email, full_name, phone, avatar, role, department_id, language, created_at, updated_at FROM users WHERE id = ?', [req.user.id]);
-    if (!user) {
-        return res.status(404).json({ success: false, message: req.t('user.notfound') });
-    }
-    return res.json({ success: true, data: user });
+// Validation functions for user management (without password confirmation)
+const validateUsername = username => {
+  if (!username || username.trim() === '') {
+    throw new Error('Username is required');
+  }
+
+  if (username.length < 3) {
+    throw new Error('Username must be at least 3 characters');
+  }
+
+  if (username.length > 50) {
+    throw new Error('Username must be at most 50 characters');
+  }
+
+  const usernamePattern = /^[a-zA-Z0-9_]+$/;
+  if (!usernamePattern.test(username)) {
+    throw new Error(
+      'Username can only contain letters, numbers, and underscores'
+    );
+  }
+};
+
+const validateEmail = email => {
+  if (!email || email.trim() === '') {
+    return; // Email is optional in user management
+  }
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    throw new Error('Invalid email format');
+  }
+};
+
+const validatePassword = password => {
+  if (!password || password.trim() === '') {
+    throw new Error('Password is required');
+  }
+
+  if (password.length < 8) {
+    throw new Error('Password must be at least 8 characters long');
+  }
+
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  if (!hasUpperCase) {
+    throw new Error('Password must contain at least one uppercase letter');
+  }
+
+  if (!hasLowerCase) {
+    throw new Error('Password must contain at least one lowercase letter');
+  }
+
+  if (!hasNumbers) {
+    throw new Error('Password must contain at least one number');
+  }
+
+  if (!hasSpecialChar) {
+    throw new Error('Password must contain at least one special character');
+  }
+};
+
+// Role hierarchy validation
+const validateRoleHierarchy = (currentUserRole, targetRole) => {
+  const roleHierarchy = {
+    admin: 3,
+    moderator: 2,
+    employee: 1,
+  };
+
+  const currentUserLevel = roleHierarchy[currentUserRole];
+  const targetLevel = roleHierarchy[targetRole];
+
+  // Users can only manage roles at or below their level
+  return targetLevel <= currentUserLevel;
+};
+
+// Check if user can manage target user
+const canManageUser = (currentUserRole, targetUserRole) => {
+  const roleHierarchy = {
+    admin: 3,
+    moderator: 2,
+    employee: 1,
+  };
+
+  const currentUserLevel = roleHierarchy[currentUserRole];
+  const targetLevel = roleHierarchy[targetUserRole];
+
+  // Users can only manage roles below their level
+  return targetLevel < currentUserLevel;
+};
+
+// Get all users (filtered by role permissions)
+const getAllUsers = asyncHandler(async (req, res) => {
+  const currentUser = req.user;
+  let query = `
+    SELECT u.id, u.username, u.email, u.full_name, u.role, u.department_id, 
+           u.is_active, u.created_at, u.updated_at, d.name as department_name
+    FROM users u
+    LEFT JOIN departments d ON u.department_id = d.id
+    WHERE u.id != ?
+  `;
+  const params = [currentUser.id]; // Exclude current user
+
+  // Filter by role permissions
+  if (currentUser.role === 'admin') {
+    // Admin can see all users
+    query += ' ORDER BY u.role DESC, u.created_at DESC';
+  } else if (currentUser.role === 'moderator') {
+    // Moderator can only see employees
+    query += ' AND u.role = "employee" ORDER BY u.created_at DESC';
+  } else {
+    // Employees cannot see other users
+    throw new Error('Insufficient permissions');
+  }
+
+  const users = await dbManager.query(query, params);
+
+  return ResponseHandler.success(res, users, req.t('user.fetched_all'));
 });
 
-// Update user profile (including language)
-const updateProfile = asyncHandler(async (req, res) => {
-    const { full_name, email, phone, avatar, language } = req.body;
-    const updateFields = [];
-    const params = [];
-    if (full_name) { updateFields.push('full_name = ?'); params.push(full_name); }
-    if (email) { updateFields.push('email = ?'); params.push(email); }
-    if (phone) { updateFields.push('phone = ?'); params.push(phone); }
-    if (avatar) { updateFields.push('avatar = ?'); params.push(avatar); }
-    if (language) { updateFields.push('language = ?'); params.push(language); }
-    if (updateFields.length === 0) {
-        return res.status(400).json({ success: false, message: req.t('error.validation') });
-    }
-    updateFields.push('updated_at = CURRENT_TIMESTAMP');
-    params.push(req.user.id);
-    await dbManager.run(`UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`, params);
-    return res.json({ success: true, message: req.t('profile.updated') });
-});
-
-// Change password
-const changePassword = asyncHandler(async (req, res) => {
-    const { current_password, new_password } = req.body;
-    const user = await dbManager.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
-    if (!user) {
-        return res.status(404).json({ success: false, message: req.t('user.notfound') });
-    }
-    const isValid = await bcrypt.compare(current_password, user.password_hash);
-    if (!isValid) {
-        return res.status(400).json({ success: false, message: req.t('error.validation') });
-    }
-    const newPasswordHash = await bcrypt.hash(new_password, 10);
-    await dbManager.run('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newPasswordHash, req.user.id]);
-    logger.info('Password changed', { userId: req.user.id });
-    return res.json({ success: true, message: req.t('password.changed') });
-});
-
-// List all users (admin only)
-const listUsers = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
-    const users = await dbManager.query('SELECT id, username, email, full_name, phone, avatar, role, department_id, language, is_active, email_verified, created_at, updated_at FROM users');
-    return res.json({ success: true, data: users });
-});
-
-// Get user by ID (admin only)
+// Get user by ID
 const getUserById = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
-    const { id } = req.params;
-    const user = await dbManager.get('SELECT id, username, email, full_name, phone, avatar, role, department_id, language, is_active, email_verified, created_at, updated_at FROM users WHERE id = ?', [id]);
-    if (!user) {
-        return res.status(404).json({ success: false, message: req.t('user.notfound') });
-    }
-    return res.json({ success: true, data: user });
+  const { id } = req.params;
+  const currentUser = req.user;
+
+  const user = await dbManager.get(
+    `
+    SELECT u.id, u.username, u.email, u.full_name, u.role, u.department_id, 
+           u.is_active, u.created_at, u.updated_at, d.name as department_name
+    FROM users u
+    LEFT JOIN departments d ON u.department_id = d.id
+    WHERE u.id = ?
+  `,
+    [id]
+  );
+
+  if (!user) {
+    throw new Error(req.t('user.notfound'));
+  }
+
+  // Check permissions
+  if (!canManageUser(currentUser.role, user.role)) {
+    throw new Error('Insufficient permissions to view this user');
+  }
+
+  return ResponseHandler.success(res, user, req.t('user.fetched'));
 });
 
-// Update user (admin only)
+// Create new user (admin/moderator only)
+const createUser = asyncHandler(async (req, res) => {
+  const { username, password, email, full_name, role, department_id } =
+    req.body;
+  const currentUser = req.user;
+
+  // Validate role permissions
+  if (!validateRoleHierarchy(currentUser.role, role)) {
+    throw new Error('Cannot create user with higher or equal role level');
+  }
+
+  // Validate input fields using our custom validation functions
+  validateUsername(username);
+  validatePassword(password);
+  validateEmail(email);
+
+  // Check if username already exists
+  const existingUser = await dbManager.get(
+    'SELECT id FROM users WHERE username = ?',
+    [username]
+  );
+  if (existingUser) {
+    throw new Error(req.t('auth.username_exists'));
+  }
+
+  // Check if email already exists
+  if (email) {
+    const existingEmail = await dbManager.get(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+    if (existingEmail) {
+      throw new Error(req.t('auth.email_exists'));
+    }
+  }
+
+  // Hash password
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  // Insert new user
+  const result = await dbManager.run(
+    'INSERT INTO users (username, password_hash, email, full_name, role, department_id) VALUES (?, ?, ?, ?, ?, ?)',
+    [username, passwordHash, email, full_name, role, department_id]
+  );
+
+  // Get the created user
+  const newUser = await dbManager.get(
+    `
+    SELECT u.id, u.username, u.email, u.full_name, u.role, u.department_id, 
+           u.created_at, d.name as department_name
+    FROM users u
+    LEFT JOIN departments d ON u.department_id = d.id
+    WHERE u.id = ?
+  `,
+    [result.lastID]
+  );
+
+  logger.info('User created', {
+    createdBy: currentUser.id,
+    newUserId: newUser.id,
+    newUserRole: newUser.role,
+  });
+
+  return ResponseHandler.created(res, newUser, req.t('user.created'));
+});
+
+// Update user
 const updateUser = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
-    const { id } = req.params;
-    const { full_name, email, phone, avatar, role, department_id, language, is_active, email_verified } = req.body;
-    const updateFields = [];
-    const params = [];
-    if (full_name !== undefined) { updateFields.push('full_name = ?'); params.push(full_name); }
-    if (email !== undefined) { updateFields.push('email = ?'); params.push(email); }
-    if (phone !== undefined) { updateFields.push('phone = ?'); params.push(phone); }
-    if (avatar !== undefined) { updateFields.push('avatar = ?'); params.push(avatar); }
-    if (role !== undefined) { updateFields.push('role = ?'); params.push(role); }
-    if (department_id !== undefined) { updateFields.push('department_id = ?'); params.push(department_id); }
-    if (language !== undefined) { updateFields.push('language = ?'); params.push(language); }
-    if (is_active !== undefined) { updateFields.push('is_active = ?'); params.push(is_active ? 1 : 0); }
-    if (email_verified !== undefined) { updateFields.push('email_verified = ?'); params.push(email_verified ? 1 : 0); }
-    if (updateFields.length === 0) {
-        return res.status(400).json({ success: false, message: req.t('error.validation') });
+  const { id } = req.params;
+  const { email, full_name, role, department_id, is_active } = req.body;
+  const currentUser = req.user;
+
+  // Get target user
+  const targetUser = await dbManager.get(
+    'SELECT role FROM users WHERE id = ?',
+    [id]
+  );
+  if (!targetUser) {
+    throw new Error(req.t('user.notfound'));
+  }
+
+  // Check permissions
+  if (!canManageUser(currentUser.role, targetUser.role)) {
+    throw new Error('Insufficient permissions to modify this user');
+  }
+
+  // Validate role change permissions
+  if (role && !validateRoleHierarchy(currentUser.role, role)) {
+    throw new Error('Cannot assign higher or equal role level');
+  }
+
+  // Check if email already exists (if changing email)
+  if (email) {
+    const existingEmail = await dbManager.get(
+      'SELECT id FROM users WHERE email = ? AND id != ?',
+      [email, id]
+    );
+    if (existingEmail) {
+      throw new Error(req.t('auth.email_exists'));
     }
-    updateFields.push('updated_at = CURRENT_TIMESTAMP');
-    params.push(id);
-    await dbManager.run(`UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`, params);
-    logger.info('User updated by admin', { userId: id, adminId: req.user.id });
-    return res.json({ success: true, message: req.t('user.updated') });
+  }
+
+  // Build update query
+  const updates = [];
+  const params = [];
+
+  if (email !== undefined) {
+    updates.push('email = ?');
+    params.push(email);
+  }
+  if (full_name !== undefined) {
+    updates.push('full_name = ?');
+    params.push(full_name);
+  }
+  if (role !== undefined) {
+    updates.push('role = ?');
+    params.push(role);
+  }
+  if (department_id !== undefined) {
+    updates.push('department_id = ?');
+    params.push(department_id);
+  }
+  if (is_active !== undefined) {
+    updates.push('is_active = ?');
+    params.push(is_active);
+  }
+
+  if (updates.length === 0) {
+    throw new Error('No fields to update');
+  }
+
+  updates.push('updated_at = CURRENT_TIMESTAMP');
+  params.push(id);
+
+  const result = await dbManager.run(
+    `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+    params
+  );
+
+  if (result.changes === 0) {
+    throw new Error(req.t('user.notfound'));
+  }
+
+  // Get updated user
+  const updatedUser = await dbManager.get(
+    `
+    SELECT u.id, u.username, u.email, u.full_name, u.role, u.department_id, 
+           u.is_active, u.created_at, u.updated_at, d.name as department_name
+    FROM users u
+    LEFT JOIN departments d ON u.department_id = d.id
+    WHERE u.id = ?
+  `,
+    [id]
+  );
+
+  logger.info('User updated', {
+    updatedBy: currentUser.id,
+    userId: id,
+    changes: updates,
+  });
+
+  return ResponseHandler.success(res, updatedUser, req.t('user.updated'));
 });
 
-// Delete user (admin only)
+// Delete user
 const deleteUser = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
-    const { id } = req.params;
-    if (parseInt(id) === req.user.id) {
-        return res.status(400).json({ success: false, message: req.t('user.cannot_delete_self') });
-    }
-    const user = await dbManager.get('SELECT username FROM users WHERE id = ?', [id]);
-    if (!user) {
-        return res.status(404).json({ success: false, message: req.t('user.notfound') });
-    }
-    await dbManager.run('DELETE FROM users WHERE id = ?', [id]);
-    logger.info('User deleted by admin', { userId: id, adminId: req.user.id, username: user.username });
-    return res.json({ success: true, message: req.t('user.deleted') });
+  const { id } = req.params;
+  const currentUser = req.user;
+
+  // Prevent self-deletion
+  if (parseInt(id) === currentUser.id) {
+    throw new Error(req.t('user.cannot_delete_self'));
+  }
+
+  // Get target user
+  const targetUser = await dbManager.get(
+    'SELECT role FROM users WHERE id = ?',
+    [id]
+  );
+  if (!targetUser) {
+    throw new Error(req.t('user.notfound'));
+  }
+
+  // Check permissions
+  if (!canManageUser(currentUser.role, targetUser.role)) {
+    throw new Error('Insufficient permissions to delete this user');
+  }
+
+  // Check if user has appointments
+  const appointmentCount = await dbManager.get(
+    'SELECT COUNT(*) as count FROM appointments WHERE user_id = ?',
+    [id]
+  );
+
+  if (appointmentCount.count > 0) {
+    throw new Error('Cannot delete user with existing appointments');
+  }
+
+  // Delete user
+  const result = await dbManager.run('DELETE FROM users WHERE id = ?', [id]);
+
+  if (result.changes === 0) {
+    throw new Error(req.t('user.notfound'));
+  }
+
+  logger.info('User deleted', {
+    deletedBy: currentUser.id,
+    userId: id,
+  });
+
+  return ResponseHandler.success(res, null, req.t('user.deleted'));
 });
 
-// User statistics (admin only)
-const userStats = asyncHandler(async (req, res) => {
-    if (req.user.role !== 'admin') throw new AuthorizationError(req.t('error.forbidden'));
-    const stats = await dbManager.get(`
-        SELECT 
-            COUNT(*) as total_users,
-            SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admin_count,
-            SUM(CASE WHEN role = 'employee' THEN 1 ELSE 0 END) as employee_count,
-            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_users,
-            SUM(CASE WHEN email_verified = 1 THEN 1 ELSE 0 END) as verified_users,
-            SUM(CASE WHEN two_factor_enabled = 1 THEN 1 ELSE 0 END) as two_factor_users
-        FROM users
-    `);
-    return res.json({ success: true, data: stats });
+// Change user password (admin/moderator only)
+const changeUserPassword = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { newPassword } = req.body;
+  const currentUser = req.user;
+
+  // Get target user
+  const targetUser = await dbManager.get(
+    'SELECT role FROM users WHERE id = ?',
+    [id]
+  );
+  if (!targetUser) {
+    throw new Error(req.t('user.notfound'));
+  }
+
+  // Check permissions
+  if (!canManageUser(currentUser.role, targetUser.role)) {
+    throw new Error("Insufficient permissions to change this user's password");
+  }
+
+  // Hash new password
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+  // Update password
+  const result = await dbManager.run(
+    'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [newPasswordHash, id]
+  );
+
+  if (result.changes === 0) {
+    throw new Error(req.t('user.notfound'));
+  }
+
+  logger.info('User password changed by admin/moderator', {
+    changedBy: currentUser.id,
+    userId: id,
+  });
+
+  return ResponseHandler.success(res, null, req.t('password.changed'));
 });
 
 module.exports = {
-    getProfile,
-    updateProfile,
-    changePassword,
-    listUsers,
-    getUserById,
-    updateUser,
-    deleteUser,
-    userStats
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+  changeUserPassword,
 };
