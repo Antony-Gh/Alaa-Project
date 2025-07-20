@@ -6,6 +6,12 @@ const dbManager = require('../utils/database');
 
 // Generate JWT token
 const generateToken = (user) => {
+    // Validate user object
+    if (!user || !user.id) {
+        logger.error('Invalid user object passed to generateToken', { user });
+        throw new Error('Invalid user data for token generation');
+    }
+
     return jwt.sign(
         { 
             id: user.id, 

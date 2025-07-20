@@ -25,6 +25,222 @@ const safeCreateElement =
     return element;
   });
 
+// Client-side validation functions
+function validateEmail(email) {
+  if (!email || email.trim() === "") {
+    return { isValid: false, message: t("auth.email_required") };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { isValid: false, message: t("auth.invalid_email") };
+  }
+
+  return { isValid: true, message: "" };
+}
+
+function validateUsername(username) {
+  if (!username || username.trim() === "") {
+    return { isValid: false, message: t("auth.username_required") };
+  }
+
+  if (username.length < 6) {
+    return { isValid: false, message: t("auth.username_too_short") };
+  }
+
+  // Check if username contains only English letters, numbers, and underscores
+  const englishRegex = /^[a-zA-Z0-9_]+$/;
+  if (!englishRegex.test(username)) {
+    return { isValid: false, message: t("auth.username_english_only") };
+  }
+
+  return { isValid: true, message: "" };
+}
+
+function validatePassword(password) {
+  if (!password || password.trim() === "") {
+    return { isValid: false, message: t("auth.password_required") };
+  }
+
+  // Password strength requirements
+  const minLength = 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  if (password.length < minLength) {
+    return { isValid: false, message: t("auth.password_too_short") };
+  }
+
+  if (!hasUpperCase) {
+    return { isValid: false, message: t("auth.password_no_uppercase") };
+  }
+
+  if (!hasLowerCase) {
+    return { isValid: false, message: t("auth.password_no_lowercase") };
+  }
+
+  if (!hasNumbers) {
+    return { isValid: false, message: t("auth.password_no_number") };
+  }
+
+  if (!hasSpecialChar) {
+    return { isValid: false, message: t("auth.password_no_special") };
+  }
+
+  return { isValid: true, message: "" };
+}
+
+function validatePasswordConfirmation(password, confirmPassword) {
+  if (!confirmPassword || confirmPassword.trim() === "") {
+    return { isValid: false, message: t("auth.confirm_password_required") };
+  }
+
+  if (password !== confirmPassword) {
+    return { isValid: false, message: t("auth.passwords_not_match") };
+  }
+
+  return { isValid: true, message: "" };
+}
+
+function checkPasswordStrength(password) {
+  if (!password) return "empty";
+
+  let score = 0;
+
+  // Length check
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+
+  // Character variety checks
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[a-z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+
+  if (score <= 2) return "weak";
+  if (score <= 4) return "medium";
+  return "strong";
+}
+
+function updatePasswordStrengthIndicator(password) {
+  const strengthIndicator = document.getElementById("passwordStrength");
+  if (!strengthIndicator) return;
+
+  const strength = checkPasswordStrength(password);
+  const strengthText = {
+    empty: "",
+    weak: t("auth.password_too_short"),
+    medium: t("auth.password_no_special"),
+    strong: "", // Empty when password is strong
+  };
+
+  strengthIndicator.textContent = strengthText[strength];
+  strengthIndicator.className = `password-strength ${strength}`;
+}
+
+function updatePasswordMatchIndicator(password, confirmPassword) {
+  const matchIndicator = document.getElementById("passwordMatch");
+  if (!matchIndicator) return;
+
+  if (!confirmPassword) {
+    matchIndicator.textContent = "";
+    matchIndicator.className = "password-match empty";
+    return;
+  }
+
+  if (password === confirmPassword) {
+    matchIndicator.textContent = ""; // Empty when passwords match
+    matchIndicator.className = "password-match match";
+  } else {
+    matchIndicator.textContent = t("auth.passwords_not_match");
+    matchIndicator.className = "password-match no-match";
+  }
+}
+
+function setupFormValidation() {
+  // Username validation
+  const usernameInputs = document.querySelectorAll(
+    "#loginUsername, #registerUsername"
+  );
+  usernameInputs.forEach((input) => {
+    input.addEventListener("input", function () {
+      const validation = validateUsername(this.value);
+      if (validation.isValid) {
+        this.classList.remove("error");
+        this.classList.add("valid");
+      } else {
+        this.classList.remove("valid");
+        this.classList.add("error");
+      }
+    });
+  });
+
+  // Email validation
+  const emailInput = document.getElementById("registerEmail");
+  if (emailInput) {
+    emailInput.addEventListener("input", function () {
+      const validation = validateEmail(this.value);
+      if (validation.isValid) {
+        this.classList.remove("error");
+        this.classList.add("valid");
+      } else {
+        this.classList.remove("valid");
+        this.classList.add("error");
+      }
+    });
+  }
+
+  // Password validation
+  const passwordInput = document.getElementById("registerPassword");
+  if (passwordInput) {
+    passwordInput.addEventListener("input", function () {
+      const validation = validatePassword(this.value);
+      updatePasswordStrengthIndicator(this.value);
+
+      if (validation.isValid) {
+        this.classList.remove("error");
+        this.classList.add("valid");
+      } else {
+        this.classList.remove("valid");
+        this.classList.add("error");
+      }
+
+      // Update password match indicator if confirm password exists
+      const confirmPasswordInput = document.getElementById(
+        "registerConfirmPassword"
+      );
+      if (confirmPasswordInput && confirmPasswordInput.value) {
+        updatePasswordMatchIndicator(this.value, confirmPasswordInput.value);
+      }
+    });
+  }
+
+  // Password confirmation validation
+  const confirmPasswordInput = document.getElementById(
+    "registerConfirmPassword"
+  );
+  if (confirmPasswordInput) {
+    confirmPasswordInput.addEventListener("input", function () {
+      const passwordInput = document.getElementById("registerPassword");
+      const validation = validatePasswordConfirmation(
+        passwordInput.value,
+        this.value
+      );
+      updatePasswordMatchIndicator(passwordInput.value, this.value);
+
+      if (validation.isValid) {
+        this.classList.remove("error");
+        this.classList.add("valid");
+      } else {
+        this.classList.remove("valid");
+        this.classList.add("error");
+      }
+    });
+  }
+}
+
 // Global variables
 let departments = [];
 let locations = [];
@@ -73,6 +289,9 @@ async function initializeApp() {
 
     // Setup event listeners
     setupEventListeners();
+
+    // Setup form validation
+    setupFormValidation();
 
     // Check authentication status
     await checkAuthStatus();
@@ -149,21 +368,23 @@ function setupEventListeners() {
 // Authentication functions
 async function checkAuthStatus() {
   try {
-    const response = await fetch("/api/auth/profile", {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
+    if (authToken) {
+      const response = await fetch("/api/auth/profile", {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      currentUser = data.data;
-      showAppSection();
-      await loadInitialData();
-    } else {
-      localStorage.removeItem("authToken");
-      authToken = null;
-      showAuthSection();
+      if (response.ok) {
+        const data = await response.json();
+        currentUser = data.data;
+        showAppSection();
+        await loadInitialData();
+      } else {
+        localStorage.removeItem("authToken");
+        authToken = null;
+        showAuthSection();
+      }
     }
   } catch (error) {
     console.error(t("console.error.auth_status_check"), error);
@@ -176,7 +397,23 @@ async function checkAuthStatus() {
 async function handleLogin(e) {
   e.preventDefault();
 
+  clearAllMessages();
+
   const loginData = sanitizeFormData(new FormData(loginForm));
+
+  // Client-side validation
+  const usernameValidation = validateUsername(loginData.username);
+  const passwordValidation = validatePassword(loginData.password);
+
+  if (!usernameValidation.isValid) {
+    showMessage(usernameValidation.message, "error");
+    return;
+  }
+
+  if (!passwordValidation.isValid) {
+    showMessage(passwordValidation.message, "error");
+    return;
+  }
 
   try {
     const response = await fetch("/api/auth/login", {
@@ -232,7 +469,38 @@ async function handleLogin(e) {
 async function handleRegister(e) {
   e.preventDefault();
 
+  clearAllMessages();
+
   const registerData = sanitizeFormData(new FormData(registerForm));
+
+  // Client-side validation
+  const usernameValidation = validateUsername(registerData.username);
+  const emailValidation = validateEmail(registerData.email);
+  const passwordValidation = validatePassword(registerData.password);
+  const confirmPasswordValidation = validatePasswordConfirmation(
+    registerData.password,
+    registerData.confirmPassword
+  );
+
+  if (!usernameValidation.isValid) {
+    showMessage(usernameValidation.message, "error");
+    return;
+  }
+
+  if (!emailValidation.isValid) {
+    showMessage(emailValidation.message, "error");
+    return;
+  }
+
+  if (!passwordValidation.isValid) {
+    showMessage(passwordValidation.message, "error");
+    return;
+  }
+
+  if (!confirmPasswordValidation.isValid) {
+    showMessage(confirmPasswordValidation.message, "error");
+    return;
+  }
 
   console.log("Register data:", registerData);
 
@@ -283,6 +551,7 @@ async function handleRegister(e) {
 }
 
 function handleLogout() {
+  clearAllMessages();
   localStorage.removeItem("authToken");
   authToken = null;
   currentUser = null;
@@ -410,23 +679,32 @@ async function loadInitialData() {
 
 async function loadUserProfile() {
   try {
-    const response = await fetch("/api/auth/profile", {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
+    if (authToken) {
+      const response = await fetch("/api/auth/profile", {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
-    if (response.ok) {
-      const result = await response.json();
-      const user = result.data;
+      if (response.ok) {
+        const result = await response.json();
+        const user = result.data;
 
-      // Populate profile form
-      setTextContent(document.getElementById("profileUsername"), user.username);
-      setTextContent(document.getElementById("profileEmail"), user.email || "");
+        // Populate profile form
+        setTextContent(
+          document.getElementById("profileUsername"),
+          user.username
+        );
+        setTextContent(
+          document.getElementById("profileEmail"),
+          user.email || ""
+        );
 
-      // Set department if available
-      if (user.department_id) {
-        document.getElementById("profileDepartment").value = user.department_id;
+        // Set department if available
+        if (user.department_id) {
+          document.getElementById("profileDepartment").value =
+            user.department_id;
+        }
       }
     }
   } catch (error) {
@@ -1354,13 +1632,13 @@ function createModernLangSwitcher() {
         <button class="lang-btn ${
           currentLang === "ar" ? "active" : ""
         }" data-lang="ar" title="العربية">
-            <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'><rect width='900' height='600' fill='%23ce1126'/><rect width='900' height='400' fill='%23fff'/><rect width='900' height='200' fill='%23000'/><circle cx='450' cy='300' r='90' fill='%23000'/><circle cx='450' cy='300' r='60' fill='%23fff'/><circle cx='450' cy='300' r='30' fill='%23000'/></svg>" alt="العربية">
+            <img src="./icons/egypt.svg" alt="العربية">
             العربية
         </button>
         <button class="lang-btn ${
           currentLang === "en" ? "active" : ""
         }" data-lang="en" title="English">
-            <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'><rect width='900' height='600' fill='%23012169'/><rect width='900' height='46.15' y='46.15' fill='%23fff'/><rect width='900' height='46.15' y='138.45' fill='%23fff'/><rect width='900' height='46.15' y='230.75' fill='%23fff'/><rect width='900' height='46.15' y='323.05' fill='%23fff'/><rect width='900' height='46.15' y='415.35' fill='%23fff'/><rect width='900' height='46.15' y='507.65' fill='%23fff'/><rect width='346.15' height='323.05' fill='%23c8102e'/><rect width='46.15' height='323.05' x='46.15' fill='%23fff'/><rect width='46.15' height='323.05' x='92.3' fill='%23c8102e'/></svg>" alt="English">
+            <img src="./icons/usa.svg" alt="English">
             English
         </button>
     `;
@@ -1371,7 +1649,7 @@ function createModernLangSwitcher() {
   languageSwitcher.querySelectorAll(".lang-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const lang = btn.dataset.lang;
-      setLanguage(lang);
+      setLanguage(lang, true); // Show notification when user changes language
     });
   });
 }
@@ -1386,7 +1664,7 @@ function updateLangSwitcherActive() {
   });
 }
 
-function setLanguage(lang) {
+function setLanguage(lang, showNotification = false) {
   // Store language preference
   localStorage.setItem("language", lang);
 
@@ -1415,9 +1693,11 @@ function setLanguage(lang) {
     document.body.classList.remove("language-transitioning");
   }, 300);
 
-  // Show a brief notification about language change
-  const langName = lang === "ar" ? "العربية" : "English";
-  showMessage(`${langName} - ${t("language_changed")}`, "info");
+  // Only show notification if explicitly requested (user action)
+  if (showNotification) {
+    const langName = lang === "ar" ? "العربية" : "English";
+    showMessage(`${langName} - ${t("language_changed")}`, "info");
+  }
 }
 
 // Helper to get translation

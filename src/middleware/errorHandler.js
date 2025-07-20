@@ -20,8 +20,9 @@ class ValidationError extends AppError {
 }
 
 class AuthenticationError extends AppError {
-    constructor(message) {
+    constructor(message, translationKey = null) {
         super(message, 401, 'AUTHENTICATION_ERROR');
+        this.translationKey = translationKey;
     }
 }
 
@@ -49,10 +50,17 @@ class DatabaseError extends AppError {
 const errorHandler = (err, req, res, next) => {
     let error = { ...err };
     error.message = err.message;
+    
+    // Preserve the translationKey if it exists
+    if (err.translationKey) {
+        error.translationKey = err.translationKey;
+    }
 
-    // Log error for debugging
+    // Log error for debugging - use translation key if available
+    const logMessage = error.translationKey || error.message;
     logger.error('Error occurred:', {
-        message: err.message,
+        message: logMessage,
+        translationKey: error.translationKey,
         stack: err.stack,
         url: req.url,
         method: req.method,
@@ -105,6 +113,11 @@ const errorHandler = (err, req, res, next) => {
     // Use i18n for 404 and 500
     if (statusCode === 404 && req.t) message = req.t('error.notfound');
     if (statusCode === 500 && req.t) message = req.t('error.internal');
+
+    // For AuthenticationError, preserve translation key if available
+    if (errorCode === 'AUTHENTICATION_ERROR' && error.translationKey) {
+        message = error.translationKey;
+    }
 
     // Don't leak error details in production
     const response = {

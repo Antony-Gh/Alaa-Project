@@ -7,10 +7,15 @@
     <!-- <meta http-equiv="X-Frame-Options" content="DENY"> -->
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     <title data-i18n="system_title">نظام حجز المواعيد للموظفين</title>
-    <link
+    <!-- <link
       rel="icon"
       type="image/svg+xml"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>"
+    /> -->
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="favicon.ico"
     />
     <link rel="stylesheet" href="style.css" />
     <link
@@ -129,6 +134,19 @@
                   placeholder="password"
                   data-i18n-placeholder="password_placeholder"
                 />
+                <div class="password-strength" id="passwordStrength"></div>
+              </div>
+              <div class="form-group">
+                <label for="registerConfirmPassword" data-i18n="confirm_password"></label>
+                <input
+                  type="password"
+                  id="registerConfirmPassword"
+                  name="confirmPassword"
+                  required
+                  placeholder="confirm_password"
+                  data-i18n-placeholder="confirm_password_placeholder"
+                />
+                <div class="password-match" id="passwordMatch"></div>
               </div>
               <div class="form-group">
                 <label for="registerRole" data-i18n="role"></label>
