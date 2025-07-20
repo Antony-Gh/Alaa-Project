@@ -1,0 +1,264 @@
+/* Message Components */
+
+/* Import variables */
+@import url('../variables.css');
+
+/* Message Container */
+.message-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: var(--z-modal);
+  max-width: 400px;
+  width: 100%;
+  pointer-events: none;
+}
+
+body[dir="ltr"] .message-container {
+  right: auto;
+  left: 20px;
+}
+
+/* Individual Messages */
+.message {
+  background: var(--white);
+  border-radius: var(--message-border-radius);
+  padding: var(--message-padding);
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-lg);
+  border: var(--message-border-width) solid transparent;
+  position: relative;
+  pointer-events: auto;
+  animation: slideDown 0.3s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Message Types */
+.message.success {
+  border-color: var(--success-color);
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+}
+
+.message.error {
+  border-color: var(--error-color);
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%);
+}
+
+.message.info {
+  border-color: var(--info-color);
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%);
+}
+
+.message.warning {
+  border-color: var(--warning-color);
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%);
+}
+
+/* Message Content */
+.message-text {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.message.success .message-text {
+  color: var(--success-dark);
+}
+
+.message.error .message-text {
+  color: var(--error-dark);
+}
+
+.message.info .message-text {
+  color: var(--info-dark);
+}
+
+.message.warning .message-text {
+  color: var(--warning-dark);
+}
+
+/* Close Button */
+.message .close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  color: var(--text-muted);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+}
+
+.message .close-btn:hover {
+  background: var(--gray-200);
+  color: var(--text-primary);
+}
+
+/* RTL/LTR Support for Messages */
+body[dir="rtl"] .message .close-btn {
+  left: var(--space-4);
+  right: auto;
+}
+
+body[dir="ltr"] .message .close-btn {
+  right: var(--space-4);
+  left: auto;
+}
+
+body[dir="rtl"] .message {
+  border-right: var(--message-border-width) solid;
+}
+
+body[dir="rtl"] .message.success {
+  border-right-color: var(--success-color);
+}
+
+body[dir="rtl"] .message.error {
+  border-right-color: var(--error-color);
+}
+
+body[dir="rtl"] .message.info {
+  border-right-color: var(--info-color);
+}
+
+body[dir="rtl"] .message.warning {
+  border-right-color: var(--warning-color);
+}
+
+body[dir="ltr"] .message {
+  border-left: var(--message-border-width) solid;
+}
+
+body[dir="ltr"] .message.success {
+  border-left-color: var(--success-color);
+}
+
+body[dir="ltr"] .message.error {
+  border-left-color: var(--error-color);
+}
+
+body[dir="ltr"] .message.info {
+  border-left-color: var(--info-color);
+}
+
+body[dir="ltr"] .message.warning {
+  border-left-color: var(--warning-color);
+}
+
+/* Message Icons */
+.message::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: var(--font-size-sm);
+}
+
+.message.success::before {
+  content: '\f00c';
+  background: var(--success-color);
+  color: var(--white);
+}
+
+.message.error::before {
+  content: '\f00d';
+  background: var(--error-color);
+  color: var(--white);
+}
+
+.message.info::before {
+  content: '\f05a';
+  background: var(--info-color);
+  color: var(--white);
+}
+
+.message.warning::before {
+  content: '\f071';
+  background: var(--warning-color);
+  color: var(--white);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .message-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  
+  body[dir="ltr"] .message-container {
+    left: 10px;
+    right: 10px;
+  }
+  
+  .message {
+    padding: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+  
+  .message-text {
+    font-size: var(--font-size-xs);
+  }
+  
+  .message .close-btn {
+    font-size: var(--font-size-base);
+    min-width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .message-container {
+    top: 5px;
+    right: 5px;
+    left: 5px;
+  }
+  
+  body[dir="ltr"] .message-container {
+    left: 5px;
+    right: 5px;
+  }
+  
+  .message {
+    padding: var(--space-2);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+  
+  .message::before {
+    align-self: flex-start;
+  }
+  
+  .message .close-btn {
+    align-self: flex-end;
+  }
+} 

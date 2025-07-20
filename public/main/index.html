@@ -4,20 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <!-- <meta http-equiv="X-Frame-Options" content="DENY"> -->
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     <title data-i18n="system_title">نظام حجز المواعيد للموظفين</title>
-    <!-- <link
-      rel="icon"
-      type="image/svg+xml"
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>"
-    /> -->
     <link
       rel="icon"
       type="image/x-icon"
       href="favicon.ico"
     />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="css/main.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
       rel="stylesheet"
@@ -199,434 +193,256 @@
             <i class="fas fa-user-shield"></i>
             <span data-i18n="admin_panel"></span>
           </button>
-          <button class="tab-btn" data-tab="dashboard" title="dashboard">
-            <i class="fas fa-chart-bar"></i> <span data-i18n="dashboard"></span>
-          </button>
-          <button class="tab-btn" data-tab="profile" title="profile">
-            <i class="fas fa-user-cog"></i> <span data-i18n="profile"></span>
+          <button
+            class="tab-btn"
+            data-tab="dashboard"
+            title="dashboard"
+          >
+            <i class="fas fa-chart-bar"></i>
+            <span data-i18n="dashboard"></span>
           </button>
         </nav>
 
-        <!-- Employee Booking Tab -->
-        <div class="tab-content active" id="employee-tab">
-          <div class="booking-form">
-            <h2>
-              <i class="fas fa-plus-circle"></i>
-              <span data-i18n="new_appointment"></span>
-            </h2>
-            <form id="appointmentForm">
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="employeeName" data-i18n="employee_name"></label>
-                  <input
-                    type="text"
-                    id="employeeName"
-                    name="employeeName"
-                    required
-                    placeholder="employee_name"
-                    data-i18n-placeholder="employee_name_placeholder"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="employeeId" data-i18n="employee_id"></label>
-                  <input
-                    type="text"
-                    id="employeeId"
-                    name="employeeId"
-                    required
-                    placeholder="employee_id"
-                    data-i18n-placeholder="employee_id_placeholder"
-                  />
-                </div>
-              </div>
+        <!-- Employee Tab Content -->
+        <div id="employeeTab" class="tab-content active">
+          <div class="tab-header">
+            <h2 data-i18n="new_appointment">حجز موعد جديد</h2>
+            <p data-i18n="appointment_form_description">
+              قم بملء النموذج التالي لحجز موعد جديد
+            </p>
+          </div>
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label
-                    for="department"
-                    data-i18n="department"
-                    class="visually-hidden"
-                  ></label>
-                  <select
-                    id="department"
-                    name="department"
-                    required
-                    title="department"
-                  >
-                    <option value="" data-i18n="select_department"></option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="location" data-i18n="location"></label>
-                  <select
-                    id="location"
-                    name="location"
-                    required
-                    title="location"
-                  >
-                    <option value="" data-i18n="select_location"></option>
-                  </select>
-                </div>
-              </div>
-
+          <form id="appointmentForm" class="appointment-form">
+            <div class="form-row">
               <div class="form-group">
-                <label for="title" data-i18n="appointment_title"></label>
+                <label for="employeeName" data-i18n="employee_name">اسم الموظف</label>
                 <input
                   type="text"
-                  id="title"
-                  name="title"
-                  placeholder="appointment_title"
+                  id="employeeName"
+                  name="employee_name"
                   required
-                  data-i18n-placeholder="appointment_title_placeholder"
+                  placeholder="employee_name"
+                  data-i18n-placeholder="employee_name_placeholder"
                 />
               </div>
-
               <div class="form-group">
-                <label
-                  for="description"
-                  data-i18n="appointment_description"
-                ></label>
+                <label for="employeeId" data-i18n="employee_id">رقم الموظف</label>
+                <input
+                  type="text"
+                  id="employeeId"
+                  name="employee_id"
+                  required
+                  placeholder="employee_id"
+                  data-i18n-placeholder="employee_id_placeholder"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="departmentSelect" data-i18n="department">القسم</label>
+                <select id="departmentSelect" name="department_id" required>
+                  <option value="" data-i18n="select_department">اختر القسم</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="locationSelect" data-i18n="location">الموقع</label>
+                <select id="locationSelect" name="location_id" required>
+                  <option value="" data-i18n="select_location">اختر الموقع</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="appointmentTitle" data-i18n="title">عنوان الموعد</label>
+                <input
+                  type="text"
+                  id="appointmentTitle"
+                  name="title"
+                  required
+                  placeholder="title"
+                  data-i18n-placeholder="title_placeholder"
+                />
+              </div>
+              <div class="form-group">
+                <label for="appointmentDate" data-i18n="date">التاريخ</label>
+                <input
+                  type="date"
+                  id="appointmentDate"
+                  name="requested_date"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="appointmentTime" data-i18n="time">الوقت</label>
+                <input
+                  type="time"
+                  id="appointmentTime"
+                  name="requested_time"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="appointmentDescription" data-i18n="description">الوصف</label>
                 <textarea
-                  id="description"
+                  id="appointmentDescription"
                   name="description"
                   rows="3"
-                  placeholder="appointment_description"
-                  data-i18n-placeholder="appointment_description_placeholder"
+                  placeholder="description"
+                  data-i18n-placeholder="description_placeholder"
                 ></textarea>
               </div>
+            </div>
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="requestedDate" data-i18n="requested_date"></label>
-                  <input
-                    type="date"
-                    id="requestedDate"
-                    name="requestedDate"
-                    required
-                    placeholder="requested_date"
-                    title="requested_date"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="requestedTime" data-i18n="requested_time"></label>
-                  <input
-                    type="time"
-                    id="requestedTime"
-                    name="requestedTime"
-                    required
-                    placeholder="requested_time"
-                    title="requested_time"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                class="btn btn-primary"
-                title="submit_request"
-              >
-                <i class="fas fa-paper-plane"></i>
-                <span data-i18n="submit_request"></span>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" title="create_appointment">
+                <i class="fas fa-calendar-plus"></i>
+                <span data-i18n="create_appointment">إنشاء الموعد</span>
               </button>
-            </form>
+            </div>
+          </form>
+        </div>
+
+        <!-- Admin Tab Content -->
+        <div id="adminTab" class="tab-content">
+          <div class="tab-header">
+            <h2 data-i18n="admin_panel">لوحة الإدارة</h2>
+            <p data-i18n="admin_panel_description">
+              إدارة المواعيد وتحديث حالاتها
+            </p>
           </div>
 
-          <div class="my-appointments">
-            <h3>
-              <i class="fas fa-list"></i>
-              <span data-i18n="my_appointments"></span>
-            </h3>
-            <div id="myAppointmentsList" class="appointments-list">
-              <!-- Appointments will be loaded here -->
+          <div class="admin-controls">
+            <div class="filter-section">
+              <label for="statusFilter" data-i18n="filter_by_status">تصفية حسب الحالة:</label>
+              <select id="statusFilter">
+                <option value="all" data-i18n="all_appointments">جميع المواعيد</option>
+                <option value="pending" data-i18n="pending">في الانتظار</option>
+                <option value="approved" data-i18n="approved">مقبول</option>
+                <option value="rejected" data-i18n="rejected">مرفوض</option>
+              </select>
             </div>
+          </div>
+
+          <div id="adminAppointments" class="appointments-grid">
+            <!-- Admin appointments will be loaded here -->
           </div>
         </div>
 
-        <!-- Admin Panel Tab -->
-        <div class="tab-content" id="admin-tab">
-          <div class="admin-header">
-            <h2>
-              <i class="fas fa-user-shield"></i>
-              <span data-i18n="admin_panel"></span>
-            </h2>
-            <div class="status-filters">
-              <button class="status-btn active" data-status="all">الكل</button>
-              <button class="status-btn" data-status="pending">
-                في الانتظار
-              </button>
-              <button class="status-btn" data-status="approved">مقبول</button>
-              <button class="status-btn" data-status="rejected">مرفوض</button>
-              <button class="status-btn" data-status="done">مكتمل</button>
-              <button class="status-btn" data-status="missed">فات</button>
-            </div>
+        <!-- Dashboard Tab Content -->
+        <div id="dashboardTab" class="tab-content">
+          <div class="tab-header">
+            <h2 data-i18n="dashboard">لوحة المعلومات</h2>
+            <p data-i18n="dashboard_description">
+              نظرة عامة على المواعيد والإحصائيات
+            </p>
           </div>
 
-          <div class="appointments-container">
-            <div id="adminAppointmentsList" class="appointments-list">
-              <!-- Admin appointments will be loaded here -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Dashboard Tab -->
-        <div class="tab-content" id="dashboard-tab">
-          <div class="dashboard-header">
-            <h2>
-              <i class="fas fa-chart-bar"></i>
-              <span data-i18n="dashboard"></span>
-            </h2>
-          </div>
-
-          <div class="stats-grid">
+          <div class="dashboard-stats">
             <div class="stat-card">
-              <div class="stat-icon pending">
+              <div class="stat-icon">
+                <i class="fas fa-calendar-check"></i>
+              </div>
+              <div class="stat-content">
+                <h3 id="totalAppointments">0</h3>
+                <p data-i18n="total_appointments">إجمالي المواعيد</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">
                 <i class="fas fa-clock"></i>
               </div>
               <div class="stat-content">
-                <h3 id="pendingCount">0</h3>
-                <p data-i18n="pending_appointments">في الانتظار</p>
+                <h3 id="pendingAppointments">0</h3>
+                <p data-i18n="pending_appointments">مواعيد في الانتظار</p>
               </div>
             </div>
-
             <div class="stat-card">
-              <div class="stat-icon approved">
+              <div class="stat-icon">
                 <i class="fas fa-check-circle"></i>
               </div>
               <div class="stat-content">
-                <h3 id="approvedCount">0</h3>
-                <p data-i18n="approved_appointments">مقبول</p>
+                <h3 id="approvedAppointments">0</h3>
+                <p data-i18n="approved_appointments">مواعيد مقبولة</p>
               </div>
             </div>
-
             <div class="stat-card">
-              <div class="stat-icon rejected">
+              <div class="stat-icon">
                 <i class="fas fa-times-circle"></i>
               </div>
               <div class="stat-content">
-                <h3 id="rejectedCount">0</h3>
-                <p data-i18n="rejected_appointments">مرفوض</p>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon done">
-                <i class="fas fa-check-double"></i>
-              </div>
-              <div class="stat-content">
-                <h3 id="doneCount">0</h3>
-                <p data-i18n="completed_appointments">مكتمل</p>
+                <h3 id="rejectedAppointments">0</h3>
+                <p data-i18n="rejected_appointments">مواعيد مرفوضة</p>
               </div>
             </div>
           </div>
 
-          <div class="recent-appointments">
-            <h3>
-              <i class="fas fa-history"></i>
-              <span data-i18n="recent_appointments"></span>
-            </h3>
-            <div id="recentAppointmentsList" class="appointments-list">
-              <!-- Recent appointments will be loaded here -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Profile Tab -->
-        <div class="tab-content" id="profile-tab">
-          <div class="profile-header">
-            <h2>
-              <i class="fas fa-user-cog"></i> <span data-i18n="profile"></span>
-            </h2>
-          </div>
-
-          <div class="profile-content">
-            <form id="profileForm" class="profile-form">
-              <div class="form-group">
-                <label for="profileUsername" data-i18n="username"></label>
-                <input
-                  type="text"
-                  id="profileUsername"
-                  name="username"
-                  readonly
-                  placeholder="username"
-                  title="username"
-                />
-              </div>
-              <div class="form-group">
-                <label for="profileEmail" data-i18n="email"></label>
-                <input
-                  type="email"
-                  id="profileEmail"
-                  name="email"
-                  placeholder="email"
-                  title="email"
-                />
-              </div>
-              <div class="form-group">
-                <label for="profileDepartment" data-i18n="department"></label>
-                <select
-                  id="profileDepartment"
-                  name="department"
-                  title="department"
-                >
-                  <option value="" data-i18n="select_department"></option>
-                </select>
-              </div>
-              <button
-                type="submit"
-                class="btn btn-primary"
-                title="save_changes"
-              >
-                <i class="fas fa-save"></i>
-                <span data-i18n="save_changes"></span>
-              </button>
-            </form>
-
-            <div class="change-password-section">
-              <h3>
-                <i class="fas fa-key"></i>
-                <span data-i18n="change_password"></span>
-              </h3>
-              <form id="changePasswordForm" class="password-form">
-                <div class="form-group">
-                  <label
-                    for="currentPassword"
-                    data-i18n="current_password"
-                  ></label>
-                  <input
-                    type="password"
-                    id="currentPassword"
-                    name="currentPassword"
-                    required
-                    placeholder="current_password"
-                    title="current_password"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="newPassword" data-i18n="new_password"></label>
-                  <input
-                    type="password"
-                    id="newPassword"
-                    name="newPassword"
-                    required
-                    placeholder="new_password"
-                    title="new_password"
-                  />
-                </div>
-                <div class="form-group">
-                  <label
-                    for="confirmPassword"
-                    data-i18n="confirm_password"
-                  ></label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    required
-                    placeholder="confirm_password"
-                    title="confirm_password"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  class="btn btn-warning"
-                  title="change_password"
-                >
-                  <i class="fas fa-key"></i>
-                  <span data-i18n="change_password"></span>
-                </button>
-              </form>
+          <div class="my-appointments-section">
+            <h3 data-i18n="my_appointments">مواعيدي</h3>
+            <div id="myAppointments" class="appointments-grid">
+              <!-- User appointments will be loaded here -->
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal for appointment details -->
-    <div id="appointmentModal" class="modal">
-      <div class="modal-content">
-        <span class="close">&times;</span>
-        <div id="modalContent">
-          <!-- Modal content will be loaded here -->
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal for admin approval/rejection -->
+    <!-- Admin Modal -->
     <div id="adminModal" class="modal">
       <div class="modal-content">
-        <span class="close">&times;</span>
-        <h3 id="adminModalTitle" data-i18n="update_appointment_status">
-          تحديث حالة الموعد
-        </h3>
-        <form id="adminForm">
-          <input type="hidden" id="appointmentId" name="appointmentId" />
+        <div class="modal-header">
+          <h2 data-i18n="update_appointment_status">تحديث حالة الموعد</h2>
+          <button class="close-btn" onclick="app.closeModals()">&times;</button>
+        </div>
+        <form id="adminForm" class="admin-form">
           <div class="form-group">
-            <label for="statusSelect" data-i18n="status"></label>
-            <select id="statusSelect" name="status" required title="status">
-              <option value="approved" data-i18n="accept">قبول</option>
-              <option value="rejected" data-i18n="reject">رفض</option>
-              <option value="done" data-i18n="complete">مكتمل</option>
-              <option value="missed" data-i18n="missed">فات</option>
+            <label for="statusSelect" data-i18n="status">الحالة</label>
+            <select id="statusSelect" name="status" required>
+              <option value="pending" data-i18n="pending">في الانتظار</option>
+              <option value="approved" data-i18n="approved">مقبول</option>
+              <option value="rejected" data-i18n="rejected">مرفوض</option>
             </select>
           </div>
-          <div class="form-group hidden" id="approvedDateGroup">
-            <label for="approvedDate" data-i18n="approved_date"></label>
-            <input
-              type="date"
-              id="approvedDate"
-              name="approvedDate"
-              placeholder="approved_date"
-              title="approved_date"
-            />
-          </div>
-          <div class="form-group hidden" id="approvedTimeGroup">
-            <label for="approvedTime" data-i18n="approved_time"></label>
-            <input
-              type="time"
-              id="approvedTime"
-              name="approvedTime"
-              placeholder="approved_time"
-              title="approved_time"
-            />
-          </div>
-          <div class="form-group hidden" id="rejectionReasonGroup">
-            <label
-              for="rejectionReason"
-              data-i18n="rejection_reason"
-              class="visually-hidden"
-              >Rejection Reason</label
-            >
-            <textarea
-              id="rejectionReason"
-              name="rejectionReason"
-              rows="3"
-              placeholder="rejection_reason"
-              title="rejection_reason"
-            ></textarea>
-          </div>
           <div class="form-group">
-            <label
-              for="adminNotes"
-              data-i18n="admin_notes"
-              class="visually-hidden"
-              >Admin Notes</label
-            >
+            <label for="adminNotes" data-i18n="admin_notes">ملاحظات الإدارة</label>
             <textarea
               id="adminNotes"
-              name="adminNotes"
+              name="admin_notes"
               rows="3"
               placeholder="admin_notes"
-              title="admin_notes"
+              data-i18n-placeholder="admin_notes_placeholder"
             ></textarea>
           </div>
-          <button type="submit" class="btn btn-primary" title="update_status">
-            <i class="fas fa-sync-alt"></i>
-            <span data-i18n="update_status"></span>
-          </button>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" title="update_status">
+              <i class="fas fa-save"></i>
+              <span data-i18n="update_status">تحديث الحالة</span>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="app.closeModals()" title="cancel">
+              <i class="fas fa-times"></i>
+              <span data-i18n="cancel">إلغاء</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal">
+      <!-- Appointment details will be loaded here -->
+    </div>
+
+    <!-- Load modular JavaScript files -->
+    <script type="module" src="js/config/config.js"></script>
+    <script type="module" src="js/api/apiService.js"></script>
+    <script type="module" src="js/validation/validators.js"></script>
+    <script type="module" src="js/utils/i18n.js"></script>
+    <script type="module" src="js/utils/helpers.js"></script>
+    <script type="module" src="js/utils/sanitize.js"></script>
+    <script type="module" src="js/app.js"></script>
   </body>
 </html>

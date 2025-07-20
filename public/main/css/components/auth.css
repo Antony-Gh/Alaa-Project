@@ -1,0 +1,296 @@
+/* Authentication Components */
+
+/* Import variables */
+@import url('../variables.css');
+
+/* Auth Section */
+.auth-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-4);
+}
+
+.auth-container {
+  background: var(--bg-backdrop);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--card-shadow);
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+}
+
+/* Auth Tabs */
+.auth-tabs {
+  display: flex;
+  background: var(--gray-100);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.auth-tab-btn {
+  flex: 1;
+  padding: var(--space-4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.auth-tab-btn:hover {
+  background: var(--gray-200);
+  color: var(--text-primary);
+}
+
+.auth-tab-btn.active {
+  background: var(--white);
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.auth-tab-btn i {
+  font-size: var(--font-size-lg);
+}
+
+/* Auth Content */
+.auth-content {
+  display: none;
+  padding: var(--space-6);
+}
+
+.auth-content.active {
+  display: block;
+}
+
+/* Auth Form */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-group label {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: var(--input-padding);
+  border: var(--input-border-width) solid var(--border-color);
+  border-radius: var(--input-border-radius);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-normal);
+  background: var(--white);
+  color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Password Validation Indicators */
+.password-strength,
+.password-match {
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-normal);
+}
+
+.password-strength.weak {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--error-color);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.password-strength.medium {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.password-strength.strong {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.password-match.match {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.password-match.no-match {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--error-color);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.password-match.empty {
+  background-color: rgba(158, 158, 158, 0.1);
+  color: var(--text-muted);
+  border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+/* Form Validation Styles */
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+  border-color: var(--border-error);
+  box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
+}
+
+.form-group input.valid,
+.form-group select.valid,
+.form-group textarea.valid {
+  border-color: var(--border-success);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--btn-padding-y) var(--btn-padding-x);
+  border: none;
+  border-radius: var(--btn-border-radius);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  min-height: var(--btn-height);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-danger {
+  background: var(--error-color);
+  color: var(--white);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--error-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-warning {
+  background: var(--warning-color);
+  color: var(--white);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--warning-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background: var(--gray-500);
+  color: var(--white);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--gray-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* RTL/LTR Support for Auth */
+body[dir="rtl"] .auth-tab-btn,
+body[dir="rtl"] .tab-btn {
+  text-align: right;
+}
+
+body[dir="ltr"] .auth-tab-btn,
+body[dir="ltr"] .tab-btn {
+  text-align: left;
+}
+
+body[dir="rtl"] .form-group input,
+body[dir="rtl"] .form-group select,
+body[dir="rtl"] .form-group textarea {
+  text-align: right;
+}
+
+body[dir="ltr"] .form-group input,
+body[dir="ltr"] .form-group select,
+body[dir="ltr"] .form-group textarea {
+  text-align: left;
+}
+
+/* Button and icon positioning */
+body[dir="rtl"] .btn i {
+  margin-left: var(--space-2);
+  margin-right: 0;
+}
+
+body[dir="ltr"] .btn i {
+  margin-right: var(--space-2);
+  margin-left: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .auth-section {
+    padding: var(--space-2);
+  }
+  
+  .auth-container {
+    max-width: 100%;
+  }
+  
+  .auth-content {
+    padding: var(--space-4);
+  }
+  
+  .auth-tab-btn {
+    padding: var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+  
+  .auth-tab-btn i {
+    font-size: var(--font-size-base);
+  }
+} 
