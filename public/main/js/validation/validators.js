@@ -1,4 +1,7 @@
 // Validation module for form validation
+import { CONFIG } from '../config/config.js';
+import { t } from '../utils/i18n.js';
+
 class Validators {
     constructor() {
         this.config = CONFIG.VALIDATION;
@@ -295,10 +298,5 @@ class Validators {
 // Create singleton instance
 const validators = new Validators();
 
-// Export for ES modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = validators;
-} else {
-    // Make available globally for browser
-    window.validators = validators;
-} 
+// Export for ES6 modules
+export { validators }; 

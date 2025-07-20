@@ -77,10 +77,5 @@ const CONFIG = {
     }
 };
 
-// Export for ES modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CONFIG;
-} else {
-    // Make available globally for browser
-    window.CONFIG = CONFIG;
-} 
+// Export for ES6 modules
+export { CONFIG }; 

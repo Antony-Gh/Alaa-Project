@@ -1,4 +1,6 @@
 // API Service for handling all HTTP communications
+import { CONFIG } from '../config/config.js';
+
 class ApiService {
     constructor() {
         this.baseURL = CONFIG.API.BASE_URL;
@@ -204,10 +206,5 @@ class ApiService {
 // Create singleton instance
 const apiService = new ApiService();
 
-// Export for ES modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = apiService;
-} else {
-    // Make available globally for browser
-    window.apiService = apiService;
-} 
+// Export for ES6 modules
+export { apiService }; 

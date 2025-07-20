@@ -1,4 +1,6 @@
 // Internationalization utility
+import { CONFIG } from '../config/config.js';
+
 class I18n {
     constructor() {
         this.currentLanguage = CONFIG.I18N.DEFAULT_LANGUAGE;
@@ -254,11 +256,5 @@ function t(key, params = {}) {
     return i18n.t(key, params);
 }
 
-// Export for ES modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { i18n, t };
-} else {
-    // Make available globally for browser
-    window.i18n = i18n;
-    window.t = t;
-} 
+// Export for ES6 modules
+export { i18n, t }; 

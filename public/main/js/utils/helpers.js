@@ -1,4 +1,6 @@
 // General helper functions
+import { t } from './i18n.js';
+
 class Helpers {
     // Format date for display
     static formatDate(dateString) {
@@ -312,10 +314,5 @@ class Helpers {
     }
 }
 
-// Export for ES modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Helpers;
-} else {
-    // Make available globally for browser
-    window.Helpers = Helpers;
-} 
+// Export for ES6 modules
+export { Helpers }; 
