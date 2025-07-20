@@ -255,5 +255,13 @@
   "error.notfound": "المورد غير موجود",
   "current_password_placeholder": "أدخل كلمة المرور الحالية",
   "new_password_placeholder": "أدخل كلمة المرور الجديدة",
-  "confirm_password_placeholder": "أكد كلمة المرور الجديدة"
+  "confirm_password_placeholder": "أكد كلمة المرور الجديدة",
+  "calendar": "التقويم",
+  "sun": "الأحد",
+  "mon": "الاثنين",
+  "tue": "الثلاثاء",
+  "wed": "الأربعاء",
+  "thu": "الخميس",
+  "fri": "الجمعة",
+  "sat": "السبت"
 }

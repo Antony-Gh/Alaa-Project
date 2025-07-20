@@ -559,6 +559,9 @@ async function initializeApp() {
     // Check authentication status
     await checkAuthStatus();
 
+    // Initialize calendar
+    initializeCalendar();
+
     console.log(t('system.ready'));
   } catch (error) {
     console.error(t('console.error.app_initialization'), error);
@@ -1062,6 +1065,7 @@ async function loadAppointments() {
       const data = result.data || result;
       appointments = Array.isArray(data.appointments) ? data.appointments : [];
       displayMyAppointments();
+      updateCalendarAppointments();
     } else {
       console.error(
         'Failed to load appointments:',
@@ -1069,11 +1073,13 @@ async function loadAppointments() {
       );
       appointments = [];
       displayMyAppointments();
+      updateCalendarAppointments();
     }
   } catch (error) {
     console.error(t('console.error.appointments'), error);
     appointments = [];
     displayMyAppointments();
+    updateCalendarAppointments();
   }
 }
 
@@ -1091,6 +1097,7 @@ async function loadAdminAppointments() {
       const data = result.data || result;
       appointments = Array.isArray(data.appointments) ? data.appointments : [];
       displayAdminAppointments();
+      updateCalendarAppointments();
     } else {
       console.error(
         'Failed to load admin appointments:',
@@ -1098,11 +1105,13 @@ async function loadAdminAppointments() {
       );
       appointments = [];
       displayAdminAppointments();
+      updateCalendarAppointments();
     }
   } catch (error) {
     console.error(t('console.error.admin_appointments'), error);
     appointments = [];
     displayAdminAppointments();
+    updateCalendarAppointments();
   }
 }
 
@@ -2511,4 +2520,145 @@ async function changeUserPassword(userId) {
 function tStatusMessage(key, status) {
   const statusText = t(`${status}_status`);
   return t(key).replace('{status}', statusText);
+}
+
+// Calendar functionality
+const currentDate = new Date();
+let calendarAppointments = [];
+
+function initializeCalendar() {
+  const prevBtn = document.getElementById('prevMonth');
+  const nextBtn = document.getElementById('nextMonth');
+
+  if (prevBtn && nextBtn) {
+    prevBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+  }
+
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const currentMonthEl = document.getElementById('currentMonth');
+  const calendarGrid = document.getElementById('calendarGrid');
+
+  if (!currentMonthEl || !calendarGrid) return;
+
+  // Update month/year display
+  const lang = localStorage.getItem('language') || 'ar';
+  const monthNames =
+    lang === 'en'
+      ? [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ]
+      : [
+          'يناير',
+          'فبراير',
+          'مارس',
+          'أبريل',
+          'مايو',
+          'يونيو',
+          'يوليو',
+          'أغسطس',
+          'سبتمبر',
+          'أكتوبر',
+          'نوفمبر',
+          'ديسمبر',
+        ];
+
+  currentMonthEl.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+  // Clear calendar grid
+  calendarGrid.innerHTML = '';
+
+  // Get first day of month and number of days
+  const firstDay = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+  const lastDay = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    0
+  );
+  const startDate = new Date(firstDay);
+  startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+  // Generate calendar days
+  for (let i = 0; i < 42; i++) {
+    const dayDate = new Date(startDate);
+    dayDate.setDate(startDate.getDate() + i);
+
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+
+    // Check if day is from other month
+    if (dayDate.getMonth() !== currentDate.getMonth()) {
+      dayElement.classList.add('other-month');
+    }
+
+    // Check if day is today
+    const today = new Date();
+    if (dayDate.toDateString() === today.toDateString()) {
+      dayElement.classList.add('today');
+    }
+
+    // Day number
+    const dayNumber = document.createElement('div');
+    dayNumber.className = 'calendar-day-number';
+    dayNumber.textContent = dayDate.getDate();
+    dayElement.appendChild(dayNumber);
+
+    // Events container
+    const eventsContainer = document.createElement('div');
+    eventsContainer.className = 'calendar-events';
+
+    // Get appointments for this day
+    const dayAppointments = getAppointmentsForDate(dayDate);
+    dayAppointments.forEach(appointment => {
+      const eventElement = document.createElement('div');
+      eventElement.className = `calendar-event ${appointment.status}`;
+      eventElement.textContent = appointment.title;
+      eventElement.title = `${appointment.title} - ${appointment.employee_name}`;
+      eventElement.addEventListener('click', () =>
+        viewAppointmentDetails(appointment.id)
+      );
+      eventsContainer.appendChild(eventElement);
+    });
+
+    dayElement.appendChild(eventsContainer);
+    calendarGrid.appendChild(dayElement);
+  }
+}
+
+function getAppointmentsForDate(date) {
+  const dateString = date.toISOString().slice(0, 10);
+  return calendarAppointments.filter(
+    appointment => appointment.requested_date === dateString
+  );
+}
+
+function updateCalendarAppointments() {
+  // Use the global appointments array
+  calendarAppointments = Array.isArray(appointments) ? appointments : [];
+  renderCalendar();
 }

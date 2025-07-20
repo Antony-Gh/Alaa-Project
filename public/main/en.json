@@ -255,5 +255,13 @@
   "error.notfound": "Resource not found",
   "current_password_placeholder": "Enter your current password",
   "new_password_placeholder": "Enter your new password",
-  "confirm_password_placeholder": "Confirm your new password"
+  "confirm_password_placeholder": "Confirm your new password",
+  "calendar": "Calendar",
+  "sun": "Sun",
+  "mon": "Mon",
+  "tue": "Tue",
+  "wed": "Wed",
+  "thu": "Thu",
+  "fri": "Fri",
+  "sat": "Sat"
 } 

@@ -556,8 +556,42 @@
             </div>
           </div>
 
+          <!-- Calendar Section -->
+          <div class="calendar-section">
+            <div class="calendar-header">
+              <h3>
+                <i class="fas fa-calendar-alt"></i>
+                <span data-i18n="calendar">التقويم</span>
+              </h3>
+              <div class="calendar-navigation">
+                <button id="prevMonth" class="btn btn-icon" title="Previous Month">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <h4 id="currentMonth">July 2025</h4>
+                <button id="nextMonth" class="btn btn-icon" title="Next Month">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="calendar-container">
+              <div class="calendar-weekdays">
+                <div class="weekday" data-i18n="sun">الأحد</div>
+                <div class="weekday" data-i18n="mon">الاثنين</div>
+                <div class="weekday" data-i18n="tue">الثلاثاء</div>
+                <div class="weekday" data-i18n="wed">الأربعاء</div>
+                <div class="weekday" data-i18n="thu">الخميس</div>
+                <div class="weekday" data-i18n="fri">الجمعة</div>
+                <div class="weekday" data-i18n="sat">السبت</div>
+              </div>
+              <div id="calendarGrid" class="calendar-grid">
+                <!-- Calendar days will be generated here -->
+              </div>
+            </div>
+          </div>
+
           <div class="recent-appointments">
-            <h3>
+            <h3 class="mb-1">
               <i class="fas fa-history"></i>
               <span data-i18n="recent_appointments"></span>
             </h3>
