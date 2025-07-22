@@ -147,9 +147,17 @@ app.use('/api/notifications', apiLimiter, checkFeatureAccess('notifications'), n
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/license', apiLimiter, licenseRoutes);
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../src/public')));
+
 // Serve main application
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/main/index.html'));
+  res.redirect('/main/index.html');
+});
+
+// Redirect /public to /main as well
+app.get('/public', (req, res) => {
+  res.redirect('/main/index.html');
 });
 
 // API Documentation
@@ -210,7 +218,7 @@ app.use('*', (req, res, next) => {
     next(error);
   } else {
     // Web page 404 response
-    res.status(404).sendFile(path.join(__dirname, '../public/main/404.html'));
+    res.status(404).sendFile(path.join(__dirname, '../src/public/main/404.html'));
   }
 });
 
@@ -230,6 +238,7 @@ const initializeApp = async () => {
     const PORT = config.port || 5000;
     app.listen(PORT, () => {
       logger.info(`✅ Server running in ${config.env} mode on port ${PORT}`);
+      console.log(`Visit: http://localhost:${PORT}`);
     });
   } catch (error) {
     logger.error('❌ Failed to initialize app:', error);

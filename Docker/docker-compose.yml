@@ -1,4 +1,5 @@
-version: '3.8'
+# Compose specification
+# See: https://docs.docker.com/compose/compose-file/
 
 services:
   app:
@@ -37,8 +38,7 @@ services:
       - app_data:/app/data:rw
       - app_logs:/app/logs:rw
       - app_uploads:/app/uploads:rw
-      # Temporary files volume for app temporary files
-      - app_tmp:/tmp:rw
+      # Remove the duplicate tmp volume
     tmpfs:
       - /tmp:size=64M,mode=1777
     depends_on:

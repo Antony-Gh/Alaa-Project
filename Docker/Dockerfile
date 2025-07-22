@@ -17,29 +17,22 @@ COPY . .
 RUN npm install -g javascript-obfuscator uglify-js terser
 RUN mkdir -p /app/dist
 
-# Obfuscate and minify backend code
+# Obfuscate and minify backend code - use only supported options
 RUN for file in $(find ./src -type f -name "*.js" -not -path "*/node_modules/*"); do \
     echo "Processing $file..."; \
     javascript-obfuscator $file --output /app/dist/${file#./} \
     --compact true \
     --control-flow-flattening true \
-    --control-flow-flattening-threshold 0.7 \
     --dead-code-injection true \
-    --dead-code-injection-threshold 0.4 \
     --debug-protection true \
-    --debug-protection-interval true \
     --disable-console-output true \
     --identifier-names-generator hexadecimal \
     --log false \
     --rename-globals true \
-    --rotate-string-array true \
     --self-defending true \
     --shuffle-string-array true \
     --split-strings true \
-    --split-strings-chunk-length 5 \
-    --string-array-encoding rc4 \
-    --string-array-threshold 0.8 \
-    --string-array-wrappers-count 5 \
+    --string-array true \
     --transform-object-keys true \
     --unicode-escape-sequence true; \
     done

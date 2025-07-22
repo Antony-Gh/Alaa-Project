@@ -1,0 +1,14 @@
+{
+  "key": "a3185463733aba72bfb60c7bf29881f37890a3ae21c897f5",
+  "createdAt": "2025-07-22T07:21:57.866Z",
+  "expiresAt": "2025-08-05T07:21:57.866Z",
+  "type": "TRIAL",
+  "features": {
+    "analytics": true,
+    "userManagement": true,
+    "advancedReporting": false,
+    "notifications": true,
+    "apiAccess": true,
+    "fullAccess": false
+  }
+}
