@@ -2,21 +2,47 @@ version: '3.8'
 
 services:
   app:
-    build: .
-    ports:
-      - '5000:5000'
+    build: 
+      context: .
+      # Use BuildKit for better security
+      dockerfile: Dockerfile
+    image: scheduling-app:${VERSION:-latest}
+    container_name: scheduling-app
+    restart: unless-stopped
+    # Drop additional capabilities for security
+    cap_drop:
+      - ALL
+    # Add only needed capabilities
+    cap_add:
+      - NET_BIND_SERVICE
+    # Set resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    read_only: true  # Make filesystem read-only
+    security_opt:
+      - no-new-privileges:true  # Prevent privilege escalation
+    # Only expose what's needed internally, not to host directly
+    expose:
+      - '5000'
     environment:
       - NODE_ENV=production
       - DB_PATH=/app/data/scheduling.db
       - CACHE_TYPE=redis
       - REDIS_URL=redis://redis:6379
+      - TZ=UTC
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./uploads:/app/uploads
+      - app_data:/app/data:rw
+      - app_logs:/app/logs:rw
+      - app_uploads:/app/uploads:rw
+      # Temporary files volume for app temporary files
+      - app_tmp:/tmp:rw
+    tmpfs:
+      - /tmp:size=64M,mode=1777
     depends_on:
       - redis
-    restart: unless-stopped
     healthcheck:
       test:
         [
@@ -28,31 +54,105 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
-    ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
+    container_name: scheduling-redis
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-changeme}"]
     restart: unless-stopped
+    expose:
+      - '6379'
+    # Drop all capabilities for security
+    cap_drop:
+      - ALL
+    read_only: false
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    volumes:
+      - redis_data:/data:rw
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   nginx:
     image: nginx:alpine
+    container_name: scheduling-nginx
+    restart: unless-stopped
     ports:
       - '80:80'
       - '443:443'
+    # Drop all capabilities for security except what's needed
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    # Increase security with read-only mode
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      # Create a writable volume for nginx temp files
+      - nginx_cache:/var/cache/nginx:rw
+      - nginx_run:/var/run:rw
+      - nginx_tmp:/tmp:rw
     depends_on:
       - app
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   redis_data:
+    driver: local
+  app_data:
+    driver: local
+  app_logs:
+    driver: local
+  app_uploads:
+    driver: local
+  app_tmp:
+    driver: local
+  nginx_cache:
+    driver: local
+  nginx_run:
+    driver: local
+  nginx_tmp:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

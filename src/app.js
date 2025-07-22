@@ -13,6 +13,7 @@ const logger = require('./utils/logger');
 const { globalErrorHandler } = require('./utils/errorHandler');
 const { eventBus, EVENTS } = require('./core/events/eventBus');
 const metricsCollector = require('./core/monitoring/metricsCollector');
+const licenseManager = require('./core/licensing/licenseManager');
 
 // Import security middleware
 const {
@@ -28,6 +29,13 @@ const {
   csrfProtection,
 } = require('./middleware/security');
 
+// Import license middleware
+const { 
+  checkLicense, 
+  addLicenseInfoToResponse, 
+  checkFeatureAccess 
+} = require('./middleware/licenseCheck');
+
 // Import services
 const cacheService = require('./services/cacheService');
 
@@ -40,6 +48,7 @@ const monitoringRoutes = require('./routes/monitoringRoutes');
 const rbacRoutes = require('./routes/rbacRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const licenseRoutes = require('./routes/licenseRoutes');
 
 // Initialize Express app
 const app = express();
@@ -104,14 +113,8 @@ app.use(i18nextMiddleware.handle(i18next));
 // CSRF protection for non-API routes
 app.use(csrfProtection);
 
-// Static files with cache headers
-// app.use(
-//   express.static(path.join(__dirname, '../src/public'), {
-//     maxAge: '1m', // Cache for 1 day
-//     etag: true,
-//     lastModified: true,
-//   })
-// );
+// License middleware for API routes
+app.use('/api', checkLicense, addLicenseInfoToResponse);
 
 // Static files with no caching (for development)
 app.use(
@@ -138,10 +141,11 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/appointments', apiLimiter, appointmentRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
 app.use('/api/user-management', apiLimiter, userManagementRoutes);
-app.use('/api/rbac', apiLimiter, rbacRoutes);
-app.use('/api/analytics', apiLimiter, analyticsRoutes);
-app.use('/api/notifications', apiLimiter, notificationRoutes);
+app.use('/api/rbac', apiLimiter, checkFeatureAccess('userManagement'), rbacRoutes);
+app.use('/api/analytics', apiLimiter, checkFeatureAccess('analytics'), analyticsRoutes);
+app.use('/api/notifications', apiLimiter, checkFeatureAccess('notifications'), notificationRoutes);
 app.use('/api/monitoring', monitoringRoutes);
+app.use('/api/license', apiLimiter, licenseRoutes);
 
 // Serve main application
 app.get('/', (req, res) => {
