@@ -1,385 +1,234 @@
 const express = require('express');
-const path = require('path');
-const helmet = require('helmet');
 const cors = require('cors');
-const bodyParser = require('body-parser');
+const path = require('path');
 const compression = require('compression');
-// const rateLimit = require('express-rate-limit');
-const slowDown = require('express-slow-down');
-const xss = require('xss-clean');
-const hpp = require('hpp');
-const expressSanitizer = require('express-sanitizer');
-const expressRequestId = require('express-request-id');
-// Status monitor disabled due to event-loop-stats compatibility issues
-// let statusMonitor;
-// try {
-//   statusMonitor = require('express-status-monitor');
-// } catch (error) {
-//   statusMonitor = null;
-// }
-const http = require('http');
-
-// i18n setup
 const i18next = require('i18next');
-const i18nextFsBackend = require('i18next-fs-backend');
 const i18nextMiddleware = require('i18next-http-middleware');
 
-// Import configuration and utilities
+// Import configurations and utilities
 const config = require('./config/config');
-const logger = require('./utils/logger');
 const dbManager = require('./utils/database');
-const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
-const { generalLimiter } = require('./middleware/rateLimiter');
+const logger = require('./utils/logger');
+const { globalErrorHandler } = require('./utils/errorHandler');
+const { eventBus, EVENTS } = require('./core/events/eventBus');
+const metricsCollector = require('./core/monitoring/metricsCollector');
+
+// Import security middleware
+const {
+  generalLimiter,
+  authLimiter,
+  apiLimiter,
+  sanitizeInput,
+  preventParameterPollution,
+  securityHeaders,
+  xssClean,
+  xssProtection,
+  corsOptions,
+  csrfProtection,
+} = require('./middleware/security');
 
 // Import services
-// const emailService = require('./services/emailService');
-const realtimeService = require('./services/realtimeService');
-const simpleMonitor = require('./utils/simpleMonitor');
+const cacheService = require('./services/cacheService');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
 const userManagementRoutes = require('./routes/userManagementRoutes');
+const monitoringRoutes = require('./routes/monitoringRoutes');
 const rbacRoutes = require('./routes/rbacRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
+// Initialize Express app
 const app = express();
-const server = http.createServer(app);
 
-// i18n initialization
-const supportedLngs = ['en', 'ar'];
-i18next
-  .use(i18nextFsBackend)
-  .use(i18nextMiddleware.LanguageDetector)
-  .init({
-    fallbackLng: 'ar',
-    preload: supportedLngs,
-    supportedLngs,
-    backend: {
-      loadPath: path.join(__dirname, 'locales/{{lng}}/translation.json'),
-    },
-    detection: {
-      order: ['querystring', 'header', 'cookie'],
-      lookupQuerystring: 'lang',
-      lookupHeader: 'accept-language',
-      lookupCookie: 'lang',
-      caches: false,
-    },
-    interpolation: { escapeValue: false },
-    debug: false,
-  });
+// Trust proxy (for rate limiting behind reverse proxy)
+app.set('trust proxy', 1);
 
-// i18n middleware
+// Compression middleware (must be at the top for best performance)
 app.use(
-  i18nextMiddleware.handle(i18next, {
-    removeLngFromUrl: false,
+  compression({
+    level: 6, // Balance between compression and CPU usage
+    threshold: 1024, // Only compress responses larger than 1KB
   })
 );
-
-// Make i18n available in all requests (for controllers)
-app.use((req, res, next) => {
-  req.language = req.language || req.lng || 'ar';
-  req.t = req.t || (key => i18next.t(key, { lng: req.language }));
-  next();
-});
-
-// Initialize real-time service
-realtimeService.initialize(server);
 
 // Security middleware
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          'https://fonts.googleapis.com',
-          'https://cdnjs.cloudflare.com',
-        ],
-        fontSrc: [
-          "'self'",
-          'https://fonts.gstatic.com',
-          'https://cdnjs.cloudflare.com',
-        ],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.socket.io'],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'", 'ws:', 'wss:'],
-        frameSrc: ["'none'"],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
-    crossOriginEmbedderPolicy: false,
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-      preload: true,
-    },
-  })
-);
-
-// Explicitly set X-Frame-Options header
-app.use(helmet.frameguard({ action: 'deny' }));
-
-// CORS configuration
-app.use(
-  cors({
-    origin: config.cors.origin,
-    credentials: config.cors.credentials,
-    methods: config.cors.methods,
-    allowedHeaders: config.cors.allowedHeaders,
-  })
-);
-
-// Compression middleware
-app.use(compression());
+app.use(securityHeaders); // Apply helmet security headers
+app.use(cors(corsOptions)); // Apply CORS with specific options
+app.use(generalLimiter); // Rate limiting for all routes
+app.use(xssClean()); // XSS sanitization
+app.use(xssProtection); // Additional XSS protection
+app.use(sanitizeInput); // Input sanitization
+app.use(preventParameterPollution); // Prevent parameter pollution
 
 // Body parsing middleware
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-
-// Security middleware
-app.use(xss());
-app.use(hpp());
-app.use(expressSanitizer());
-
-// Request ID middleware
-app.use(expressRequestId());
-
-// Status monitoring replaced with simple monitor
-if (config.nodeEnv === 'development') {
-  logger.info(
-    '✅ Simple monitoring system enabled (replaces express-status-monitor)'
-  );
-}
-
-// Rate limiting
-app.use(generalLimiter);
-
-// Slow down middleware for brute force protection
-const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  delayAfter: 100, // Allow 100 requests per 15 minutes, then...
-  delayMs: (used, req) => {
-    // Begin adding 500ms of delay per request above 100
-    const delayAfter = req.slowDown.limit;
-    return (used - delayAfter) * 500;
-  },
-});
-app.use(speedLimiter);
-
-// Static files
-app.use('/main', express.static(path.join(__dirname, '../public/main')));
-app.get('/', (req, res) => {
-  res.redirect('/main');
-});
-
-// Request logging with pretty print
-app.use((req, res, next) => {
-  const startTime = Date.now();
-
-  // Log request details
-  logger.info('🌐 Incoming Request', {
-    method: req.method,
-    url: req.url,
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    requestId: req.id,
-    headers: {
-      'content-type': req.get('Content-Type'),
-      authorization: req.get('Authorization') ? 'Bearer [HIDDEN]' : 'None',
-      accept: req.get('Accept'),
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req, res, buf) => {
+      // Store raw body for CSRF validation or webhook signatures
+      req.rawBody = buf.toString();
     },
-    body: req.method !== 'GET' ? req.body : undefined,
-  });
+  })
+);
 
-  // Log response details
-  res.on('finish', () => {
-    const duration = Date.now() - startTime;
-    const statusColor =
-      res.statusCode >= 400 ? '🔴' : res.statusCode >= 300 ? '🟡' : '🟢';
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: '10mb',
+  })
+);
 
-    // Record request in simple monitor
-    simpleMonitor.recordRequest(duration, res.statusCode >= 400);
+// Initialize i18n middleware
+const i18nConfig = {
+  debug: process.env.NODE_ENV === 'development',
+  fallbackLng: 'en',
+  preload: ['en', 'ar'],
+  ns: ['translation'],
+  defaultNS: 'translation',
+  backend: {
+    loadPath: path.join(__dirname, 'locales/{{lng}}/{{ns}}.json'),
+  },
+};
 
-    logger.info(`${statusColor} Request Completed`, {
-      method: req.method,
-      url: req.url,
-      statusCode: res.statusCode,
-      duration: `${duration}ms`,
-      contentLength: res.get('Content-Length') || '0',
-      requestId: req.id,
-    });
-  });
+i18next.use(i18nextMiddleware.LanguageDetector).init(i18nConfig);
 
-  next();
-});
+app.use(i18nextMiddleware.handle(i18next));
+
+// CSRF protection for non-API routes
+app.use(csrfProtection);
+
+// Static files with cache headers
+app.use(
+  express.static(path.join(__dirname, '../public'), {
+    maxAge: '1d', // Cache for 1 day
+    etag: true,
+    lastModified: true,
+  })
+);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Server is healthy',
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    version: config.features.system_version || '2.0.0',
-    environment: config.nodeEnv,
     uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    realtime: {
-      enabled: config.realtime.enabled,
-      connectedUsers: realtimeService.getConnectedUsersCount(),
-    },
-    email: {
-      enabled: config.email.enabled,
-    },
+    environment: config.env,
+    version: process.env.npm_package_version || '2.0.0',
   });
 });
 
-// Simple monitoring endpoint (replaces express-status-monitor)
-app.get('/api/monitor', (req, res) => {
-  res.json({
-    success: true,
-    data: simpleMonitor.getFormattedMetrics(),
-  });
+// API routes
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/appointments', apiLimiter, appointmentRoutes);
+app.use('/api/users', apiLimiter, userRoutes);
+app.use('/api/user-management', apiLimiter, userManagementRoutes);
+app.use('/api/rbac', apiLimiter, rbacRoutes);
+app.use('/api/analytics', apiLimiter, analyticsRoutes);
+app.use('/api/notifications', apiLimiter, notificationRoutes);
+app.use('/api/monitoring', monitoringRoutes);
+
+// Serve main application
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/main/index.html'));
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/user-management', userManagementRoutes);
-app.use('/api/rbac', rbacRoutes);
+// API Documentation
+if (process.env.NODE_ENV !== 'production') {
+  const swaggerUi = require('swagger-ui-express');
+  const swaggerDocument = require('../public/api-docs/swagger.json');
 
-// Real-time endpoint
-app.get('/api/realtime/status', (req, res) => {
-  res.json({
-    enabled: config.realtime.enabled,
-    connectedUsers: realtimeService.getConnectedUsersCount(),
-    usersByRole: {
-      admin: realtimeService.getConnectedUsersByRole('admin').length,
-      employee: realtimeService.getConnectedUsersByRole('employee').length,
-    },
-  });
-});
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  logger.info('API documentation available at /api-docs');
+}
 
 // 404 handler
-app.use(notFoundHandler);
-
-// Error handler (must be last)
-app.use(errorHandler);
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('🛑 SIGTERM received, shutting down gracefully', {
-    signal: 'SIGTERM',
-    timestamp: new Date().toISOString(),
-  });
-  await dbManager.close();
-  logger.info('✅ Database connection closed successfully');
-  process.exit(0);
+app.use('*', (req, res, next) => {
+  if (req.originalUrl.startsWith('/api/')) {
+    // API 404 response
+    const error = new Error(
+      req.t ? req.t('error.route_not_found') : 'Route not found'
+    );
+    error.statusCode = 404;
+    next(error);
+  } else {
+    // Web page 404 response
+    res.status(404).sendFile(path.join(__dirname, '../public/main/404.html'));
+  }
 });
 
-process.on('SIGINT', async () => {
-  logger.info('🛑 SIGINT received, shutting down gracefully', {
-    signal: 'SIGINT',
-    timestamp: new Date().toISOString(),
-  });
-  await dbManager.close();
-  logger.info('✅ Database connection closed successfully');
-  process.exit(0);
-});
+// Global error handler
+app.use(globalErrorHandler);
 
-// Unhandled promise rejections
-process.on('unhandledRejection', err => {
-  logger.error('💥 Unhandled Promise Rejection', {
-    error: err.message,
-    stack: err.stack,
-    timestamp: new Date().toISOString(),
-  });
-  process.exit(1);
-});
-
-// Uncaught exceptions
-process.on('uncaughtException', err => {
-  logger.error('💥 Uncaught Exception', {
-    error: err.message,
-    stack: err.stack,
-    timestamp: new Date().toISOString(),
-  });
-  process.exit(1);
-});
-
-// Initialize database and start server
-const startServer = async () => {
+// Database initialization
+const initializeApp = async () => {
   try {
     // Initialize database
-    logger.info('🔧 Initializing database...');
     await dbManager.initialize();
-    logger.info('✅ Database initialized successfully');
 
-    // Start server
-    server.listen(config.port, () => {
-      logger.info('🚀 Server Started Successfully', {
-        port: config.port,
-        url: `http://localhost:${config.port}/`,
-        environment: config.nodeEnv,
-        timestamp: new Date().toISOString(),
-      });
+    // Additional startup tasks
+    eventBus.emit(EVENTS.APP_STARTED);
 
-      // Start simple monitoring
-      simpleMonitor.startPeriodicLogging(300000); // Log metrics every 5 minutes
-
-      logger.info('📋 System Information', {
-        service: 'Advanced Employee Scheduling System',
-        version: '2.0.0',
-        language: 'نظام حجز المواعيد المتقدم جاهز للاستخدام',
-        features: [
-          'Advanced User Authentication & Authorization',
-          'Real-time Notifications & Live Updates',
-          'Email Notifications & Reminders',
-          'Recurring Appointments',
-          'Advanced Search & Filtering',
-          'Comprehensive Analytics & Reporting',
-          'Enhanced Security & Rate Limiting',
-          'File Upload & Attachments',
-          'Calendar Integration',
-          'Mobile Responsive Design',
-          'Dark Mode & Accessibility',
-          'Audit Logging & Monitoring',
-        ],
-      });
-
-      logger.info('🔧 Enabled Features', {
-        emailNotifications: config.notifications.email.enabled,
-        realtimeNotifications: config.realtime.enabled,
-        recurringAppointments: config.features.recurringAppointments,
-        advancedSearch: config.features.advancedSearch,
-        calendarIntegration: config.features.calendarIntegration,
-        darkMode: config.features.darkMode,
-        accessibility: config.features.accessibility,
-        analytics: config.analytics.enabled,
-        twoFactorAuth: config.security.twoFactor.enabled,
-      });
+    // Start the server
+    const PORT = config.port || 5000;
+    app.listen(PORT, () => {
+      logger.info(`✅ Server running in ${config.env} mode on port ${PORT}`);
     });
   } catch (error) {
-    logger.error('❌ Failed to start server', {
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString(),
-    });
+    logger.error('❌ Failed to initialize app:', error);
     process.exit(1);
   }
 };
 
-// Start the server
-startServer();
+// Graceful shutdown
+const shutdownGracefully = async signal => {
+  logger.info(`${signal} received, shutting down gracefully`);
 
-module.exports = { app, server };
+  // Emit shutdown event for cleanup tasks
+  eventBus.emit(EVENTS.APP_SHUTDOWN);
+
+  try {
+    // Close database connection
+    await dbManager.close();
+
+    // Close cache connection
+    await cacheService.close();
+
+    // Allow time for cleanup operations
+    setTimeout(() => {
+      logger.info('👋 Server shutdown complete');
+      process.exit(0);
+    }, 1000);
+  } catch (error) {
+    logger.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => shutdownGracefully('SIGTERM'));
+process.on('SIGINT', () => shutdownGracefully('SIGINT'));
+
+// Unhandled promise rejections
+process.on('unhandledRejection', err => {
+  logger.error('Unhandled Promise Rejection:', err);
+  // Don't exit in production, just log the error
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
+});
+
+// Uncaught exceptions
+process.on('uncaughtException', err => {
+  logger.error('Uncaught Exception:', err);
+  // Always exit on uncaught exceptions
+  process.exit(1);
+});
+
+// Initialize the application
+if (require.main === module) {
+  initializeApp();
+}
+
+module.exports = app;

@@ -584,7 +584,7 @@ function setupEventListeners() {
 
   // Tab switching
   tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    btn.addEventListener('click', () => switchTab(btn.dataset.tabName));
   });
 
   // Form submissions
@@ -635,6 +635,111 @@ function setupEventListeners() {
 
   // Setup user management functionality
   setupUserManagement();
+
+  // Calendar click events - only add if calendar elements exist
+  const calendarContainer = document.querySelector('.calendar-section');
+  if (calendarContainer) {
+    calendarContainer.addEventListener('click', e => {
+      const calendarDay = e.target.closest('.calendar-day');
+      if (calendarDay && !e.target.closest('.calendar-event')) {
+        // Get the day number from the calendar day
+        const dayNumber = calendarDay.querySelector('.calendar-day-number');
+        if (dayNumber) {
+          const dayDate = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            parseInt(dayNumber.textContent)
+          );
+          const appointments = getAppointmentsForDate(dayDate);
+
+          handleCalendarDayClick(dayDate, appointments);
+        }
+      }
+    });
+  }
+
+  // Mini calendar click events
+  const miniCalendarContainer = document.querySelector('.mini-calendar');
+  if (miniCalendarContainer) {
+    miniCalendarContainer.addEventListener('click', e => {
+      const miniCalendarDay = e.target.closest('.mini-calendar__day');
+      if (miniCalendarDay) {
+        // Get the day number from mini calendar
+        const dayNumber = parseInt(miniCalendarDay.textContent);
+        if (!isNaN(dayNumber)) {
+          // Determine the month from mini calendar current date
+          const miniCalendarDate = document.getElementById('miniCalendarDate');
+          if (miniCalendarDate) {
+            const dateText = miniCalendarDate.textContent;
+            const lang = localStorage.getItem('language') || 'ar';
+            const monthNames =
+              lang === 'en'
+                ? [
+                    'January',
+                    'February',
+                    'March',
+                    'April',
+                    'May',
+                    'June',
+                    'July',
+                    'August',
+                    'September',
+                    'October',
+                    'November',
+                    'December',
+                  ]
+                : [
+                    'يناير',
+                    'فبراير',
+                    'مارس',
+                    'أبريل',
+                    'مايو',
+                    'يونيو',
+                    'يوليو',
+                    'أغسطس',
+                    'سبتمبر',
+                    'أكتوبر',
+                    'نوفمبر',
+                    'ديسمبر',
+                  ];
+
+            const currentYear = new Date().getFullYear();
+            let monthIndex = -1;
+
+            for (let i = 0; i < monthNames.length; i++) {
+              if (dateText.includes(monthNames[i])) {
+                monthIndex = i;
+                break;
+              }
+            }
+
+            if (monthIndex !== -1) {
+              const dayDate = new Date(currentYear, monthIndex, dayNumber);
+              const appointments = getAppointmentsForDate(dayDate);
+
+              if (appointments.length > 0) {
+                // Show appointments modal with option to add new appointment
+                showAppointmentsList(dayDate, appointments);
+              } else {
+                // No appointments - go directly to new appointment tab with selected date
+                goToNewAppointmentWithDate(dayDate);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Today button click event - only add if button exists
+  const todayBtn = document.getElementById('todayBtn');
+  if (todayBtn) {
+    todayBtn.addEventListener('click', () => {
+      currentDate = new Date();
+      renderCalendar();
+      renderMiniCalendar();
+    });
+  }
 }
 
 // Authentication functions
@@ -1065,6 +1170,9 @@ async function loadAppointments() {
       const data = result.data || result;
       appointments = Array.isArray(data.appointments) ? data.appointments : [];
       displayMyAppointments();
+      if (currentUser.role === 'admin' || currentUser.role === 'manager') {
+        displayAdminAppointments();
+      }
       updateCalendarAppointments();
     } else {
       console.error(
@@ -1073,44 +1181,18 @@ async function loadAppointments() {
       );
       appointments = [];
       displayMyAppointments();
+      if (currentUser.role === 'admin' || currentUser.role === 'manager') {
+        displayAdminAppointments();
+      }
       updateCalendarAppointments();
     }
   } catch (error) {
     console.error(t('console.error.appointments'), error);
     appointments = [];
     displayMyAppointments();
-    updateCalendarAppointments();
-  }
-}
-
-async function loadAdminAppointments() {
-  try {
-    const response = await fetch('/api/appointments', {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
-    const result = await response.json();
-
-    if (response.ok) {
-      // Ensure appointments is always an array
-      const data = result.data || result;
-      appointments = Array.isArray(data.appointments) ? data.appointments : [];
+    if (currentUser.role === 'admin' || currentUser.role === 'manager') {
       displayAdminAppointments();
-      updateCalendarAppointments();
-    } else {
-      console.error(
-        'Failed to load admin appointments:',
-        result.message || 'Unknown error'
-      );
-      appointments = [];
-      displayAdminAppointments();
-      updateCalendarAppointments();
     }
-  } catch (error) {
-    console.error(t('console.error.admin_appointments'), error);
-    appointments = [];
-    displayAdminAppointments();
     updateCalendarAppointments();
   }
 }
@@ -1296,7 +1378,7 @@ async function handleAdminFormSubmit(e) {
     if (response.ok) {
       showMessage('admin_form_update_success', 'success');
       closeModals();
-      await loadAdminAppointments();
+      await loadAppointments();
       await loadDashboardStats();
     } else {
       showMessage(result.message || 'admin_form_update_failed', 'error');
@@ -1537,15 +1619,25 @@ function switchTab(tabName) {
   tabContents.forEach(content => content.classList.remove('active'));
 
   // Add active class to selected tab and content
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-  document.getElementById(`${tabName}-tab`).classList.add('active');
+  const selectedTab = document.querySelector(`[data-tab-name="${tabName}"]`);
+  const selectedContent = document.querySelector(
+    `[data-tab-content="${tabName}"]`
+  );
+
+  if (selectedTab) {
+    selectedTab.classList.add('active');
+  }
+
+  if (selectedContent) {
+    selectedContent.classList.add('active');
+  }
 
   // Scroll to top when switching tabs
   window.scrollTo(0, 0);
 
   // Load specific data based on tab
   if (tabName === 'admin') {
-    loadAdminAppointments();
+    loadAppointments();
   } else if (tabName === 'dashboard') {
     loadDashboardStats();
   }
@@ -1594,7 +1686,7 @@ function openAdminModal(appointmentId) {
   document.getElementById('appointmentId').value = appointmentId;
   document.getElementById('statusSelect').value = appointment.status;
   document.getElementById('adminNotes').value = appointment.admin_notes || '';
-  document.getElementById('rejectionReason').value =
+  document.getElementById('rejection_reason').value =
     appointment.rejection_reason || '';
 
   handleStatusChange(); // Show/hide relevant fields
@@ -1673,6 +1765,34 @@ function viewAppointmentDetails(appointmentId) {
                   appointment.created_at
                 )}</span>
             </div>
+            ${
+              (appointment.status === 'rejected' ||
+                appointment.status === 'approved') &&
+              appointment.admin_notes
+                ? `
+                <div class="detail-item">
+                    <i class="fas fa-sticky-note"></i>
+                    <span class="detail-label">${t('admin_notes')}:</span>
+                    <span class="detail-value">${escapeHtml(
+                      appointment.admin_notes
+                    )}</span>
+                </div>
+            `
+                : ''
+            }
+            ${
+              appointment.status === 'rejected' && appointment.rejection_reason
+                ? `
+                <div class="detail-item">
+                    <i class="fas fa-times-circle"></i>
+                    <span class="detail-label">${t('rejection_reason')}:</span>
+                    <span class="detail-value">${escapeHtml(
+                      appointment.rejection_reason
+                    )}</span>
+                </div>
+            `
+                : ''
+            }
         </div>
     `;
 
@@ -1688,21 +1808,23 @@ function closeModals() {
 // Admin form status change handler
 function handleStatusChange() {
   const status = document.getElementById('statusSelect').value;
-  const approvedDateGroup = document.getElementById('approvedDateGroup');
-  const approvedTimeGroup = document.getElementById('approvedTimeGroup');
-  const rejectionReasonGroup = document.getElementById('rejectionReasonGroup');
+  const approved_dateGroup = document.getElementById('approved_dateGroup');
+  const approved_timeGroup = document.getElementById('approved_timeGroup');
+  const rejection_reasonGroup = document.getElementById(
+    'rejection_reasonGroup'
+  );
 
   // Hide all conditional fields
-  approvedDateGroup.classList.add('hidden');
-  approvedTimeGroup.classList.add('hidden');
-  rejectionReasonGroup.classList.add('hidden');
+  approved_dateGroup.classList.add('hidden');
+  approved_timeGroup.classList.add('hidden');
+  rejection_reasonGroup.classList.add('hidden');
 
   // Show relevant fields based on status
   if (status === 'approved') {
-    approvedDateGroup.classList.remove('hidden');
-    approvedTimeGroup.classList.remove('hidden');
+    approved_dateGroup.classList.remove('hidden');
+    approved_timeGroup.classList.remove('hidden');
   } else if (status === 'rejected') {
-    rejectionReasonGroup.classList.remove('hidden');
+    rejection_reasonGroup.classList.remove('hidden');
   }
 }
 
@@ -1933,7 +2055,12 @@ function showMessage(message, type = 'info') {
   const closeBtn = messageDiv.querySelector('.close-btn');
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
-      messageDiv.remove();
+      messageDiv.classList.add('hide');
+      setTimeout(() => {
+        if (messageDiv.parentElement) {
+          messageDiv.remove();
+        }
+      }, 400);
     });
   }
 
@@ -1944,7 +2071,12 @@ function showMessage(message, type = 'info') {
   const autoRemoveTime = type === 'error' ? 8000 : 5000;
   setTimeout(() => {
     if (messageDiv.parentElement) {
-      messageDiv.remove();
+      messageDiv.classList.add('hide');
+      setTimeout(() => {
+        if (messageDiv.parentElement) {
+          messageDiv.remove();
+        }
+      }, 400);
     }
   }, autoRemoveTime);
 }
@@ -2523,26 +2655,166 @@ function tStatusMessage(key, status) {
 }
 
 // Calendar functionality
-const currentDate = new Date();
+let currentDate = new Date();
 let calendarAppointments = [];
 
 function initializeCalendar() {
   const prevBtn = document.getElementById('prevMonth');
   const nextBtn = document.getElementById('nextMonth');
+  const todayBtn = document.getElementById('todayBtn');
+  const miniPrevBtn = document.getElementById('miniPrevMonth');
+  const miniNextBtn = document.getElementById('miniNextMonth');
+  const createEventBtn = document.getElementById('createEventBtn');
 
   if (prevBtn && nextBtn) {
     prevBtn.addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() - 1);
       renderCalendar();
+      renderMiniCalendar();
     });
 
     nextBtn.addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() + 1);
       renderCalendar();
+      renderMiniCalendar();
+    });
+  }
+
+  if (miniPrevBtn && miniNextBtn) {
+    miniPrevBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+      renderMiniCalendar();
+    });
+
+    miniNextBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+      renderMiniCalendar();
+    });
+  }
+
+  if (todayBtn) {
+    todayBtn.addEventListener('click', () => {
+      currentDate = new Date();
+      renderCalendar();
+      renderMiniCalendar();
+    });
+  }
+
+  if (createEventBtn) {
+    createEventBtn.addEventListener('click', () => {
+      // Switch to appointments tab to create new appointment
+      switchTab('new_appointment');
+
+      setTimeout(() => {
+        const dateInput = document.getElementById('requested_date');
+        if (dateInput) {
+          dateInput.value = new Date();
+        }
+      }, 500);
     });
   }
 
   renderCalendar();
+  renderMiniCalendar();
+}
+
+function renderMiniCalendar() {
+  const miniCurrentMonthEl = document.getElementById('miniCurrentMonth');
+  const miniCalendarGrid = document.getElementById('miniCalendarGrid');
+
+  if (!miniCurrentMonthEl || !miniCalendarGrid) return;
+
+  // Update mini calendar month display
+  const lang = localStorage.getItem('language') || 'ar';
+  const monthNames =
+    lang === 'en'
+      ? [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ]
+      : [
+          'يناير',
+          'فبراير',
+          'مارس',
+          'أبريل',
+          'مايو',
+          'يونيو',
+          'يوليو',
+          'أغسطس',
+          'سبتمبر',
+          'أكتوبر',
+          'نوفمبر',
+          'ديسمبر',
+        ];
+
+  miniCurrentMonthEl.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+  // Clear mini calendar grid
+  miniCalendarGrid.innerHTML = '';
+
+  // Get first day of month and number of days
+  const firstDay = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+  const lastDay = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    0
+  );
+  const startDate = new Date(firstDay);
+  startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+  // Generate mini calendar days
+  for (let i = 0; i < 42; i++) {
+    const dayDate = new Date(startDate);
+    dayDate.setDate(startDate.getDate() + i);
+
+    const dayElement = document.createElement('div');
+    dayElement.className = 'mini-calendar-day';
+
+    // Check if day is from other month
+    if (dayDate.getMonth() !== currentDate.getMonth()) {
+      dayElement.classList.add('other-month');
+    }
+
+    // Check if day is today
+    const today = new Date();
+    if (dayDate.toDateString() === today.toDateString()) {
+      dayElement.classList.add('today');
+    }
+
+    // Check if day has events
+    const dayAppointments = getAppointmentsForDate(dayDate);
+    if (dayAppointments.length > 0) {
+      dayElement.classList.add('has-events');
+    }
+
+    // Day number
+    dayElement.textContent = dayDate.getDate();
+
+    // Add click event to navigate to that day
+    dayElement.addEventListener('click', () => {
+      currentDate = new Date(dayDate);
+      renderCalendar();
+      renderMiniCalendar();
+    });
+
+    miniCalendarGrid.appendChild(dayElement);
+  }
 }
 
 function renderCalendar() {
@@ -2634,24 +2906,51 @@ function renderCalendar() {
 
     // Get appointments for this day
     const dayAppointments = getAppointmentsForDate(dayDate);
-    dayAppointments.forEach(appointment => {
+
+    // Limit to 3 events per day to prevent overflow
+    const displayAppointments = dayAppointments.slice(0, 3);
+
+    displayAppointments.forEach((appointment, index) => {
       const eventElement = document.createElement('div');
       eventElement.className = `calendar-event ${appointment.status}`;
-      eventElement.textContent = appointment.title;
-      eventElement.title = `${appointment.title} - ${appointment.employee_name}`;
+
+      // Show department name and employee name
+      const eventText = appointment.department_name
+        ? `${appointment.department_name} - ${appointment.employee_name}`
+        : appointment.employee_name || appointment.title;
+
+      eventElement.textContent = eventText;
+      eventElement.title = `${appointment.title || 'Appointment'} - ${appointment.employee_name} (${appointment.status})`;
       eventElement.addEventListener('click', () =>
         viewAppointmentDetails(appointment.id)
       );
       eventsContainer.appendChild(eventElement);
     });
 
+    // Show count of additional events if more than 3
+    if (dayAppointments.length > 3) {
+      const moreEvents = document.createElement('div');
+      moreEvents.className = 'calendar-event more-events';
+      moreEvents.textContent = `+${dayAppointments.length - 3} more`;
+      moreEvents.style.background = '#6c757d';
+      moreEvents.style.fontSize = '0.7rem';
+      moreEvents.style.opacity = '0.8';
+      eventsContainer.appendChild(moreEvents);
+    }
+
     dayElement.appendChild(eventsContainer);
     calendarGrid.appendChild(dayElement);
   }
 }
 
+// Get appointments for a specific date
 function getAppointmentsForDate(date) {
-  const dateString = date.toISOString().slice(0, 10);
+  // Validate date parameter
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return [];
+  }
+
+  const dateString = localDateString(date);
   return calendarAppointments.filter(
     appointment => appointment.requested_date === dateString
   );
@@ -2661,4 +2960,158 @@ function updateCalendarAppointments() {
   // Use the global appointments array
   calendarAppointments = Array.isArray(appointments) ? appointments : [];
   renderCalendar();
+  renderMiniCalendar();
+}
+
+// Handle calendar day clicks
+function handleCalendarDayClick(date, appointments) {
+  // Format the date
+  const formattedDate = formatDate(date.toISOString());
+
+  if (appointments.length === 0) {
+    // No appointments on this day
+    goToNewAppointmentWithDate(date);
+  } else if (appointments.length === 1) {
+    // Single appointment - show details directly
+    viewAppointmentDetails(appointments[0].id);
+  } else {
+    // Multiple appointments - show list
+    showAppointmentsList(date, appointments);
+  }
+}
+
+// Show list of appointments for a specific day
+function showAppointmentsList(date, appointments) {
+  const formattedDate = formatDate(date.toISOString());
+
+  const appointmentsList = appointments
+    .map(appointment => {
+      const time = appointment.requested_time
+        ? formatTime(appointment.requested_time)
+        : '';
+      const department = appointment.department_name || '';
+      const employee = appointment.employee_name || '';
+
+      return `
+        <div class="appointment-list-item" onclick="viewAppointmentDetails(${appointment.id})">
+          <div class="appointment-time">${time}</div>
+          <div class="appointment-info">
+            <div class="appointment-title">${appointment.title || 'Appointment'}</div>
+            <div class="appointment-details">${department} - ${employee}</div>
+          </div>
+          <div class="appointment-status ${appointment.status}">${t(getStatusText(appointment.status))}</div>
+        </div>
+      `;
+    })
+    .join('');
+
+  const modalHtml = `
+    <div class="appointments-list-modal">
+      <h3>${t('appointments_on_date', { date: formattedDate })}</h3>
+      <div class="appointments-list-modal-list">
+        ${appointmentsList}
+      </div>
+      <div class="appointments-modal-actions">
+        <button class="btn btn-primary" id="addNewAppointmentBtn">
+          <i class="fas fa-plus"></i>
+          ${t('add_new_appointment')}
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Create and show modal
+  showModal(modalHtml, 'appointments-list');
+
+  // Attach event listener for the button
+  const addBtn = document.getElementById('addNewAppointmentBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      goToNewAppointmentWithDate(date);
+      removeModal('appointments-list');
+    });
+  }
+
+  // Also close modal and restore scroll on close
+  const modal = document.getElementById('appointments-list');
+  if (modal) {
+    const closeBtn = modal.querySelector('.close');
+    if (closeBtn) {
+      closeBtn.onclick = () => removeModal('appointments-list');
+    }
+    modal.onclick = e => {
+      if (e.target === modal) {
+        removeModal('appointments-list');
+      }
+    };
+  }
+}
+
+// Show modal function
+function showModal(content, modalId = 'custom-modal') {
+  // Remove existing modal if any
+  removeModal(modalId);
+
+  const modal = document.createElement('div');
+  modal.id = modalId;
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      ${content}
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Prevent background scroll
+  document.body.style.overflow = 'hidden';
+
+  // Close modal functionality
+  const closeBtn = modal.querySelector('.close');
+  closeBtn.onclick = () => removeModal(modalId);
+
+  modal.onclick = e => {
+    if (e.target === modal) {
+      removeModal(modalId);
+    }
+  };
+
+  // Show modal
+  modal.style.display = 'block';
+}
+
+// Navigate to new appointment tab with selected date
+function goToNewAppointmentWithDate(date) {
+  // Format date for input field (YYYY-MM-DD)
+  const formattedDate = localDateString(date);
+
+  console.log(date);
+  console.log(formattedDate);
+
+  // Switch to appointments tab
+  switchTab('new_appointment');
+
+  // Set the date in the appointment form after a short delay to ensure form is loaded
+  setTimeout(() => {
+    const dateInput = document.getElementById('requested_date');
+    if (dateInput) {
+      dateInput.value = formattedDate;
+    }
+  }, 100);
+}
+
+// Remove modal and restore scroll
+function removeModal(modalId = 'custom-modal') {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = '';
+  }
+}
+
+// Helper to get local date string in YYYY-MM-DD
+function localDateString(date) {
+  if (!(date instanceof Date) || isNaN(date.getTime())) return '';
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }

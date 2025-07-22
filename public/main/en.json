@@ -263,5 +263,11 @@
   "wed": "Wed",
   "thu": "Thu",
   "fri": "Fri",
-  "sat": "Sat"
+  "sat": "Sat",
+  "today": "Today",
+  "create_event": "Create Event",
+  "no_appointments_on_date": "No appointments on {date}",
+  "appointments_on_date": "Appointments on {date}",
+  "click_to_create_appointment": "Click to create new appointment",
+  "add_new_appointment": "Add New Appointment"
 } 

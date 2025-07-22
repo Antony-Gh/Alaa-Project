@@ -263,5 +263,11 @@
   "wed": "الأربعاء",
   "thu": "الخميس",
   "fri": "الجمعة",
-  "sat": "السبت"
+  "sat": "السبت",
+  "today": "اليوم",
+  "create_event": "إنشاء موعد",
+  "no_appointments_on_date": "لا توجد مواعيد في {date}",
+  "appointments_on_date": "المواعيد في {date}",
+  "click_to_create_appointment": "انقر لإنشاء موعد جديد",
+  "add_new_appointment": "إضافة موعد جديد"
 }
