@@ -115,17 +115,23 @@ function sanitizeFormData(formData) {
  *
  * @param {string} date - Date string (YYYY-MM-DD)
  * @param {string} time - Time string (HH:MM)
- * @returns {boolean} - Whether date and time are valid
+ * @returns {Object} - Object with valid flag and message
  */
 function validateDateTime(date, time) {
   // Validate date format
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return false;
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return {
+      valid: false,
+      message: 'date_format_invalid'
+    };
   }
 
   // Validate time format
-  if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(time)) {
-    return false;
+  if (!time || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(time)) {
+    return {
+      valid: false,
+      message: 'time_format_invalid'
+    };
   }
 
   // Create Date object for further validation
@@ -133,23 +139,53 @@ function validateDateTime(date, time) {
 
   // Check if date is valid
   if (isNaN(dateObj.getTime())) {
-    return false;
+    return {
+      valid: false,
+      message: 'date_invalid'
+    };
   }
 
   // Check if date is not in the past
   const now = new Date();
-  return dateObj >= now;
+  if (dateObj < now) {
+    return {
+      valid: false,
+      message: 'date_in_past'
+    };
+  }
+
+  return {
+    valid: true,
+    message: 'datetime_valid'
+  };
 }
 
 /**
  * Validate employee ID
  *
  * @param {string} employee_id - Employee ID to validate
- * @returns {boolean} - Whether employee ID is valid
+ * @returns {Object} - Object with valid flag and message
  */
 function validateEmployeeId(employee_id) {
+  if (!employee_id || typeof employee_id !== 'string') {
+    return {
+      valid: false,
+      message: 'employee_id_required'
+    };
+  }
+  
   // Employee ID should be 3-10 characters of letters and numbers
-  return /^[A-Za-z0-9]{3,10}$/.test(employee_id);
+  if (!/^[A-Za-z0-9]{3,10}$/.test(employee_id)) {
+    return {
+      valid: false,
+      message: 'employee_id_invalid_format'
+    };
+  }
+  
+  return {
+    valid: true,
+    message: 'employee_id_valid'
+  };
 }
 
 /**
@@ -158,31 +194,84 @@ function validateEmployeeId(employee_id) {
  * @param {string} text - Text to validate
  * @param {number} minLength - Minimum length
  * @param {number} maxLength - Maximum length
- * @returns {boolean} - Whether text is valid
+ * @returns {Object} - Object with valid flag and message
  */
 function validateArabicText(text, minLength = 2, maxLength = 100) {
   if (!text || typeof text !== 'string') {
-    return false;
+    return {
+      valid: false,
+      message: 'text_required'
+    };
   }
 
   // Check length
-  if (text.length < minLength || text.length > maxLength) {
-    return false;
+  if (text.length < minLength) {
+    return {
+      valid: false,
+      message: 'text_too_short'
+    };
+  }
+  
+  if (text.length > maxLength) {
+    return {
+      valid: false,
+      message: 'text_too_long'
+    };
   }
 
   // Check for Arabic characters (Unicode range for Arabic: \u0600-\u06FF)
   // Also allow English letters and spaces
-  return /^[\u0600-\u06FFa-zA-Z\s]+$/.test(text);
+  if (!/^[\u0600-\u06FFa-zA-Z\s]+$/.test(text)) {
+    return {
+      valid: false,
+      message: 'text_invalid_characters'
+    };
+  }
+  
+  return {
+    valid: true,
+    message: 'text_valid'
+  };
 }
 
 /**
  * Validate employee name (specific validation for employee names)
  *
  * @param {string} name - Name to validate
- * @returns {boolean} - Whether name is valid
+ * @returns {Object} - Object with valid flag and message
  */
 function validateEmployeeName(name) {
-  return validateArabicText(name, 2, 100);
+  const validation = validateArabicText(name, 2, 100);
+  
+  // Customize message for employee name
+  if (!validation.valid) {
+    if (validation.message === 'text_required') {
+      return {
+        valid: false,
+        message: 'employee_name_required'
+      };
+    } else if (validation.message === 'text_too_short') {
+      return {
+        valid: false,
+        message: 'employee_name_too_short'
+      };
+    } else if (validation.message === 'text_too_long') {
+      return {
+        valid: false,
+        message: 'employee_name_too_long'
+      };
+    } else if (validation.message === 'text_invalid_characters') {
+      return {
+        valid: false,
+        message: 'employee_name_invalid_characters'
+      };
+    }
+  }
+  
+  return {
+    valid: true,
+    message: 'employee_name_valid'
+  };
 }
 
 // Export functions for use in other scripts

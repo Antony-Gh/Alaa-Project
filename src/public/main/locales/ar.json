@@ -269,5 +269,27 @@
   "no_appointments_on_date": "لا توجد مواعيد في {date}",
   "appointments_on_date": "المواعيد في {date}",
   "click_to_create_appointment": "انقر لإنشاء موعد جديد",
-  "add_new_appointment": "إضافة موعد جديد"
+  "add_new_appointment": "إضافة موعد جديد",
+  
+  "date_format_invalid": "تنسيق التاريخ غير صحيح. استخدم YYYY-MM-DD",
+  "time_format_invalid": "تنسيق الوقت غير صحيح. استخدم HH:MM (24 ساعة)",
+  "date_invalid": "التاريخ غير صحيح",
+  "date_in_past": "التاريخ والوقت يجب أن يكونا في المستقبل",
+  "datetime_valid": "التاريخ والوقت صحيحان",
+  
+  "employee_id_required": "رقم الموظف مطلوب",
+  "employee_id_invalid_format": "رقم الموظف يجب أن يكون 3-10 أحرف إنجليزية وأرقام",
+  "employee_id_valid": "رقم الموظف صحيح",
+  
+  "text_required": "النص مطلوب",
+  "text_too_short": "النص قصير جداً",
+  "text_too_long": "النص طويل جداً",
+  "text_invalid_characters": "النص يحتوي على أحرف غير صالحة",
+  "text_valid": "النص صحيح",
+  
+  "employee_name_required": "اسم الموظف مطلوب",
+  "employee_name_too_short": "اسم الموظف قصير جداً",
+  "employee_name_too_long": "اسم الموظف طويل جداً",
+  "employee_name_invalid_characters": "اسم الموظف يجب أن يحتوي على أحرف عربية أو إنجليزية فقط",
+  "employee_name_valid": "اسم الموظف صحيح"
 }

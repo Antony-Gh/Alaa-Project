@@ -1,11 +1,12 @@
 // Using sanitize.js functions from window globals
 // (sanitize.js registers these functions on the window object)
-const escapeHtml = window.escapeHtml || ((text) => text);
-const setTextContent = window.setTextContent || ((el, text) => { if (el) el.textContent = text; });
-const sanitizeFormData = window.sanitizeFormData || ((data) => Object.fromEntries(data.entries()));
-const validateDateTime = window.validateDateTime || ((date, time) => true);
-const validateEmployeeId = window.validateEmployeeId || ((id) => true);
-const validateEmployeeName = window.validateEmployeeName || ((name) => true);
+const escapeHtml = window.escapeHtml;
+const setTextContent = window.setTextContent;
+const sanitizeFormData = window.sanitizeFormData;
+const validateDateTime = window.validateDateTime;
+console.log(validateDateTime);
+const validateEmployeeId = window.validateEmployeeId;
+const validateEmployeeName = window.validateEmployeeName;
 
 // Create element helper function
 const safeCreateElement = (tag, attributes = {}) => {
@@ -1271,12 +1272,16 @@ async function handleAppointmentSubmit(e) {
   appointmentData.department_id = parseInt(appointmentData.department);
   appointmentData.location_id = parseInt(appointmentData.location);
 
-  console.log(appointmentData);
+  // console.log(appointmentData);
 
   // Validate input
   const validation = validateAppointmentData(appointmentData);
+
+  // console.log(validation.valid);
+  // console.log(validation.message);
+
   if (!validation.valid) {
-    showMessage(validation.message, 'error');
+    showMessage(t(validation.message), 'error');
     return;
   }
 
@@ -1331,11 +1336,14 @@ function validateAppointmentData(data) {
     data.requested_date,
     data.requested_time
   );
+
+  console.log(dateTimeValidation);
+
   if (!dateTimeValidation.valid) {
     return dateTimeValidation;
   }
 
-  return { valid: true };
+  return { valid: true, message: 'appointment_submit_success'};
 }
 
 async function handleAdminFormSubmit(e) {

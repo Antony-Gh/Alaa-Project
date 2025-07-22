@@ -269,5 +269,27 @@
   "no_appointments_on_date": "No appointments on {date}",
   "appointments_on_date": "Appointments on {date}",
   "click_to_create_appointment": "Click to create new appointment",
-  "add_new_appointment": "Add New Appointment"
+  "add_new_appointment": "Add New Appointment",
+  
+  "date_format_invalid": "Invalid date format. Use YYYY-MM-DD",
+  "time_format_invalid": "Invalid time format. Use HH:MM (24-hour)",
+  "date_invalid": "Invalid date",
+  "date_in_past": "Date and time must be in the future",
+  "datetime_valid": "Date and time are valid",
+  
+  "employee_id_required": "Employee ID is required",
+  "employee_id_invalid_format": "Employee ID must be 3-10 English letters and numbers",
+  "employee_id_valid": "Employee ID is valid",
+  
+  "text_required": "Text is required",
+  "text_too_short": "Text is too short",
+  "text_too_long": "Text is too long",
+  "text_invalid_characters": "Text contains invalid characters",
+  "text_valid": "Text is valid",
+  
+  "employee_name_required": "Employee name is required",
+  "employee_name_too_short": "Employee name is too short",
+  "employee_name_too_long": "Employee name is too long",
+  "employee_name_invalid_characters": "Employee name must contain only Arabic or English letters",
+  "employee_name_valid": "Employee name is valid"
 } 
