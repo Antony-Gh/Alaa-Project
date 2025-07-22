@@ -3,7 +3,7 @@ const router = express.Router();
 const departmentController = require('../controllers/departmentController');
 const locationController = require('../controllers/locationController');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
-const { adminLimiter } = require('../middleware/rateLimiter');
+const { adminLimiter } = require('../middleware/security');
 
 // All admin routes require authentication and admin role
 router.use(authenticateToken);

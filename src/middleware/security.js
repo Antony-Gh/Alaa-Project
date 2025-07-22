@@ -26,8 +26,15 @@ const generalLimiter = rateLimit({
       ip: req.ip,
       path: req.path,
       method: req.method,
+      userAgent: req.get('User-Agent'),
+      url: req.url,
     });
     next(err);
+  },
+  message: {
+    success: false,
+    message: 'Too many requests, please try again later',
+    errorCode: 'RATE_LIMIT_EXCEEDED',
   },
 });
 
@@ -46,9 +53,16 @@ const authLimiter = rateLimit({
       ip: req.ip,
       path: req.path,
       method: req.method,
+      userAgent: req.get('User-Agent'),
       username: req.body.username,
+      url: req.url,
     });
     next(err);
+  },
+  message: {
+    success: false,
+    message: 'Too many login attempts, please try again later',
+    errorCode: 'AUTH_RATE_LIMIT_EXCEEDED',
   },
 });
 
@@ -73,9 +87,9 @@ const securityHeaders = helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"], // Consider removing unsafe-inline in production
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:'],
-      fontSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:"],
+      fontSrc: ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
       connectSrc: ["'self'"],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
@@ -193,10 +207,62 @@ const corsOptions = {
   maxAge: 600, // 10 minutes
 };
 
+// Appointment creation rate limiter (more restrictive)
+const appointmentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 appointment requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many appointment requests, please try again later',
+    errorCode: 'APPOINTMENT_RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn('Appointment rate limit exceeded', {
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      url: req.url,
+    });
+    res.status(429).json({
+      success: false,
+      message: 'Too many appointment requests, please try again later',
+      errorCode: 'APPOINTMENT_RATE_LIMIT_EXCEEDED',
+    });
+  },
+});
+
+// Admin operations rate limiter
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // limit each IP to 50 admin requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many admin requests, please try again later',
+    errorCode: 'ADMIN_RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn('Admin rate limit exceeded', {
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      url: req.url,
+    });
+    res.status(429).json({
+      success: false,
+      message: 'Too many admin requests, please try again later',
+      errorCode: 'ADMIN_RATE_LIMIT_EXCEEDED',
+    });
+  },
+});
+
 module.exports = {
   generalLimiter,
   authLimiter,
   apiLimiter,
+  appointmentLimiter,
+  adminLimiter,
   securityHeaders,
   sanitizeInput,
   xssClean,

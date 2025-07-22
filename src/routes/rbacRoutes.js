@@ -11,7 +11,7 @@ const {
   canManageRole,
   logRBACAction,
 } = require('../middleware/rbac');
-const { generalLimiter } = require('../middleware/rateLimiter');
+const { generalLimiter } = require('../middleware/security');
 
 // Get user's effective permissions
 router.get(

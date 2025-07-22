@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { authenticateToken } = require('../middleware/auth');
-const { generalLimiter } = require('../middleware/rateLimiter');
-const { validateRole } = require('../middleware/validation');
+const { generalLimiter } = require('../middleware/security');
+const { validate, rules } = require('../middleware/validation');
 
 // Middleware to check if user is admin or moderator
 const requireAdminOrModerator = (req, res, next) => {

@@ -4,6 +4,7 @@ const path = require('path');
 const compression = require('compression');
 const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
+const i18nextFsBackend = require('i18next-fs-backend');
 
 // Import configurations and utilities
 const config = require('./config/config');
@@ -93,7 +94,10 @@ const i18nConfig = {
   },
 };
 
-i18next.use(i18nextMiddleware.LanguageDetector).init(i18nConfig);
+i18next
+  .use(i18nextFsBackend)
+  .use(i18nextMiddleware.LanguageDetector)
+  .init(i18nConfig);
 
 app.use(i18nextMiddleware.handle(i18next));
 
@@ -101,11 +105,20 @@ app.use(i18nextMiddleware.handle(i18next));
 app.use(csrfProtection);
 
 // Static files with cache headers
+// app.use(
+//   express.static(path.join(__dirname, '../src/public'), {
+//     maxAge: '1m', // Cache for 1 day
+//     etag: true,
+//     lastModified: true,
+//   })
+// );
+
+// Static files with no caching (for development)
 app.use(
-  express.static(path.join(__dirname, '../public'), {
-    maxAge: '1d', // Cache for 1 day
-    etag: true,
-    lastModified: true,
+  express.static(path.join(__dirname, '../src/public'), {
+    maxAge: 0,
+    etag: false,
+    lastModified: false
   })
 );
 
@@ -138,10 +151,48 @@ app.get('/', (req, res) => {
 // API Documentation
 if (process.env.NODE_ENV !== 'production') {
   const swaggerUi = require('swagger-ui-express');
-  const swaggerDocument = require('../public/api-docs/swagger.json');
-
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-  logger.info('API documentation available at /api-docs');
+  const fs = require('fs');
+  const apiDocsPath = path.join(__dirname, '../api-docs');
+  const swaggerJsonPath = path.join(apiDocsPath, 'swagger.json');
+  
+  try {
+    // Create api-docs directory if it doesn't exist
+    if (!fs.existsSync(apiDocsPath)) {
+      fs.mkdirSync(apiDocsPath, { recursive: true });
+      logger.info('Created API docs directory');
+    }
+    
+    // Create a basic swagger.json if it doesn't exist
+    if (!fs.existsSync(swaggerJsonPath)) {
+      const basicSwagger = {
+        openapi: '3.0.0',
+        info: {
+          title: 'Scheduling System API',
+          version: '1.0.0',
+          description: 'API for the scheduling system'
+        },
+        servers: [
+          {
+            url: '/api',
+            description: 'Development server'
+          }
+        ],
+        paths: {}
+      };
+      
+      fs.writeFileSync(
+        swaggerJsonPath, 
+        JSON.stringify(basicSwagger, null, 2)
+      );
+      logger.info('Created basic swagger.json file');
+    }
+    
+    const swaggerDocument = require(swaggerJsonPath);
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    logger.info('API documentation available at /api-docs');
+  } catch (error) {
+    logger.error('Failed to setup API documentation:', error);
+  }
 }
 
 // 404 handler

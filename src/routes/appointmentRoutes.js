@@ -8,14 +8,8 @@ const {
   requireAdmin,
   requireEmployee,
 } = require('../middleware/auth');
-const {
-  validateAppointment,
-  validateAppointmentStatus,
-} = require('../middleware/validation');
-const {
-  appointmentLimiter,
-  adminLimiter,
-} = require('../middleware/rateLimiter');
+const { validate, rules } = require('../middleware/validation');
+const { appointmentLimiter, adminLimiter } = require('../middleware/security');
 
 // Public routes (for getting departments and locations)
 router.get('/departments', departmentController.getAllDepartments);
@@ -29,7 +23,8 @@ router.post(
   '/',
   appointmentLimiter,
   requireEmployee,
-  validateAppointment,
+  rules.createAppointment,
+  validate,
   appointmentController.createAppointment
 );
 router.get('/', appointmentController.getAllAppointments);
@@ -41,7 +36,8 @@ router.put(
   '/:id/status',
   adminLimiter,
   requireAdmin,
-  validateAppointmentStatus,
+  rules.updateAppointmentStatus,
+  validate,
   appointmentController.updateAppointmentStatus
 );
 router.delete(

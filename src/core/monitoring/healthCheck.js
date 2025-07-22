@@ -240,7 +240,7 @@ class HealthCheck {
   async checkEmailService() {
     const nodemailer = require('nodemailer');
 
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: config.email.host,
       port: config.email.port,
       auth: config.email.auth.user ? config.email.auth : undefined,

@@ -1,6 +1,6 @@
 # نظام حجز المواعيد للموظفين - Employee Scheduling System
 
-![scheduling-system-banner](public/main/banner.png)
+![scheduling-system-banner](/src/public/main/banner.png)
 
 [![Node.js CI](https://img.shields.io/github/workflow/status/your-org/your-repo/Node.js%20CI?style=flat-square)](https://github.com/your-org/your-repo/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
@@ -11,6 +11,7 @@ A modern, secure, and scalable web application for managing employee appointment
 ---
 
 ## 📑 Table of Contents
+
 - [Overview](#-overview)
 - [Key Features](#-key-features)
 - [Screenshots](#-screenshots)
@@ -47,6 +48,7 @@ Built with **Node.js**, **Express.js**, **SQLite**, and a modern Vanilla JS fron
 ## ✨ Key Features
 
 ### 🔐 Security & Authentication
+
 - JWT-based token authentication
 - Role-based access control (admin vs employee)
 - Password hashing with Bcrypt
@@ -56,6 +58,7 @@ Built with **Node.js**, **Express.js**, **SQLite**, and a modern Vanilla JS fron
 - 2FA-ready architecture
 
 ### 📅 Appointment Management
+
 - Create, edit, approve, and reject appointments
 - Conflict detection (location/time)
 - Recurring appointments (daily, weekly, monthly, yearly)
@@ -65,6 +68,7 @@ Built with **Node.js**, **Express.js**, **SQLite**, and a modern Vanilla JS fron
 - Attachments and file uploads
 
 ### 📊 Analytics & Dashboard
+
 - Real-time statistics and trends
 - Status filters, recent activity, and data export (CSV/JSON)
 - Admin dashboard and audit logging
@@ -73,12 +77,14 @@ Built with **Node.js**, **Express.js**, **SQLite**, and a modern Vanilla JS fron
 - User activity tracking
 
 ### 📬 Notifications
+
 - Real-time via Socket.IO (admin/employee)
 - Email alerts (status changes, reminders) via Nodemailer
 - Notification preferences (email, in-app, push-ready)
 - In-app notification center
 
 ### 👥 User & Profile Management
+
 - User registration and self-service profile updates
 - Admin user management (CRUD)
 - Password changes, validation, and secure sessions
@@ -87,6 +93,7 @@ Built with **Node.js**, **Express.js**, **SQLite**, and a modern Vanilla JS fron
 - Avatar upload and profile picture
 
 ### 🌐 Localization & Accessibility
+
 - Arabic (RTL) and English (LTR) support
 - Responsive mobile design
 - Dark mode, high contrast, and keyboard accessibility
@@ -162,15 +169,16 @@ Alaa Project/
 ## ⚡ Quick Start
 
 ### Prerequisites
+
 - Node.js v14 or higher
 - npm or yarn
 
 ### Setup
 
-   ```bash
+```bash
 git clone <repository-url>
 cd "Alaa Project"
-   npm install
+npm install
 cp .env.example .env
 # Edit .env as needed (see below for all variables)
 npm run migrate       # Run migrations to create/update the database schema
@@ -193,6 +201,7 @@ API Base: [http://localhost:5000/api](http://localhost:5000/api)
 ## 📡 API Overview
 
 ### Auth
+
 - `POST   /api/auth/register` — Register a new user
 - `POST   /api/auth/login` — Login and receive JWT
 - `POST   /api/auth/logout` — Logout (invalidate token)
@@ -201,6 +210,7 @@ API Base: [http://localhost:5000/api](http://localhost:5000/api)
 - `PUT    /api/auth/change-password` — Change password
 
 ### Appointments
+
 - `GET    /api/appointments` — List all appointments (with filters, pagination, search)
 - `POST   /api/appointments` — Create a new appointment
 - `GET    /api/appointments/:id` — Get appointment by ID
@@ -209,6 +219,7 @@ API Base: [http://localhost:5000/api](http://localhost:5000/api)
 - `GET    /api/appointments/stats` — Get appointment statistics (counts, trends)
 
 ### Departments & Locations
+
 - `GET    /api/appointments/departments` — List all departments
 - `POST   /api/admin/departments` — Create department (admin)
 - `PUT    /api/admin/departments/:id` — Update department (admin)
@@ -219,6 +230,7 @@ API Base: [http://localhost:5000/api](http://localhost:5000/api)
 - `DELETE /api/admin/locations/:id` — Delete location (admin)
 
 ### Users
+
 - `GET    /api/users` — List all users (admin only)
 - `GET    /api/users/:id` — Get user by ID (admin only)
 - `PUT    /api/users/:id` — Update user (admin only)
@@ -228,6 +240,7 @@ API Base: [http://localhost:5000/api](http://localhost:5000/api)
 - `PUT    /api/users/change-password` — Change current user password
 
 ### Notifications
+
 - `GET    /api/notifications` — List all notifications for current user
 - `PUT    /api/notifications/:id/read` — Mark notification as read
 - `PUT    /api/notifications/read-all` — Mark all notifications as read
@@ -235,11 +248,13 @@ API Base: [http://localhost:5000/api](http://localhost:5000/api)
 - `PUT    /api/notifications/preferences` — Update notification preferences
 
 ### Analytics
+
 - `GET    /api/analytics/dashboard` — Get analytics dashboard (stats, trends)
 - `GET    /api/analytics/detailed` — Get detailed analytics (by status, department, location, time)
 - `GET    /api/analytics/export` — Export analytics data (CSV/JSON)
 
 ### Real-time
+
 - `GET    /api/realtime/status` — Get real-time system status (connected users, roles)
 
 ---
@@ -277,6 +292,7 @@ npm run backup      # Backup the database
 ## 📊 Database Schema
 
 ### users
+
 ```sql
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -303,6 +319,7 @@ CREATE TABLE users (
 ```
 
 ### departments
+
 ```sql
 CREATE TABLE departments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -317,6 +334,7 @@ CREATE TABLE departments (
 ```
 
 ### locations
+
 ```sql
 CREATE TABLE locations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -334,6 +352,7 @@ CREATE TABLE locations (
 ```
 
 ### appointments
+
 ```sql
 CREATE TABLE appointments (
     id TEXT PRIMARY KEY,
@@ -367,6 +386,7 @@ CREATE TABLE appointments (
 ```
 
 ### recurring_appointments
+
 ```sql
 CREATE TABLE recurring_appointments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -388,6 +408,7 @@ CREATE TABLE recurring_appointments (
 ```
 
 ### audit_logs
+
 ```sql
 CREATE TABLE audit_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -405,6 +426,7 @@ CREATE TABLE audit_logs (
 ```
 
 ### analytics
+
 ```sql
 CREATE TABLE analytics (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -422,6 +444,7 @@ CREATE TABLE analytics (
 ```
 
 ### notifications
+
 ```sql
 CREATE TABLE notifications (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -439,6 +462,7 @@ CREATE TABLE notifications (
 ```
 
 ### user_sessions
+
 ```sql
 CREATE TABLE user_sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -455,6 +479,7 @@ CREATE TABLE user_sessions (
 ```
 
 ### file_attachments
+
 ```sql
 CREATE TABLE file_attachments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -471,6 +496,7 @@ CREATE TABLE file_attachments (
 ```
 
 ### calendar_integrations
+
 ```sql
 CREATE TABLE calendar_integrations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -488,6 +514,7 @@ CREATE TABLE calendar_integrations (
 ```
 
 ### system_settings
+
 ```sql
 CREATE TABLE system_settings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -532,30 +559,30 @@ CMD ["npm", "start"]
 
 ## 📄 Environment Variables
 
-| Variable             | Description                        | Default                                        |
-|--------------------- |------------------------------------|------------------------------------------------|
-| `PORT`               | Server port                        | 5000                                           |
-| `JWT_SECRET`         | Token signing key                  | your-secret-key                                |
-| `DB_PATH`            | SQLite DB path                     | ./scheduling.db                                |
-| `NODE_ENV`           | Environment                        | development                                    |
-| `CORS_ORIGIN`        | CORS allowed                       | http://localhost:3000                          |
-| `SESSION_SECRET`     | Session secret                     | your-session-secret                            |
-| `EMAIL_ENABLED`      | Enable email notifications         | false                                          |
-| `EMAIL_HOST`         | SMTP host                          | smtp.example.com                               |
-| `EMAIL_PORT`         | SMTP port                          | 587                                            |
-| `EMAIL_USER`         | SMTP username                      |                                                |
-| `EMAIL_PASS`         | SMTP password                      |                                                |
-| `EMAIL_FROM`         | From address                       | noreply@scheduling-system.com                  |
-| `REALTIME_ENABLED`   | Enable real-time notifications     | true                                           |
-| `RATE_LIMIT_WINDOW_MS`| Rate limit window (ms)            | 900000                                         |
-| `RATE_LIMIT_MAX_REQUESTS`| Max requests per window         | 100                                            |
-| `LOG_LEVEL`          | Logging level                      | info                                           |
-| `LOG_MAX_FILES`      | Max log files                      | 5                                              |
-| `LOG_MAX_SIZE`       | Max log file size                  | 5m                                             |
-| `DEFAULT_TIMEZONE`   | Default timezone                   | Asia/Riyadh                                    |
-| `FEATURE_RECURRING_APPOINTMENTS`| Enable recurring appts   | true                                           |
-| `FEATURE_DARK_MODE`  | Enable dark mode                   | true                                           |
-| `FEATURE_ACCESSIBILITY`| Enable accessibility features     | true                                           |
+| Variable                         | Description                    | Default                       |
+| -------------------------------- | ------------------------------ | ----------------------------- |
+| `PORT`                           | Server port                    | 5000                          |
+| `JWT_SECRET`                     | Token signing key              | your-secret-key               |
+| `DB_PATH`                        | SQLite DB path                 | ./scheduling.db               |
+| `NODE_ENV`                       | Environment                    | development                   |
+| `CORS_ORIGIN`                    | CORS allowed                   | <http://localhost:3000>         |
+| `SESSION_SECRET`                 | Session secret                 | your-session-secret           |
+| `EMAIL_ENABLED`                  | Enable email notifications     | false                         |
+| `EMAIL_HOST`                     | SMTP host                      | smtp.example.com              |
+| `EMAIL_PORT`                     | SMTP port                      | 587                           |
+| `EMAIL_USER`                     | SMTP username                  |                               |
+| `EMAIL_PASS`                     | SMTP password                  |                               |
+| `EMAIL_FROM`                     | From address                   | <noreply@scheduling-system.com> |
+| `REALTIME_ENABLED`               | Enable real-time notifications | true                          |
+| `RATE_LIMIT_WINDOW_MS`           | Rate limit window (ms)         | 900000                        |
+| `RATE_LIMIT_MAX_REQUESTS`        | Max requests per window        | 100                           |
+| `LOG_LEVEL`                      | Logging level                  | info                          |
+| `LOG_MAX_FILES`                  | Max log files                  | 5                             |
+| `LOG_MAX_SIZE`                   | Max log file size              | 5m                            |
+| `DEFAULT_TIMEZONE`               | Default timezone               | Asia/Riyadh                   |
+| `FEATURE_RECURRING_APPOINTMENTS` | Enable recurring appts         | true                          |
+| `FEATURE_DARK_MODE`              | Enable dark mode               | true                          |
+| `FEATURE_ACCESSIBILITY`          | Enable accessibility features  | true                          |
 
 ---
 
@@ -597,6 +624,7 @@ This project is licensed under the **MIT License**.
 ---
 
 > **Note:**
+>
 > - This system is fully localized for Arabic (RTL) and English (LTR).
 > - For screenshots, see the `/public/main/` directory or add your own.
-> - For production, review all security and deployment recommendations. 
+> - For production, review all security and deployment recommendations.

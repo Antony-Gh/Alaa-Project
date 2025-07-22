@@ -1,28 +1,24 @@
-// Import utilities
-import {
-  escapeHtml,
-  setTextContent,
-  createElement,
-  sanitizeFormData,
-  validateDateTime,
-  validateEmployeeId,
-  validateEmployeeName,
-} from './utils/sanitize.js';
+// Using sanitize.js functions from window globals
+// (sanitize.js registers these functions on the window object)
+const escapeHtml = window.escapeHtml || ((text) => text);
+const setTextContent = window.setTextContent || ((el, text) => { if (el) el.textContent = text; });
+const sanitizeFormData = window.sanitizeFormData || ((data) => Object.fromEntries(data.entries()));
+const validateDateTime = window.validateDateTime || ((date, time) => true);
+const validateEmployeeId = window.validateEmployeeId || ((id) => true);
+const validateEmployeeName = window.validateEmployeeName || ((name) => true);
 
-// Fallback for createElement in case import fails
-const safeCreateElement =
-  createElement ||
-  ((tag, attributes = {}) => {
-    const element = document.createElement(tag);
-    for (const [key, value] of Object.entries(attributes)) {
-      if (key === 'className') {
-        element.className = value;
-      } else {
-        element.setAttribute(key, value);
-      }
+// Create element helper function
+const safeCreateElement = (tag, attributes = {}) => {
+  const element = document.createElement(tag);
+  for (const [key, value] of Object.entries(attributes)) {
+    if (key === 'className') {
+      element.className = value;
+    } else {
+      element.setAttribute(key, value);
     }
-    return element;
-  });
+  }
+  return element;
+};
 
 // Client-side validation functions
 function validateEmail(email) {
@@ -1949,7 +1945,7 @@ const translations = { en: {}, ar: {} };
 
 async function loadTranslations(lang) {
   try {
-    const response = await fetch(`${lang}.json`);
+    const response = await fetch(`./locales/${lang}.json`);
     const data = await response.json();
     translations[lang] = data;
   } catch (error) {

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
-const { generalLimiter } = require('../middleware/rateLimiter');
+const { generalLimiter } = require('../middleware/security');
 const dbManager = require('../utils/database');
 const ResponseHandler = require('../utils/responseHandler');
 const logger = require('../utils/logger');

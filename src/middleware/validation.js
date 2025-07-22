@@ -205,6 +205,21 @@ const rules = {
       .withMessage('Location ID must be an integer'),
   ],
 
+  // Appointment status validation
+  updateAppointmentStatus: [
+    body('status')
+      .notEmpty()
+      .withMessage('Status is required')
+      .isIn(['pending', 'approved', 'rejected', 'done', 'missed'])
+      .withMessage('Invalid status value'),
+    body('notes')
+      .optional()
+      .isString()
+      .withMessage('Notes must be a string')
+      .isLength({ max: 500 })
+      .withMessage('Notes cannot exceed 500 characters'),
+  ],
+
   // ID parameter validation
   idParam: [
     param('id')

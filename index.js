@@ -12,7 +12,7 @@ const PORT = 5000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use('/', express.static(`${__dirname}/public`));
+app.use('/', express.static(`${__dirname}/src/public`));
 
 // Database setup
 const db = new sqlite3.Database('./scheduling.db', err => {
