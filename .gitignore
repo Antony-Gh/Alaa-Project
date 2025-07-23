@@ -73,8 +73,11 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+*.py
+*.pyc
 .cursorindexingignore
 .specstory
 /texts/**
 /tests/**
 /dist/**
+/.cursor/**

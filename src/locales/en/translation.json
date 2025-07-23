@@ -87,7 +87,6 @@
   "email.body.status": "Your appointment status has been changed.",
   "email.body.admin": "A new appointment request has been received.",
   "email.signature": "Thank you,\nEmployee Scheduling System",
-  
   "email.appointment_confirmation_subject": "Appointment Confirmation",
   "email.appointment_reminder_subject": "Appointment Reminder",
   "email.status_update_subject": "Appointment Status Update: {newStatus}",
@@ -95,13 +94,11 @@
   "email.password_reset_subject": "Password Reset",
   "email.welcome_subject": "Welcome to the Employee Scheduling System",
   "system_name": "Employee Scheduling System",
-  
   "status.pending": "Pending",
   "status.approved": "Approved",
   "status.rejected": "Rejected",
   "status.done": "Completed",
   "status.missed": "Missed",
-  
   "rbac.permissions_fetched": "Permissions fetched successfully",
   "rbac.roles_fetched": "Roles fetched successfully",
   "rbac.role_assigned": "Role assigned successfully",
@@ -113,7 +110,6 @@
   "rbac.permission_checked": "Permission check completed",
   "rbac.audit_logs_fetched": "Audit logs fetched successfully",
   "rbac.statistics_fetched": "RBAC statistics fetched successfully",
-  
   "validation.field_required": "This field is required",
   "validation.username_pattern": "Username must contain only letters, numbers, and underscores",
   "validation.username_min": "Username must be at least 3 characters long",
@@ -132,7 +128,6 @@
   "validation.name_max_length": "Name cannot exceed 100 characters",
   "validation.phone_format": "Please enter a valid phone number",
   "validation.role_invalid": "Invalid role selected",
-  
   "role.employee": "Employee",
   "role.admin": "Admin",
   "role.manager": "Manager",
@@ -183,7 +178,6 @@
   "validation.capacity_min": "Capacity must be at least 1",
   "validation.capacity_max": "Capacity cannot exceed 1000",
   "validation.token_required": "Token is required",
-  
   "full_name": "Full Name",
   "full_name_placeholder": "Enter your full name",
   "phone": "Phone",

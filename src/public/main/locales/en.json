@@ -129,6 +129,7 @@
   "department.delete_has_users": "Cannot delete department because it has users",
   "department.delete_has_appointments": "Cannot delete department because it has appointments",
   "department.deleted": "Department deleted successfully",
+  "department.notfound": "Department not found",
   "location.fetched_all": "Locations fetched successfully",
   "location.fetched": "Location fetched successfully",
   "location.duplicate": "Location name already exists",

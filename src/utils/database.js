@@ -313,7 +313,7 @@ class DatabaseManager {
     );
 
     // Insert sample employee users
-    const employeePasswordHash = await bcrypt.hash('employee123', 10);
+    const employeePasswordHash = await bcrypt.hash('Employee123', 10);
 
     await this.run(
       `INSERT INTO users (username, password_hash, email, full_name, role, department_id, email_verified) VALUES 

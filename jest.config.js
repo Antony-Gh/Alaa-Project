@@ -18,4 +18,5 @@ module.exports = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
+  globalSetup: '<rootDir>/tests/setup/globalSetup.js',
 };

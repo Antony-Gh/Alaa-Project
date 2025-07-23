@@ -129,6 +129,7 @@
   "department.delete_has_users": "لا يمكن حذف القسم لأنه يحتوي على موظفين",
   "department.delete_has_appointments": "لا يمكن حذف القسم لأنه يحتوي على مواعيد",
   "department.deleted": "تم حذف القسم بنجاح",
+  "department.notfound": "لم يتم العثور على القسم",
   "location.fetched_all": "تم جلب المواقع بنجاح",
   "location.fetched": "تم جلب الموقع بنجاح",
   "location.duplicate": "اسم الموقع موجود مسبقاً",

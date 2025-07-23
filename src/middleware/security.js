@@ -10,76 +10,84 @@ const config = require('../config/config');
 const logger = require('../utils/logger');
 const { TooManyRequestsError } = require('../utils/errorHandler');
 
+const isTest = process.env.NODE_ENV === 'test';
+
 // General rate limiter for all routes
-const generalLimiter = rateLimit({
-  windowMs: config.security.rateLimit.windowMs,
-  max: config.security.rateLimit.max,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req, res) => req.path === '/health',
-  handler: (req, res, next) => {
-    const err = new TooManyRequestsError(
-      'Too many requests, please try again later',
-      'errors.too_many_requests'
-    );
-    logger.warn('Rate limit exceeded', {
-      ip: req.ip,
-      path: req.path,
-      method: req.method,
-      userAgent: req.get('User-Agent'),
-      url: req.url,
+const generalLimiter = isTest
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: config.security.rateLimit.windowMs,
+      max: config.security.rateLimit.max,
+      standardHeaders: true,
+      legacyHeaders: false,
+      skip: (req, res) => req.path === '/health',
+      handler: (req, res, next) => {
+        const err = new TooManyRequestsError(
+          'Too many requests, please try again later',
+          'errors.too_many_requests'
+        );
+        logger.warn('Rate limit exceeded', {
+          ip: req.ip,
+          path: req.path,
+          method: req.method,
+          userAgent: req.get('User-Agent'),
+          url: req.url,
+        });
+        next(err);
+      },
+      message: {
+        success: false,
+        message: 'Too many requests, please try again later',
+        errorCode: 'RATE_LIMIT_EXCEEDED',
+      },
     });
-    next(err);
-  },
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later',
-    errorCode: 'RATE_LIMIT_EXCEEDED',
-  },
-});
 
 // More strict rate limiter for authentication routes
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res, next) => {
-    const err = new TooManyRequestsError(
-      'Too many login attempts, please try again later',
-      'errors.too_many_login_attempts'
-    );
-    logger.warn('Auth rate limit exceeded', {
-      ip: req.ip,
-      path: req.path,
-      method: req.method,
-      userAgent: req.get('User-Agent'),
-      username: req.body.username,
-      url: req.url,
+const authLimiter = isTest
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 10, // 10 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+      handler: (req, res, next) => {
+        const err = new TooManyRequestsError(
+          'Too many login attempts, please try again later',
+          'errors.too_many_login_attempts'
+        );
+        logger.warn('Auth rate limit exceeded', {
+          ip: req.ip,
+          path: req.path,
+          method: req.method,
+          userAgent: req.get('User-Agent'),
+          username: req.body.username,
+          url: req.url,
+        });
+        next(err);
+      },
+      message: {
+        success: false,
+        message: 'Too many login attempts, please try again later',
+        errorCode: 'AUTH_RATE_LIMIT_EXCEEDED',
+      },
     });
-    next(err);
-  },
-  message: {
-    success: false,
-    message: 'Too many login attempts, please try again later',
-    errorCode: 'AUTH_RATE_LIMIT_EXCEEDED',
-  },
-});
 
 // API rate limiter for sensitive operations
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30, // 30 requests per minute
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res, next) => {
-    const err = new TooManyRequestsError(
-      'Too many API requests, please try again later',
-      'errors.too_many_api_requests'
-    );
-    next(err);
-  },
-});
+const apiLimiter = isTest
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: 60 * 1000, // 1 minute
+      max: 30, // 30 requests per minute
+      standardHeaders: true,
+      legacyHeaders: false,
+      handler: (req, res, next) => {
+        const err = new TooManyRequestsError(
+          'Too many API requests, please try again later',
+          'errors.too_many_api_requests'
+        );
+        next(err);
+      },
+    });
 
 // Security headers using helmet
 const securityHeaders = helmet({
@@ -208,54 +216,58 @@ const corsOptions = {
 };
 
 // Appointment creation rate limiter (more restrictive)
-const appointmentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 appointment requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many appointment requests, please try again later',
-    errorCode: 'APPOINTMENT_RATE_LIMIT_EXCEEDED',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    logger.warn('Appointment rate limit exceeded', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      url: req.url,
+const appointmentLimiter = isTest
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 10, // limit each IP to 10 appointment requests per windowMs
+      message: {
+        success: false,
+        message: 'Too many appointment requests, please try again later',
+        errorCode: 'APPOINTMENT_RATE_LIMIT_EXCEEDED',
+      },
+      standardHeaders: true,
+      legacyHeaders: false,
+      handler: (req, res) => {
+        logger.warn('Appointment rate limit exceeded', {
+          ip: req.ip,
+          userAgent: req.get('User-Agent'),
+          url: req.url,
+        });
+        res.status(429).json({
+          success: false,
+          message: 'Too many appointment requests, please try again later',
+          errorCode: 'APPOINTMENT_RATE_LIMIT_EXCEEDED',
+        });
+      },
     });
-    res.status(429).json({
-      success: false,
-      message: 'Too many appointment requests, please try again later',
-      errorCode: 'APPOINTMENT_RATE_LIMIT_EXCEEDED',
-    });
-  },
-});
 
 // Admin operations rate limiter
-const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // limit each IP to 50 admin requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many admin requests, please try again later',
-    errorCode: 'ADMIN_RATE_LIMIT_EXCEEDED',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    logger.warn('Admin rate limit exceeded', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      url: req.url,
+const adminLimiter = isTest
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 50, // limit each IP to 50 admin requests per windowMs
+      message: {
+        success: false,
+        message: 'Too many admin requests, please try again later',
+        errorCode: 'ADMIN_RATE_LIMIT_EXCEEDED',
+      },
+      standardHeaders: true,
+      legacyHeaders: false,
+      handler: (req, res) => {
+        logger.warn('Admin rate limit exceeded', {
+          ip: req.ip,
+          userAgent: req.get('User-Agent'),
+          url: req.url,
+        });
+        res.status(429).json({
+          success: false,
+          message: 'Too many admin requests, please try again later',
+          errorCode: 'ADMIN_RATE_LIMIT_EXCEEDED',
+        });
+      },
     });
-    res.status(429).json({
-      success: false,
-      message: 'Too many admin requests, please try again later',
-      errorCode: 'ADMIN_RATE_LIMIT_EXCEEDED',
-    });
-  },
-});
 
 module.exports = {
   generalLimiter,

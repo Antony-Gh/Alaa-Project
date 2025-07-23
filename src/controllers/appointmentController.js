@@ -32,7 +32,6 @@ const createAppointment = asyncHandler(async (req, res) => {
 
   const appointment_id = uuidv4();
 
-  // Validate department exists
   const department = await dbManager.get(
     'SELECT id FROM departments WHERE id = ?',
     [department_id]

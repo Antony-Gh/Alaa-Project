@@ -40,12 +40,39 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, config.jwt.secret);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, config.jwt.secret);
+    } catch (error) {
+      // Handle invalid/expired token
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(401).json({
+          success: false,
+          message: req.t ? req.t('error.invalid_token') : 'Invalid token',
+          errorCode: 'INVALID_TOKEN',
+        });
+      } else if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message: req.t ? req.t('error.token_expired') : 'Token expired',
+          errorCode: 'TOKEN_EXPIRED',
+        });
+      }
+      logger.error('Authentication error:', { error: error.message });
+      return res.status(401).json({
+        success: false,
+        message: req.t
+          ? req.t('error.authentication_failed')
+          : 'Authentication failed',
+        errorCode: 'AUTH_ERROR',
+      });
+    }
 
     // Verify user still exists in database
     const user = await dbManager.get('SELECT * FROM users WHERE id = ?', [
       decoded.id,
     ]);
+    
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -67,22 +94,8 @@ const authenticateToken = async (req, res, next) => {
     });
     next();
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(403).json({
-        success: false,
-        message: req.t ? req.t('error.invalid_token') : 'Invalid token',
-        errorCode: 'INVALID_TOKEN',
-      });
-    } else if (error.name === 'TokenExpiredError') {
-      return res.status(403).json({
-        success: false,
-        message: req.t ? req.t('error.token_expired') : 'Token expired',
-        errorCode: 'TOKEN_EXPIRED',
-      });
-    }
-
     logger.error('Authentication error:', { error: error.message });
-    return res.status(500).json({
+    return res.status(401).json({
       success: false,
       message: req.t
         ? req.t('error.authentication_failed')
@@ -94,6 +107,13 @@ const authenticateToken = async (req, res, next) => {
 
 // Require admin or manager role
 const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: req.t ? req.t('error.access_token_required') : 'Access token required',
+      errorCode: 'TOKEN_MISSING',
+    });
+  }
   if (req.user.role !== 'admin' && req.user.role !== 'manager') {
     logger.warn('Unauthorized admin access attempt', {
       userId: req.user.id,
@@ -114,6 +134,13 @@ const requireAdmin = (req, res, next) => {
 
 // Require employee role, admin, or manager
 const requireEmployee = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: req.t ? req.t('error.access_token_required') : 'Access token required',
+      errorCode: 'TOKEN_MISSING',
+    });
+  }
   if (
     req.user.role !== 'employee' &&
     req.user.role !== 'admin' &&
