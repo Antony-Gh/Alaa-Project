@@ -139,12 +139,12 @@ router.put(
       }
 
       // Hash new password
-      const newPasswordHash = await bcrypt.hash(new_password, 10);
+      const new_passwordHash = await bcrypt.hash(new_password, 10);
 
       // Update password
       await dbManager.run(
         'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [newPasswordHash, req.user.id]
+        [new_passwordHash, req.user.id]
       );
 
       logger.info('Password changed', { userId: req.user.id });

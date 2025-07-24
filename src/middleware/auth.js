@@ -72,7 +72,7 @@ const authenticateToken = async (req, res, next) => {
     const user = await dbManager.get('SELECT * FROM users WHERE id = ?', [
       decoded.id,
     ]);
-    
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -110,7 +110,9 @@ const requireAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
-      message: req.t ? req.t('error.access_token_required') : 'Access token required',
+      message: req.t
+        ? req.t('error.access_token_required')
+        : 'Access token required',
       errorCode: 'TOKEN_MISSING',
     });
   }
@@ -137,7 +139,9 @@ const requireEmployee = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
-      message: req.t ? req.t('error.access_token_required') : 'Access token required',
+      message: req.t
+        ? req.t('error.access_token_required')
+        : 'Access token required',
       errorCode: 'TOKEN_MISSING',
     });
   }

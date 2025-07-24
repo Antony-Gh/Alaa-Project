@@ -30,10 +30,10 @@ const {
 } = require('./middleware/security');
 
 // Import license middleware
-const { 
-  checkLicense, 
-  addLicenseInfoToResponse, 
-  checkFeatureAccess 
+const {
+  checkLicense,
+  addLicenseInfoToResponse,
+  checkFeatureAccess,
 } = require('./middleware/licenseCheck');
 
 // Import services
@@ -121,7 +121,7 @@ app.use(
   express.static(path.join(__dirname, '../src/public'), {
     maxAge: 0,
     etag: false,
-    lastModified: false
+    lastModified: false,
   })
 );
 
@@ -141,9 +141,24 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/appointments', apiLimiter, appointmentRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
 app.use('/api/user-management', apiLimiter, userManagementRoutes);
-app.use('/api/rbac', apiLimiter, checkFeatureAccess('userManagement'), rbacRoutes);
-app.use('/api/analytics', apiLimiter, checkFeatureAccess('analytics'), analyticsRoutes);
-app.use('/api/notifications', apiLimiter, checkFeatureAccess('notifications'), notificationRoutes);
+app.use(
+  '/api/rbac',
+  apiLimiter,
+  checkFeatureAccess('userManagement'),
+  rbacRoutes
+);
+app.use(
+  '/api/analytics',
+  apiLimiter,
+  checkFeatureAccess('analytics'),
+  analyticsRoutes
+);
+app.use(
+  '/api/notifications',
+  apiLimiter,
+  checkFeatureAccess('notifications'),
+  notificationRoutes
+);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/license', apiLimiter, licenseRoutes);
 
@@ -166,14 +181,14 @@ if (process.env.NODE_ENV !== 'production') {
   const fs = require('fs');
   const apiDocsPath = path.join(__dirname, '../api-docs');
   const swaggerJsonPath = path.join(apiDocsPath, 'swagger.json');
-  
+
   try {
     // Create api-docs directory if it doesn't exist
     if (!fs.existsSync(apiDocsPath)) {
       fs.mkdirSync(apiDocsPath, { recursive: true });
       logger.info('Created API docs directory');
     }
-    
+
     // Create a basic swagger.json if it doesn't exist
     if (!fs.existsSync(swaggerJsonPath)) {
       const basicSwagger = {
@@ -181,24 +196,21 @@ if (process.env.NODE_ENV !== 'production') {
         info: {
           title: 'Scheduling System API',
           version: '1.0.0',
-          description: 'API for the scheduling system'
+          description: 'API for the scheduling system',
         },
         servers: [
           {
             url: '/api',
-            description: 'Development server'
-          }
+            description: 'Development server',
+          },
         ],
-        paths: {}
+        paths: {},
       };
-      
-      fs.writeFileSync(
-        swaggerJsonPath, 
-        JSON.stringify(basicSwagger, null, 2)
-      );
+
+      fs.writeFileSync(swaggerJsonPath, JSON.stringify(basicSwagger, null, 2));
       logger.info('Created basic swagger.json file');
     }
-    
+
     const swaggerDocument = require(swaggerJsonPath);
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     logger.info('API documentation available at /api-docs');
@@ -218,7 +230,9 @@ app.use('*', (req, res, next) => {
     next(error);
   } else {
     // Web page 404 response
-    res.status(404).sendFile(path.join(__dirname, '../src/public/main/404.html'));
+    res
+      .status(404)
+      .sendFile(path.join(__dirname, '../src/public/main/404.html'));
   }
 });
 

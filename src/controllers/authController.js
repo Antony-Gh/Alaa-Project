@@ -164,17 +164,21 @@ const login = asyncHandler(async (req, res) => {
 
     // Validate input
     validateUsername(username);
+
     validatePassword(password);
 
     // Find user by username
     const user = await dbManager.get('SELECT * FROM users WHERE username = ?', [
       username,
     ]);
+
     if (!user) {
       logger.warn('Login attempt with invalid username', { username });
       return res.status(401).json({
         success: false,
-        message: req.t ? req.t('auth.invalid_credentials') : 'Invalid username or password',
+        message: req.t
+          ? req.t('auth.invalid_credentials')
+          : 'Invalid username or password',
         errorCode: 'INVALID_CREDENTIALS',
       });
     }
@@ -185,7 +189,9 @@ const login = asyncHandler(async (req, res) => {
       logger.warn('Login attempt with invalid password', { username });
       return res.status(401).json({
         success: false,
-        message: req.t ? req.t('auth.invalid_credentials') : 'Invalid username or password',
+        message: req.t
+          ? req.t('auth.invalid_credentials')
+          : 'Invalid username or password',
         errorCode: 'INVALID_CREDENTIALS',
       });
     }
@@ -220,16 +226,44 @@ const login = asyncHandler(async (req, res) => {
     );
   } catch (err) {
     logger.error('Login error:', { error: err.message });
+    if (err instanceof ValidationError) {
+      console.log('[TEST SETUP] err:', {
+        success: false,
+        message: err.translationKey || err.message,
+        statusCode: 400,
+        errorCode: 'VALIDATION_ERROR',
+        errorMessage: err.message,
+        errorStack: err.stack,
+      });
+      return res.status(400).json({
+        success: false,
+        message: err.translationKey || err.message,
+        errorCode: 'VALIDATION_ERROR',
+        errorMessage: err.message,
+        errorStack: err.stack,
+      });
+    }
+    console.log('[TEST SETUP] err:', {
+      success: false,
+      message: req.t ? req.t('error.internal') : 'Internal server error',
+      statusCode: 500,
+      errorCode: 'INTERNAL_ERROR',
+      errorMessage: err.message,
+      errorStack: err.stack,
+    });
     return res.status(500).json({
       success: false,
       message: req.t ? req.t('error.internal') : 'Internal server error',
       errorCode: 'INTERNAL_ERROR',
+      errorMessage: err.message,
+      errorStack: err.stack,
     });
   }
 });
 
 // Register new user
 const register = asyncHandler(async (req, res) => {
+  console.log('[TEST SETUP AUTH CONTROLLER] dbManager:', dbManager);
   try {
     const {
       username,
@@ -257,7 +291,9 @@ const register = asyncHandler(async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: req.t ? req.t('auth.username_exists') : 'Username already exists',
+        message: req.t
+          ? req.t('auth.username_exists')
+          : 'Username already exists',
         errorCode: 'USERNAME_EXISTS',
       });
     }
@@ -295,6 +331,8 @@ const register = asyncHandler(async (req, res) => {
       ]
     );
 
+    console.log('[TEST SETUP] result:', result);
+
     logger.debug('User insert result:', { result, username, email, role });
 
     // Check if insert was successful
@@ -318,6 +356,8 @@ const register = asyncHandler(async (req, res) => {
     ]);
 
     logger.debug('Retrieved new user:', { newUser, userId: result.lastID });
+
+    // console.log('[TEST SETUP] ALL:', dbManager._tables ? dbManager._tables.users : undefined);
 
     // Check if user was retrieved successfully
     if (!newUser) {
@@ -362,16 +402,36 @@ const register = asyncHandler(async (req, res) => {
   } catch (err) {
     logger.error('Register error:', { error: err.message });
     if (err instanceof ValidationError) {
+      console.log('[TEST SETUP] err:', {
+        success: false,
+        message: err.translationKey || err.message,
+        statusCode: 400,
+        errorCode: 'VALIDATION_ERROR',
+        errorMessage: err.message,
+        errorStack: err.stack,
+      });
       return res.status(400).json({
         success: false,
         message: err.translationKey || err.message,
         errorCode: 'VALIDATION_ERROR',
+        errorMessage: err.message,
+        errorStack: err.stack,
       });
     }
+    console.log('[TEST SETUP] err:', {
+      success: false,
+      message: req.t ? req.t('error.internal') : 'Internal server error',
+      statusCode: 500,
+      errorCode: 'INTERNAL_ERROR',
+      errorMessage: err.message,
+      errorStack: err.stack,
+    });
     return res.status(500).json({
       success: false,
       message: req.t ? req.t('error.internal') : 'Internal server error',
       errorCode: 'INTERNAL_ERROR',
+      errorMessage: err.message,
+      errorStack: err.stack,
     });
   }
 });
@@ -432,7 +492,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     [email, department_id, req.user.id]
   );
 
-  if (result.changes === 0) {
+  if (!result || result.changes === 0) {
     return res.status(404).json({
       success: false,
       message: req.t('user.notfound'),
@@ -460,7 +520,9 @@ const changePassword = asyncHandler(async (req, res) => {
   if (!req.user || !req.user.id) {
     return res.status(401).json({
       success: false,
-      message: req.t ? req.t('error.access_token_required') : 'Access token required',
+      message: req.t
+        ? req.t('error.access_token_required')
+        : 'Access token required',
       errorCode: 'TOKEN_MISSING',
     });
   }
@@ -469,37 +531,40 @@ const changePassword = asyncHandler(async (req, res) => {
   // console.log('[TEST SETUP] req.user.id:', req.user.id);
   // console.log('[TEST SETUP] req.body:', req.body);
 
-  const { currentPassword, newPassword, newPasswordConfirmation } = req.body;
+  const { currentPassword, new_password, new_password_confirmation } = req.body;
 
   // Validate required fields
-  if (!currentPassword || !newPassword) {
-    logger.debug('Password change validation failed', { 
-      currentPasswordProvided: !!currentPassword, 
-      newPasswordProvided: !!newPassword 
+  if (!currentPassword || !new_password) {
+    logger.debug('Password change validation failed', {
+      currentPasswordProvided: !!currentPassword,
+      new_passwordProvided: !!new_password,
     });
     return res.status(400).json({
       success: false,
-      message: req.t ? req.t('validation.password_required') : 'Current and new passwords are required',
+      message: req.t
+        ? req.t('validation.password_required')
+        : 'Current and new passwords are required',
       errorCode: 'MISSING_REQUIRED_FIELDS',
     });
   }
 
   // Log password change attempt for debugging
-  logger.debug('Password change attempt', { 
+  logger.debug('Password change attempt', {
     userId: req.user.id,
-    passwordLength: newPassword.length,
-    hasConfirmation: !!newPasswordConfirmation
+    passwordLength: new_password.length,
+    hasConfirmation: !!new_password_confirmation,
   });
 
-  
   // Only check confirmation if present in request
   if (
-    typeof newPasswordConfirmation !== 'undefined' &&
-    newPassword !== newPasswordConfirmation
+    typeof new_password_confirmation !== 'undefined' &&
+    new_password !== new_password_confirmation
   ) {
     return res.status(400).json({
       success: false,
-      message: req.t ? req.t('validation.password_mismatch') : 'Password confirmation does not match',
+      message: req.t
+        ? req.t('validation.password_mismatch')
+        : 'Password confirmation does not match',
       errorCode: 'PASSWORD_MISMATCH',
     });
   }
@@ -526,8 +591,8 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 
   // Verify current password
-  console.log('[TEST SETUP] currentPassword:', currentPassword);
-  console.log('[TEST SETUP] user.password_hash:', user.password_hash);
+  // console.log('[TEST SETUP] currentPassword:', currentPassword);
+  // console.log('[TEST SETUP] user.password_hash:', user.password_hash);
 
   const isCurrentPasswordValid = await comparePassword(
     currentPassword,
@@ -543,16 +608,18 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 
   // Hash new password
-  const newPasswordHash = await hashPassword(newPassword);
+  const new_passwordHash = await hashPassword(new_password);
 
   // Update password
   const result = await dbManager.run(
     'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [newPasswordHash, req.user.id]
+    [new_passwordHash, req.user.id]
   );
 
-  if (result.changes === 0) {
-    logger.warn('Password change: update failed, user not found', { userId: req.user.id });
+  if (!result || result.changes === 0) {
+    logger.warn('Password change: update failed, user not found', {
+      userId: req.user.id,
+    });
     return res.status(404).json({
       success: false,
       message: req.t('user.notfound'),

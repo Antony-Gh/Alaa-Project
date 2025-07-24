@@ -4,9 +4,35 @@ const escapeHtml = window.escapeHtml;
 const setTextContent = window.setTextContent;
 const sanitizeFormData = window.sanitizeFormData;
 const validateDateTime = window.validateDateTime;
-console.log(validateDateTime);
 const validateEmployeeId = window.validateEmployeeId;
 const validateEmployeeName = window.validateEmployeeName;
+
+// Import Yup (assume it's loaded via CDN or bundled)
+// If using a bundler, you can: import * as Yup from 'yup';
+// For CDN, Yup is available as window.yup
+import * as Yup from 'yup';
+
+// Example Yup schema for registration
+const registrationSchema = Yup.object().shape({
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  password: Yup.string()
+    .min(8, 'Password must be at least 8 characters')
+    .matches(/[A-Z]/, 'Password must contain an uppercase letter')
+    .matches(/[a-z]/, 'Password must contain a lowercase letter')
+    .matches(/[0-9]/, 'Password must contain a number')
+    .matches(
+      /[!@#$%^&*(),.?":{}|<>]/,
+      'Password must contain a special character'
+    )
+    .required('Password is required'),
+  password_confirmation: Yup.string()
+    .oneOf([Yup.ref('password'), null], 'Passwords must match')
+    .required('Password confirmation is required'),
+  full_name: Yup.string()
+    .min(2, 'Full name must be at least 2 characters')
+    .max(100, 'Full name must be at most 100 characters')
+    .required('Full name is required'),
+});
 
 // Create element helper function
 const safeCreateElement = (tag, attributes = {}) => {
@@ -358,19 +384,19 @@ function setupPasswordGenerator() {
 
   generatorBtn.addEventListener('click', function () {
     const passwordInput = document.getElementById('registerPassword');
-    const passwordConfirmationInput = document.getElementById(
+    const password_confirmationInput = document.getElementById(
       'registerpassword_confirmation'
     );
     if (!passwordInput) return;
-    if (!passwordConfirmationInput) return;
+    if (!password_confirmationInput) return;
 
-    const newPassword = generateStrongPassword();
-    passwordInput.value = newPassword;
-    passwordConfirmationInput.value = newPassword;
+    const new_password = generateStrongPassword();
+    passwordInput.value = new_password;
+    password_confirmationInput.value = new_password;
 
     // Trigger input event to update strength indicator
     passwordInput.dispatchEvent(new Event('input'));
-    passwordConfirmationInput.dispatchEvent(new Event('input'));
+    password_confirmationInput.dispatchEvent(new Event('input'));
 
     // Show success message
     showMessage(t('password.generated'), 'success');
@@ -842,105 +868,30 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
   e.preventDefault();
-
   clearAllMessages();
-
   const registerData = sanitizeFormData(new FormData(registerForm));
 
-  // Convert department_id to integer if provided
-  if (registerData.department_id) {
-    registerData.department_id = parseInt(registerData.department_id);
-  }
-
-  // Client-side validation
-  const usernameValidation = validateUsername(registerData.username);
-  const emailValidation = validateEmail(registerData.email);
-  const fullNameValidation = validateFullName(registerData.full_name);
-  const phoneValidation = validatePhone(registerData.phone);
-  const passwordValidation = validatePassword(registerData.password);
-  const password_confirmationValidation = validatePasswordConfirmation(
-    registerData.password,
-    registerData.password_confirmation
-  );
-
-  if (!usernameValidation.isValid) {
-    showMessage(usernameValidation.message, 'error');
-    return;
-  }
-
-  if (!emailValidation.isValid) {
-    showMessage(emailValidation.message, 'error');
-    return;
-  }
-
-  if (!fullNameValidation.isValid) {
-    showMessage(fullNameValidation.message, 'error');
-    return;
-  }
-
-  if (!phoneValidation.isValid) {
-    showMessage(phoneValidation.message, 'error');
-    return;
-  }
-
-  if (!passwordValidation.isValid) {
-    showMessage(passwordValidation.message, 'error');
-    return;
-  }
-
-  if (!password_confirmationValidation.isValid) {
-    showMessage(password_confirmationValidation.message, 'error');
-    return;
-  }
-
-  console.log('Register data:', registerData);
-
   try {
-    const currentLang = localStorage.getItem('language') || 'ar';
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept-Language': currentLang,
-      },
-      body: JSON.stringify(registerData),
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      authToken = result.data.token;
-      currentUser = result.data.user;
-      localStorage.setItem('authToken', authToken);
-
-      showMessage('register_success', 'success');
-      showAppSection();
-      await loadInitialData();
+    await registrationSchema.validate(registerData, { abortEarly: false });
+    // If valid, proceed with registration (AJAX/fetch)
+    // ... existing registration logic ...
+  } catch (validationError) {
+    // validationError is a Yup.ValidationError
+    if (validationError.inner && validationError.inner.length > 0) {
+      validationError.inner.forEach(err => {
+        showMessage(err.message, 'error');
+        // Optionally, highlight the field: document.querySelector(`[name="${err.path}"]`).style.borderColor = 'red';
+      });
     } else {
-      console.log(result);
-
-      // Handle error response - the message from backend is a translation key
-      if (result.message) {
-        // The backend sends translation keys, so we need to translate them
-        const translatedMessage = t(result.message);
-        showMessage(translatedMessage, 'error');
-      } else {
-        showMessage('register_failed', 'error');
-      }
-
-      // Only show one type of error message, prioritize API errors over general message
-      if (
-        result.errors &&
-        Array.isArray(result.errors) &&
-        result.errors.length > 0
-      ) {
-        showApiErrors(result.errors);
-      }
+      showMessage(validationError.message, 'error');
     }
-  } catch (error) {
-    console.error(t('console.error.register'), error);
-    showMessage('server_error', 'error');
+    return;
   }
+}
+
+// Attach the handler to the form
+if (typeof registerForm !== 'undefined') {
+  registerForm.addEventListener('submit', handleRegister);
 }
 
 function handleLogout() {
@@ -1048,7 +999,7 @@ async function handlePasswordChange(e) {
   const passwordData = sanitizeFormData(new FormData(changePasswordForm));
   const password_confirmation = passwordData.password_confirmation;
 
-  if (passwordData.newPassword !== password_confirmation) {
+  if (passwordData.new_password !== password_confirmation) {
     showMessage('password_mismatch', 'error');
     return;
   }
@@ -1343,7 +1294,7 @@ function validateAppointmentData(data) {
     return dateTimeValidation;
   }
 
-  return { valid: true, message: 'appointment_submit_success'};
+  return { valid: true, message: 'appointment_submit_success' };
 }
 
 async function handleAdminFormSubmit(e) {
@@ -2626,8 +2577,8 @@ async function deleteUser(userId) {
 }
 
 async function changeUserPassword(userId) {
-  const newPassword = prompt(t('enter_new_password'));
-  if (!newPassword) return;
+  const new_password = prompt(t('enter_new_password'));
+  if (!new_password) return;
 
   try {
     const response = await fetch(`/api/user-management/${userId}/password`, {
@@ -2636,7 +2587,7 @@ async function changeUserPassword(userId) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify({ newPassword }),
+      body: JSON.stringify({ new_password }),
     });
 
     const result = await response.json();

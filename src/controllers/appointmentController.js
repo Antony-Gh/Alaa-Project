@@ -37,7 +37,12 @@ const createAppointment = asyncHandler(async (req, res) => {
     [department_id]
   );
   if (!department) {
-    throw new NotFoundError(req.t('department.notfound'));
+    return ResponseHandler.error(
+      res,
+      req.t('department.notfound'),
+      404,
+      'DEPARTMENT_NOT_FOUND'
+    );
   }
 
   // Validate location exists
@@ -46,7 +51,12 @@ const createAppointment = asyncHandler(async (req, res) => {
     [location_id]
   );
   if (!location) {
-    throw new NotFoundError(req.t('location.notfound'));
+    return ResponseHandler.error(
+      res,
+      req.t('location.notfound'),
+      404,
+      'LOCATION_NOT_FOUND'
+    );
   }
 
   // Check for location conflicts
@@ -249,10 +259,18 @@ const generateRecurringInstances = pattern => {
 
 // Helper to normalize requested_date to YYYY-MM-DD string
 function normalizeRequestedDate(appointment) {
-  if (appointment.requested_date) {
-    const d = new Date(Number(appointment.requested_date));
+  if (!appointment.requested_date) return appointment;
+  let d;
+  if (typeof appointment.requested_date === 'number') {
+    d = new Date(appointment.requested_date);
+  } else if (typeof appointment.requested_date === 'string') {
+    // Try to parse as ISO or YYYY-MM-DD
+    d = new Date(appointment.requested_date);
+  }
+  if (d instanceof Date && !isNaN(d)) {
     appointment.requested_date = d.toISOString().slice(0, 10);
   }
+  // else leave as is
   return appointment;
 }
 
@@ -366,6 +384,44 @@ const getAllAppointments = asyncHandler(async (req, res) => {
 
   const appointments = await dbManager.query(sql, params);
 
+  if (!appointments) {
+    return ResponseHandler.success(
+      res,
+      {
+        appointments: [],
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: 0,
+          pages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      },
+      req.t('appointment.none_found')
+    );
+  }
+
+  console.log('[TEST SETUP] appointments:', appointments);
+
+  if (!appointments || appointments.length === 0) {
+    return ResponseHandler.success(
+      res,
+      {
+        appointments: [],
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: 0,
+          pages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      },
+      req.t('appointment.none_found')
+    );
+  }
+
   // Get total count for pagination
   let countSql = 'SELECT COUNT(*) as total FROM appointments a';
   const countParams = [];
@@ -383,7 +439,11 @@ const getAllAppointments = asyncHandler(async (req, res) => {
   }
 
   const totalResult = await dbManager.get(countSql, countParams);
-  const total = totalResult.total;
+  console.log('[TEST SETUP] totalResult:', totalResult);
+  const total =
+    totalResult && typeof totalResult.total === 'number'
+      ? totalResult.total
+      : 0;
 
   // Parse JSON fields
   appointments.forEach(appointment => {
@@ -436,7 +496,12 @@ const getAppointmentById = asyncHandler(async (req, res) => {
   );
 
   if (!appointment) {
-    throw new NotFoundError(req.t('appointment.notfound'));
+    return ResponseHandler.error(
+      res,
+      req.t('appointment.notfound'),
+      404,
+      'APPOINTMENT_NOT_FOUND'
+    );
   }
 
   // Check if user has access to this appointment
@@ -445,7 +510,12 @@ const getAppointmentById = asyncHandler(async (req, res) => {
     req.user.role !== 'manager' &&
     appointment.employee_id !== req.user.username
   ) {
-    throw new AuthorizationError(req.t('error.forbidden'));
+    return ResponseHandler.error(
+      res,
+      req.t('error.forbidden'),
+      403,
+      'FORBIDDEN'
+    );
   }
 
   // Parse JSON fields
@@ -488,8 +558,14 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
     'SELECT * FROM appointments WHERE id = ?',
     [id]
   );
+
   if (!appointment) {
-    throw new NotFoundError(req.t('appointment.notfound'));
+    return ResponseHandler.error(
+      res,
+      req.t('appointment.notfound'),
+      404,
+      'APPOINTMENT_NOT_FOUND'
+    );
   }
 
   // Update appointment status
@@ -518,7 +594,12 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
   );
 
   if (result.changes === 0) {
-    throw new NotFoundError(req.t('appointment.notfound'));
+    return ResponseHandler.error(
+      res,
+      req.t('appointment.notfound'),
+      404,
+      'APPOINTMENT_NOT_FOUND'
+    );
   }
 
   // Get updated appointment
@@ -549,8 +630,14 @@ const deleteAppointment = asyncHandler(async (req, res) => {
     'SELECT * FROM appointments WHERE id = ?',
     [id]
   );
+
   if (!appointment) {
-    throw new NotFoundError(req.t('appointment.notfound'));
+    return ResponseHandler.error(
+      res,
+      req.t('appointment.notfound'),
+      404,
+      'APPOINTMENT_NOT_FOUND'
+    );
   }
 
   // Check if user is admin or manager
@@ -564,7 +651,12 @@ const deleteAppointment = asyncHandler(async (req, res) => {
   ]);
 
   if (result.changes === 0) {
-    throw new NotFoundError(req.t('appointment.notfound'));
+    return ResponseHandler.error(
+      res,
+      req.t('appointment.notfound'),
+      404,
+      'APPOINTMENT_NOT_FOUND'
+    );
   }
 
   logger.info('Appointment deleted', {
@@ -665,7 +757,16 @@ const getAppointmentStats = asyncHandler(async (req, res) => {
     params
   );
 
-  recentAppointments.forEach(normalizeRequestedDate);
+  if (recentAppointments) {
+    recentAppointments.forEach(normalizeRequestedDate);
+  } else {
+    return ResponseHandler.error(
+      res,
+      req.t('appointment.notfound'),
+      404,
+      'APPOINTMENT_NOT_FOUND'
+    );
+  }
 
   const result = {
     overview: stats,

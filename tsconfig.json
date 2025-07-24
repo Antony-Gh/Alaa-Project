@@ -30,7 +30,7 @@
     "src/**/*.ts",
     "src/**/*.js",
     "index.js"
-  ],
+, "tests/mocks/databaseMock.js"  ],
   "exclude": [
     "node_modules",
     "dist"

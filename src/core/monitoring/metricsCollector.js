@@ -39,13 +39,31 @@ class MetricsCollector extends EventEmitter {
     this.createCounter('users_registered_total', 'Users registered');
 
     // System metrics
-    this.createGauge('process_memory_heap_used_bytes', 'Process heap memory used in bytes');
-    this.createGauge('process_memory_heap_total_bytes', 'Process heap memory total in bytes');
-    this.createGauge('process_memory_external_bytes', 'Process external memory in bytes');
-    this.createGauge('process_cpu_user_seconds_total', 'Process CPU user time in seconds');
-    this.createGauge('process_cpu_system_seconds_total', 'Process CPU system time in seconds');
+    this.createGauge(
+      'process_memory_heap_used_bytes',
+      'Process heap memory used in bytes'
+    );
+    this.createGauge(
+      'process_memory_heap_total_bytes',
+      'Process heap memory total in bytes'
+    );
+    this.createGauge(
+      'process_memory_external_bytes',
+      'Process external memory in bytes'
+    );
+    this.createGauge(
+      'process_cpu_user_seconds_total',
+      'Process CPU user time in seconds'
+    );
+    this.createGauge(
+      'process_cpu_system_seconds_total',
+      'Process CPU system time in seconds'
+    );
     this.createGauge('process_uptime_seconds', 'Process uptime in seconds');
-    this.createGauge('nodejs_eventloop_lag_milliseconds', 'Node.js event loop lag in milliseconds');
+    this.createGauge(
+      'nodejs_eventloop_lag_milliseconds',
+      'Node.js event loop lag in milliseconds'
+    );
 
     // System metrics collection
     setInterval(() => {

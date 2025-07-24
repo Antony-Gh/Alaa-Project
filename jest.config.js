@@ -12,11 +12,14 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup/testSetup.js'],
+  setupFiles: ['<rootDir>/tests/setup/jest.setup.js'],
   testTimeout: 10000,
   verbose: true,
   forceExit: true,
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-  globalSetup: '<rootDir>/tests/setup/globalSetup.js',
+  moduleNameMapper: {
+    '^(.*[\\/])?utils/database$': '<rootDir>/tests/mocks/databaseMock.js',
+  },
 };

@@ -66,7 +66,7 @@ async function testAPI() {
     // Test registration
     console.log('4. Testing user registration...');
     const registerData = {
-      username: 'testuser',
+      username: 'regularuser',
       password: 'testpass123',
       password_confirmation: 'testpass123',
       email: 'test@example.com',
@@ -84,7 +84,7 @@ async function testAPI() {
     // Test login
     console.log('5. Testing user login...');
     const loginData = {
-      username: 'testuser',
+      username: 'regularuser',
       password: 'testpass123',
     };
     const login = await makeRequest('/api/auth/login', 'POST', loginData);

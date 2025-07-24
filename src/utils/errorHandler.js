@@ -94,7 +94,7 @@ class ConflictError extends AppError {
 }
 
 /**
- * 422 Validation error
+ * 400 Validation error
  */
 class ValidationError extends AppError {
   constructor(
@@ -102,7 +102,7 @@ class ValidationError extends AppError {
     translationKey = 'errors.validation',
     data = {}
   ) {
-    super(message, 422, translationKey, data);
+    super(message, 400, translationKey, data);
   }
 }
 

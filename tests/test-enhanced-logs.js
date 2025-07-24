@@ -10,7 +10,7 @@ logger.error('❌ Error message test');
 // Test with metadata
 logger.info('📊 User registration', {
   userId: 999,
-  username: 'testuser',
+  username: 'regularuser',
   email: 'test@example.com',
   timestamp: new Date().toISOString(),
 });

@@ -283,13 +283,13 @@ class UserRepository extends BaseRepository {
    * Update user password
    *
    * @param {number} userId - User ID
-   * @param {string} newPassword - New password
+   * @param {string} new_password - New password
    * @returns {Promise<boolean>} - Success status
    */
-  async updatePassword(userId, newPassword) {
+  async updatePassword(userId, new_password) {
     try {
       // Hash the new password
-      const passwordHash = await this.hashPassword(newPassword);
+      const passwordHash = await this.hashPassword(new_password);
 
       // Update the password hash
       await this.update(userId, {

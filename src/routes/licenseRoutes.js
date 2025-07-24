@@ -11,6 +11,10 @@ router.get('/', authMiddleware, licenseController.getLicenseInfo);
 router.post('/activate', authMiddleware, licenseController.activateLicense);
 
 // Check feature access
-router.get('/feature/:featureName', authMiddleware, licenseController.checkFeatureAccess);
+router.get(
+  '/feature/:featureName',
+  authMiddleware,
+  licenseController.checkFeatureAccess
+);
 
-module.exports = router; 
+module.exports = router;

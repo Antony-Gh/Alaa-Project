@@ -17,7 +17,13 @@ router.post(
 
 // Protected routes
 router.get('/profile', authenticateToken, authController.getProfile);
-router.put('/profile', authenticateToken, authController.updateProfile);
+router.put(
+  '/profile',
+  authenticateToken,
+  rules.updateUser,
+  validate,
+  authController.updateProfile
+);
 router.put(
   '/change-password',
   authenticateToken,

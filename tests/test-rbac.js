@@ -37,7 +37,7 @@ async function testRBAC() {
 
     // Test 3: User with Multi-Department Roles
     console.log('3. Testing Multi-Department User:');
-    const testUser = new User({
+    const regularuser = new User({
       id: 999,
       username: 'test.user',
       email: 'test@company.com',
@@ -48,25 +48,27 @@ async function testRBAC() {
       ],
     });
 
-    console.log(`   Default role: ${testUser.role}`);
-    console.log(`   Effective role (no dept): ${testUser.getEffectiveRole()}`);
+    console.log(`   Default role: ${regularuser.role}`);
     console.log(
-      `   Effective role (sales): ${testUser.getEffectiveRole('sales')}`
+      `   Effective role (no dept): ${regularuser.getEffectiveRole()}`
     );
     console.log(
-      `   Effective role (support): ${testUser.getEffectiveRole('support')}`
+      `   Effective role (sales): ${regularuser.getEffectiveRole('sales')}`
     );
     console.log(
-      `   Has role in sales: ${testUser.hasRoleInDepartment('sales', 'admin')}`
+      `   Effective role (support): ${regularuser.getEffectiveRole('support')}`
     );
     console.log(
-      `   Can manage employee: ${testUser.canManageUser({ getEffectiveRole: () => 'employee' })}`
+      `   Has role in sales: ${regularuser.hasRoleInDepartment('sales', 'admin')}`
+    );
+    console.log(
+      `   Can manage employee: ${regularuser.canManageUser({ getEffectiveRole: () => 'employee' })}`
     );
     console.log('');
 
     // Test 4: User Permissions
     console.log('4. Testing User Permissions:');
-    const userPermissions = getUserPermissions(testUser);
+    const userPermissions = getUserPermissions(regularuser);
     console.log(`   Total permissions: ${userPermissions.length}`);
     console.log(
       `   Has user:create: ${userPermissions.includes('user:create')}`
@@ -81,41 +83,45 @@ async function testRBAC() {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
 
-    testUser.setTemporaryRole('manager', expiresAt);
-    console.log(`   Has temporary role: ${testUser.hasTemporaryRole()}`);
-    console.log(`   Temporary role: ${testUser.temporary_role.role}`);
-    console.log(`   Expires: ${testUser.temporary_role.expires}`);
-    console.log(`   Effective role with temp: ${testUser.getEffectiveRole()}`);
+    regularuser.setTemporaryRole('manager', expiresAt);
+    console.log(`   Has temporary role: ${regularuser.hasTemporaryRole()}`);
+    console.log(`   Temporary role: ${regularuser.temporary_role.role}`);
+    console.log(`   Expires: ${regularuser.temporary_role.expires}`);
+    console.log(
+      `   Effective role with temp: ${regularuser.getEffectiveRole()}`
+    );
 
     // Test expired temporary role
     const expiredDate = new Date();
     expiredDate.setHours(expiredDate.getHours() - 1);
-    testUser.setTemporaryRole('admin', expiredDate);
-    console.log(`   Has expired temp role: ${testUser.hasTemporaryRole()}`);
+    regularuser.setTemporaryRole('admin', expiredDate);
+    console.log(`   Has expired temp role: ${regularuser.hasTemporaryRole()}`);
     console.log('');
 
     // Test 6: Role Management
     console.log('6. Testing Role Management:');
     console.log(
-      `   Can manage employee: ${testUser.canManageRole('employee')}`
+      `   Can manage employee: ${regularuser.canManageRole('employee')}`
     );
-    console.log(`   Can manage admin: ${testUser.canManageRole('admin')}`);
-    console.log(`   Can manage manager: ${testUser.canManageRole('manager')}`);
+    console.log(`   Can manage admin: ${regularuser.canManageRole('admin')}`);
+    console.log(
+      `   Can manage manager: ${regularuser.canManageRole('manager')}`
+    );
     console.log('');
 
     // Test 7: Department Operations
     console.log('7. Testing Department Operations:');
-    testUser.addDepartmentRole('marketing', 'moderator');
+    regularuser.addDepartmentRole('marketing', 'moderator');
     console.log(
-      `   Added marketing role: ${testUser.hasRoleInDepartment('marketing', 'moderator')}`
+      `   Added marketing role: ${regularuser.hasRoleInDepartment('marketing', 'moderator')}`
     );
 
-    testUser.removeDepartmentRole('support');
+    regularuser.removeDepartmentRole('support');
     console.log(
-      `   Removed support role: ${testUser.hasRoleInDepartment('support', 'moderator')}`
+      `   Removed support role: ${regularuser.hasRoleInDepartment('support', 'moderator')}`
     );
     console.log(
-      `   Current departments: ${JSON.stringify(testUser.getDepartments())}`
+      `   Current departments: ${JSON.stringify(regularuser.getDepartments())}`
     );
     console.log('');
 

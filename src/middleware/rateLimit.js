@@ -26,4 +26,4 @@ const apiLimiter = isTest
       message: 'Too many API requests, please try again later',
     });
 
-module.exports = { generalLimiter, authLimiter, apiLimiter }; 
+module.exports = { generalLimiter, authLimiter, apiLimiter };

@@ -400,12 +400,12 @@ class UserService {
    *
    * @param {number} id - User ID
    * @param {string} currentPassword - Current password
-   * @param {string} newPassword - New password
+   * @param {string} new_password - New password
    * @returns {Promise<boolean>} - Success status
    * @throws {NotFoundError} - If user not found
    * @throws {ValidationError} - If current password is incorrect
    */
-  async changePassword(id, currentPassword, newPassword) {
+  async changePassword(id, currentPassword, new_password) {
     // Get user with password hash
     const user = await this.repository.findById(id);
     if (!user) {
@@ -425,14 +425,14 @@ class UserService {
     }
 
     // Hash new password
-    const newPasswordHash = await bcrypt.hash(
-      newPassword,
+    const new_passwordHash = await bcrypt.hash(
+      new_password,
       config.security.bcryptRounds
     );
 
     // Update user password
     const updatedUser = await this.repository.update(id, {
-      password_hash: newPasswordHash,
+      password_hash: new_passwordHash,
     });
 
     if (!updatedUser) {

@@ -95,9 +95,14 @@ const securityHeaders = helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"], // Consider removing unsafe-inline in production
-      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdnjs.cloudflare.com"],
-      imgSrc: ["'self'", "data:"],
-      fontSrc: ["'self'", "fonts.gstatic.com", "cdnjs.cloudflare.com"],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        'fonts.googleapis.com',
+        'cdnjs.cloudflare.com',
+      ],
+      imgSrc: ["'self'", 'data:'],
+      fontSrc: ["'self'", 'fonts.gstatic.com', 'cdnjs.cloudflare.com'],
       connectSrc: ["'self'"],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],

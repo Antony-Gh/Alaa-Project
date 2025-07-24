@@ -377,7 +377,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 // Change user password (admin/moderator only)
 const changeUserPassword = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { newPassword } = req.body;
+  const { new_password } = req.body;
   const currentUser = req.user;
 
   // Get target user
@@ -395,12 +395,12 @@ const changeUserPassword = asyncHandler(async (req, res) => {
   }
 
   // Hash new password
-  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  const new_passwordHash = await bcrypt.hash(new_password, 10);
 
   // Update password
   const result = await dbManager.run(
     'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [newPasswordHash, id]
+    [new_passwordHash, id]
   );
 
   if (result.changes === 0) {

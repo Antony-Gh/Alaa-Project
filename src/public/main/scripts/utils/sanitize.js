@@ -122,7 +122,7 @@ function validateDateTime(date, time) {
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return {
       valid: false,
-      message: 'date_format_invalid'
+      message: 'date_format_invalid',
     };
   }
 
@@ -130,7 +130,7 @@ function validateDateTime(date, time) {
   if (!time || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(time)) {
     return {
       valid: false,
-      message: 'time_format_invalid'
+      message: 'time_format_invalid',
     };
   }
 
@@ -141,7 +141,7 @@ function validateDateTime(date, time) {
   if (isNaN(dateObj.getTime())) {
     return {
       valid: false,
-      message: 'date_invalid'
+      message: 'date_invalid',
     };
   }
 
@@ -150,13 +150,13 @@ function validateDateTime(date, time) {
   if (dateObj < now) {
     return {
       valid: false,
-      message: 'date_in_past'
+      message: 'date_in_past',
     };
   }
 
   return {
     valid: true,
-    message: 'datetime_valid'
+    message: 'datetime_valid',
   };
 }
 
@@ -170,21 +170,21 @@ function validateEmployeeId(employee_id) {
   if (!employee_id || typeof employee_id !== 'string') {
     return {
       valid: false,
-      message: 'employee_id_required'
+      message: 'employee_id_required',
     };
   }
-  
+
   // Employee ID should be 3-10 characters of letters and numbers
   if (!/^[A-Za-z0-9]{3,10}$/.test(employee_id)) {
     return {
       valid: false,
-      message: 'employee_id_invalid_format'
+      message: 'employee_id_invalid_format',
     };
   }
-  
+
   return {
     valid: true,
-    message: 'employee_id_valid'
+    message: 'employee_id_valid',
   };
 }
 
@@ -200,7 +200,7 @@ function validateArabicText(text, minLength = 2, maxLength = 100) {
   if (!text || typeof text !== 'string') {
     return {
       valid: false,
-      message: 'text_required'
+      message: 'text_required',
     };
   }
 
@@ -208,14 +208,14 @@ function validateArabicText(text, minLength = 2, maxLength = 100) {
   if (text.length < minLength) {
     return {
       valid: false,
-      message: 'text_too_short'
+      message: 'text_too_short',
     };
   }
-  
+
   if (text.length > maxLength) {
     return {
       valid: false,
-      message: 'text_too_long'
+      message: 'text_too_long',
     };
   }
 
@@ -224,13 +224,13 @@ function validateArabicText(text, minLength = 2, maxLength = 100) {
   if (!/^[\u0600-\u06FFa-zA-Z\s]+$/.test(text)) {
     return {
       valid: false,
-      message: 'text_invalid_characters'
+      message: 'text_invalid_characters',
     };
   }
-  
+
   return {
     valid: true,
-    message: 'text_valid'
+    message: 'text_valid',
   };
 }
 
@@ -242,35 +242,35 @@ function validateArabicText(text, minLength = 2, maxLength = 100) {
  */
 function validateEmployeeName(name) {
   const validation = validateArabicText(name, 2, 100);
-  
+
   // Customize message for employee name
   if (!validation.valid) {
     if (validation.message === 'text_required') {
       return {
         valid: false,
-        message: 'employee_name_required'
+        message: 'employee_name_required',
       };
     } else if (validation.message === 'text_too_short') {
       return {
         valid: false,
-        message: 'employee_name_too_short'
+        message: 'employee_name_too_short',
       };
     } else if (validation.message === 'text_too_long') {
       return {
         valid: false,
-        message: 'employee_name_too_long'
+        message: 'employee_name_too_long',
       };
     } else if (validation.message === 'text_invalid_characters') {
       return {
         valid: false,
-        message: 'employee_name_invalid_characters'
+        message: 'employee_name_invalid_characters',
       };
     }
   }
-  
+
   return {
     valid: true,
-    message: 'employee_name_valid'
+    message: 'employee_name_valid',
   };
 }
 

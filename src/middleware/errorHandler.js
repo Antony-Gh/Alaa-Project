@@ -76,6 +76,7 @@ const errorHandler = (err, req, res, _next) => {
       req.t ? req.t('error.validation') : 'Validation failed',
       message
     );
+    error.statusCode = 400;
   }
 
   if (err.name === 'JsonWebTokenError') {
