@@ -53,5 +53,5 @@ This document provides instructions for deploying the Scheduling System applicat
 ## Support
 
 For any technical issues or questions, please contact support at:
-- Email: support@example.com
-- Phone: +1-123-456-7890
+- Email: knkmam05@gmail.com
+- Phone: +201273481309

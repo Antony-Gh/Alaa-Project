@@ -404,6 +404,24 @@ function buildDockerImage() {
   }
 }
 
+// Helper function to recursively copy a directory
+function copyDirectory(src, dest) {
+  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (let entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirectory(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
 /**
  * Generate deployment instructions
  */
@@ -471,18 +489,21 @@ ${dockerAvailable ? '- The Docker deployment includes additional security harden
 ## Support
 
 For any technical issues or questions, please contact support at:
-- Email: support@example.com
-- Phone: +1-123-456-7890
+- Email: knkmam05@gmail.com
+- Phone: +201273481309
 `;
     
     // Write instructions to file
     fs.writeFileSync('DEPLOYMENT.md', instructions);
+    fs.copyFileSync('DEPLOYMENT.md', 'dist/DEPLOYMENT.md');
     
     // Also copy package.json to the dist directory
     if (!fs.existsSync('dist')) {
       fs.mkdirSync('dist');
     }
+
     
+
     if (fs.existsSync('package.json')) {
       fs.copyFileSync('package.json', 'dist/package.json');
       console.log(`  - Copied package.json to dist directory`);
@@ -492,12 +513,26 @@ For any technical issues or questions, please contact support at:
       fs.copyFileSync('package-lock.json', 'dist/package-lock.json');
       console.log(`  - Copied package-lock.json to dist directory`);
     }
+
+    // Copy node_modules to dist/node_modules if it exists
+    // if (fs.existsSync('node_modules')) {
+    //   console.log('  - Copying node_modules to dist/node_modules (this may take a while)...');
+    //   copyDirectory('node_modules', path.join('dist', 'node_modules'));
+    //   console.log('  - Copied node_modules to dist directory');
+    // }
+
+    // Copy data to dist/data if it exists
+    if (fs.existsSync('data')) {
+      console.log('  - Copying data to dist/data');
+      copyDirectory('data', path.join('dist', 'data'));
+      console.log('  - Copied data to dist directory');
+    }
     
     // Create a basic .env file in the dist directory
-    if (fs.existsSync('.env-example')) {
-      const envContent = fs.readFileSync('.env-example', 'utf8');
+    if (fs.existsSync('.env.example')) {
+      const envContent = fs.readFileSync('.env.example', 'utf8');
       fs.writeFileSync('dist/.env', envContent);
-      fs.copyFileSync('.env-example', 'dist/.env-example');
+      fs.copyFileSync('.env.example', 'dist/.env.example');
       console.log(`  - Created .env file in dist directory`);
     }
     
