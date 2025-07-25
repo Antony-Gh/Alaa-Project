@@ -11,6 +11,7 @@ const validateEmployeeName = window.validateEmployeeName;
 // If using a bundler, you can: import * as Yup from 'yup';
 // For CDN, Yup is available as window.yup
 import * as Yup from 'yup';
+// const Yup = window.yup;
 
 // Example Yup schema for registration
 const registrationSchema = Yup.object().shape({

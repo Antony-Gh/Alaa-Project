@@ -93,7 +93,7 @@ app.use(
 
 // Initialize i18n middleware
 const i18nConfig = {
-  debug: process.env.NODE_ENV === 'development',
+  debug: false,
   fallbackLng: 'en',
   preload: ['en', 'ar'],
   ns: ['translation'],
@@ -250,7 +250,7 @@ const initializeApp = async () => {
 
     // Start the server
     const PORT = config.port || 5000;
-    app.listen(PORT, () => {
+    app.listen(5000, () => {
       logger.info(`✅ Server running in ${config.env} mode on port ${PORT}`);
       console.log(`Visit: http://localhost:${PORT}`);
     });

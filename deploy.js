@@ -2,7 +2,7 @@
 
 /**
  * Secure Deployment Script
- * 
+ *
  * This script helps prepare the project for secure customer deployment/testing.
  * It implements several security measures:
  * 1. Code obfuscation
@@ -55,40 +55,53 @@ function isDockerAvailable() {
  */
 async function main() {
   printHeader();
-  
+
   try {
     // Install required tools
     installTools();
-    
+
+    removeDist();
+
     // Generate trial license key if requested
     if (config.generateLicenseKey) {
       generateLicenseKey();
     }
-    
+
     // Obfuscate JavaScript code if requested
     if (config.obfuscateJs) {
       obfuscateJsFiles();
     }
-    
+
     // Minify CSS files if requested
     if (config.minifyCss) {
       minifyCssFiles();
     }
-    
+
     // // Build Docker image if requested (but don't fail if it doesn't work)
     // if (config.buildDocker) {
     //   buildDockerImage();
     //   // Note: We're not checking the return value since we want to continue even if Docker build fails
     // }
-    
+
     // Generate deployment instructions
     generateInstructions();
-    
-    console.log(`${colors.green}${colors.bright}✅ Deployment preparation completed successfully!${colors.reset}`);
-    console.log(`${colors.green}The project is now ready to be deployed to your customer.${colors.reset}`);
-    console.log(`${colors.green}Obfuscated code is available in the 'dist' directory.${colors.reset}`);
+
+    console.log(
+      `${colors.green}${colors.bright}✅ Deployment preparation completed successfully!${colors.reset}`
+    );
+    console.log(
+      `${colors.green}The project is now ready to be deployed to your customer.${colors.reset}`
+    );
+    console.log(
+      `${colors.green}Obfuscated code is available in the 'dist' directory.${colors.reset}`
+    );
+
+    // Pack all files in dist directory to dist.rar
+    await packDistToRar();
   } catch (error) {
-    console.error(`${colors.red}${colors.bright}❌ Error: ${error.message}${colors.reset}`);
+    console.error(
+      `${colors.red}${colors.bright}❌ Error: ${error.message}${colors.reset}`
+    );
     process.exit(1);
   }
 }
@@ -97,33 +110,48 @@ async function main() {
  * Print header
  */
 function printHeader() {
-  console.log(`${colors.blue}${colors.bright}========================================${colors.reset}`);
-  console.log(`${colors.blue}${colors.bright}    SECURE CUSTOMER DEPLOYMENT TOOL    ${colors.reset}`);
-  console.log(`${colors.blue}${colors.bright}========================================${colors.reset}`);
+  console.log(
+    `${colors.blue}${colors.bright}========================================${colors.reset}`
+  );
+  console.log(
+    `${colors.blue}${colors.bright}    SECURE CUSTOMER DEPLOYMENT TOOL    ${colors.reset}`
+  );
+  console.log(
+    `${colors.blue}${colors.bright}========================================${colors.reset}`
+  );
   console.log(`${colors.yellow}Project: ${config.projectName}${colors.reset}`);
-  console.log(`${colors.yellow}Trial Period: ${config.trialDays} days${colors.reset}`);
-  console.log(`${colors.blue}${colors.bright}----------------------------------------${colors.reset}\n`);
+  console.log(
+    `${colors.yellow}Trial Period: ${config.trialDays} days${colors.reset}`
+  );
+  console.log(
+    `${colors.blue}${colors.bright}----------------------------------------${colors.reset}\n`
+  );
 }
 
 /**
  * Install required tools
  */
 function installTools() {
-  console.log(`${colors.magenta}📦 Installing required tools...${colors.reset}`);
-  
+  console.log(
+    `${colors.magenta}📦 Installing required tools...${colors.reset}`
+  );
+
   try {
     // Check for required tools and install if needed
     const tools = [
-      { name: 'javascript-obfuscator', command: 'npm install -g javascript-obfuscator' },
+      {
+        name: 'javascript-obfuscator',
+        command: 'npm install -g javascript-obfuscator',
+      },
       { name: 'terser', command: 'npm install -g terser' },
-      { name: 'clean-css-cli', command: 'npm install -g clean-css-cli' },
+      { name: 'csso', command: 'npm install -g csso-cli' }, // switched from clean-css-cli to csso-cli
     ];
-    
+
     for (const tool of tools) {
       try {
         // Try to execute the tool to check if it's installed
         let checkCommand;
-        
+
         if (process.platform === 'win32') {
           // On Windows
           checkCommand = `where ${tool.name}`;
@@ -131,7 +159,7 @@ function installTools() {
           // On Unix-like OS
           checkCommand = `which ${tool.name}`;
         }
-        
+
         execSync(checkCommand, { stdio: 'ignore' });
         console.log(`  - ${tool.name} is already installed`);
       } catch (error) {
@@ -139,10 +167,28 @@ function installTools() {
         execSync(tool.command, { stdio: 'inherit' });
       }
     }
-    
-    console.log(`${colors.green}✅ Tools installation completed${colors.reset}\n`);
+
+    console.log(
+      `${colors.green}✅ Tools installation completed${colors.reset}\n`
+    );
   } catch (error) {
     throw new Error(`Failed to install required tools: ${error.message}`);
+  }
+}
+
+function removeDist() {
+  console.log(`${colors.magenta}🧹 Removing dist directory...${colors.reset}`);
+  try {
+    // Create dist directory if it doesn't exist
+    if (fs.existsSync('dist')) {
+      fs.rmSync('dist', { recursive: true, force: true });
+      console.log(`${colors.green}✅ dist directory removed${colors.reset}\n`);
+    }
+
+    fs.mkdirSync('dist');
+    console.log(`${colors.green}✅ dist directory recreated${colors.reset}\n`);
+  } catch (error) {
+    throw new Error(`Failed to remove dist directory: ${error.message}`);
   }
 }
 
@@ -150,17 +196,19 @@ function installTools() {
  * Generate a trial license key
  */
 function generateLicenseKey() {
-  console.log(`${colors.magenta}🔑 Generating trial license key...${colors.reset}`);
-  
+  console.log(
+    `${colors.magenta}🔑 Generating trial license key...${colors.reset}`
+  );
+
   try {
     // Generate a cryptographically strong license key
     const licenseKey = crypto.randomBytes(24).toString('hex');
-    
+
     // Calculate expiry date
     const now = new Date();
     const expiryDate = new Date(now);
     expiryDate.setDate(expiryDate.getDate() + config.trialDays);
-    
+
     const licenseInfo = {
       key: licenseKey,
       createdAt: now.toISOString(),
@@ -172,18 +220,24 @@ function generateLicenseKey() {
         advancedReporting: false,
         notifications: true,
         apiAccess: true,
-        fullAccess: false
-      }
+        fullAccess: false,
+      },
     };
-    
+
     // Save license info to file
-    fs.writeFileSync('trial-license.json', JSON.stringify(licenseInfo, null, 2));
-    
+    fs.writeFileSync(
+      'trial-license.json',
+      JSON.stringify(licenseInfo, null, 2)
+    );
+
     console.log(`  - Trial license key: ${licenseKey}`);
     console.log(`  - Expires on: ${expiryDate.toISOString().split('T')[0]}`);
     console.log(`  - Details saved to: trial-license.json`);
-    
-    console.log(`${colors.green}✅ License key generation completed${colors.reset}\n`);
+    fs.copyFileSync('trial-license.json', 'dist/trial-license.json');
+    fs.rmSync('trial-license.json');
+    console.log(
+      `${colors.green}✅ License key generation completed${colors.reset}\n`
+    );
   } catch (error) {
     throw new Error(`Failed to generate license key: ${error.message}`);
   }
@@ -195,11 +249,11 @@ function generateLicenseKey() {
 function getAllFiles(dir, ext = null) {
   let results = [];
   const list = fs.readdirSync(dir);
-  
+
   list.forEach(file => {
     const fullPath = path.join(dir, file);
     const stat = fs.statSync(fullPath);
-    
+
     if (stat && stat.isDirectory()) {
       // Recursively get files in subdirectories
       results = results.concat(getAllFiles(fullPath, ext));
@@ -210,7 +264,7 @@ function getAllFiles(dir, ext = null) {
       }
     }
   });
-  
+
   return results;
 }
 
@@ -222,15 +276,15 @@ function copyFileWithStructure(sourceFile, baseDir, targetDir) {
   const relativePath = path.relative(baseDir, sourceFile);
   const targetFile = path.join(targetDir, relativePath);
   const targetFileDir = path.dirname(targetFile);
-  
+
   // Create directory if it doesn't exist
   if (!fs.existsSync(targetFileDir)) {
     fs.mkdirSync(targetFileDir, { recursive: true });
   }
-  
+
   // Copy file
   fs.copyFileSync(sourceFile, targetFile);
-  
+
   return targetFile;
 }
 
@@ -238,80 +292,44 @@ function copyFileWithStructure(sourceFile, baseDir, targetDir) {
  * Obfuscate JavaScript files
  */
 function obfuscateJsFiles() {
-  console.log(`${colors.magenta}🔒 Obfuscating JavaScript files...${colors.reset}`);
-  
+  console.log(
+    `${colors.magenta}🔒 Obfuscating JavaScript files...${colors.reset}`
+  );
+
   try {
-    // Create dist directory if it doesn't exist
-    if (!fs.existsSync('dist')) {
-      fs.mkdirSync('dist');
-    }
-    
-    // Create a list of directories to obfuscate
-    const directories = [
-      'src/controllers',
-      'src',
-      'src/core/events',
-      'src/core/licensing',
-      'src/core/monitoring',
-      'src/core/repositories',
-      'src/middleware',
-      'src/models',
-      'src/permissions',
-      'src/routes',
-      'src/services',
-      'src/utils',
-      'src/public/main/scripts',
-      'src/public/main/scripts/utils'
-    ];
-    
-    // For each directory, obfuscate all JS files
-    for (const dir of directories) {
-      if (fs.existsSync(dir)) {
-        console.log(`  - Processing directory: ${dir}`);
-        
-        // Create the corresponding directory in dist
-        const distDir = path.join('dist', dir);
-        if (!fs.existsSync(distDir)) {
-          fs.mkdirSync(distDir, { recursive: true });
-        }
-        
-        // Get all JS files in the directory
-        const files = fs.readdirSync(dir)
-          .filter(file => file.endsWith('.js'))
-          .map(file => path.join(dir, file));
-        
-        // Obfuscate each file
-        for (const file of files) {
-          console.log(`    - Obfuscating: ${file}`);
-          const distFile = path.join('dist', file);
-          
-          // Ensure the output directory exists
-          const outputDir = path.dirname(distFile);
-          if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-          }
-          
-          // Obfuscate the file
-          const obfuscationCommand = `javascript-obfuscator "${file}" --output "${distFile}" --compact true --control-flow-flattening true --dead-code-injection true --string-array true --self-defending true`;
-          
-          try {
-            execSync(obfuscationCommand, { stdio: 'ignore' });
-          } catch (error) {
-            console.error(`      Error obfuscating ${file}: ${error.message}`);
-            // Copy the file as is if obfuscation fails
-            fs.copyFileSync(file, distFile);
-          }
-        }
+    // Get all JS files in src recursively
+    const jsFiles = getAllFiles('src', '.js');
+
+    // Obfuscate each JS file
+    for (const file of jsFiles) {
+      console.log(`  - Obfuscating: ${file}`);
+      const distFile = path.join('dist', file);
+
+      // Ensure the output directory exists
+      const outputDir = path.dirname(distFile);
+
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+
+      // Obfuscate the file
+      const obfuscationCommand = `javascript-obfuscator "${file}" --output "${distFile}" --compact true --control-flow-flattening true --dead-code-injection true --string-array true --self-defending true`;
+      try {
+        execSync(obfuscationCommand, { stdio: 'ignore' });
+      } catch (error) {
+        console.error(`    Error obfuscating ${file}: ${error.message}`);
+        // Copy the file as is if obfuscation fails
+        fs.copyFileSync(file, distFile);
       }
     }
-    
+
     // Copy non-JS files using Node.js file system operations
     console.log(`  - Copying non-JS files...`);
-    
+
     // Get all files in src directory
     const srcDir = 'src';
     const allFiles = getAllFiles(srcDir);
-    
+
     // Copy non-JS files to dist
     for (const file of allFiles) {
       if (!file.endsWith('.js')) {
@@ -319,8 +337,10 @@ function obfuscateJsFiles() {
         console.log(`    - Copied: ${file} -> ${targetFile}`);
       }
     }
-    
-    console.log(`${colors.green}✅ JavaScript obfuscation completed${colors.reset}\n`);
+
+    console.log(
+      `${colors.green}✅ JavaScript obfuscation completed${colors.reset}\n`
+    );
   } catch (error) {
     throw new Error(`Failed to obfuscate JavaScript files: ${error.message}`);
   }
@@ -331,40 +351,42 @@ function obfuscateJsFiles() {
  */
 function minifyCssFiles() {
   console.log(`${colors.magenta}📝 Minifying CSS files...${colors.reset}`);
-  
+
   try {
     // Create dist directory if it doesn't exist
     if (!fs.existsSync('dist')) {
       fs.mkdirSync('dist');
     }
-    
+
     // Get all CSS files using Node.js fs functions
     const srcDir = 'src';
     const cssFiles = getAllFiles(srcDir, '.css');
-    
+
     // Minify each CSS file
     for (const file of cssFiles) {
       console.log(`  - Minifying: ${file}`);
-      
+
       const distFile = path.join('dist', file);
-      
+
       // Ensure the output directory exists
       const outputDir = path.dirname(distFile);
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
-      
+
       // Minify the CSS file
       try {
-        execSync(`cleancss -o "${distFile}" "${file}"`, { stdio: 'ignore' });
+        execSync(`csso "${file}" --output "${distFile}"`, { stdio: 'ignore' }); // switched from cleancss to csso
       } catch (error) {
         console.error(`    Error minifying ${file}: ${error.message}`);
         // Copy the file as is if minification fails
         fs.copyFileSync(file, distFile);
       }
     }
-    
-    console.log(`${colors.green}✅ CSS minification completed${colors.reset}\n`);
+
+    console.log(
+      `${colors.green}✅ CSS minification completed${colors.reset}\n`
+    );
   } catch (error) {
     throw new Error(`Failed to minify CSS files: ${error.message}`);
   }
@@ -375,31 +397,41 @@ function minifyCssFiles() {
  */
 function buildDockerImage() {
   console.log(`${colors.magenta}🐳 Building Docker image...${colors.reset}`);
-  
+
   try {
     // Check if Docker is available
     if (!isDockerAvailable()) {
-      console.log(`${colors.yellow}⚠️ Docker is not running or not installed. Skipping Docker build.${colors.reset}`);
-      console.log(`${colors.yellow}  To build Docker image later, make sure Docker is running and execute:${colors.reset}`);
+      console.log(
+        `${colors.yellow}⚠️ Docker is not running or not installed. Skipping Docker build.${colors.reset}`
+      );
+      console.log(
+        `${colors.yellow}  To build Docker image later, make sure Docker is running and execute:${colors.reset}`
+      );
       console.log(`${colors.yellow}  > docker-compose build${colors.reset}`);
-      
+
       return false;
     }
-    
+
     // Build Docker image
     console.log(`  - Building Docker image...`);
     execSync('docker-compose build', {
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
-    
-    console.log(`${colors.green}✅ Docker image build completed${colors.reset}\n`);
+
+    console.log(
+      `${colors.green}✅ Docker image build completed${colors.reset}\n`
+    );
     return true;
   } catch (error) {
-    console.log(`${colors.yellow}⚠️ Docker build failed, but deployment can continue.${colors.reset}`);
+    console.log(
+      `${colors.yellow}⚠️ Docker build failed, but deployment can continue.${colors.reset}`
+    );
     console.log(`${colors.yellow}  Error: ${error.message}${colors.reset}`);
-    console.log(`${colors.yellow}  To build Docker image later, make sure Docker is running and execute:${colors.reset}`);
+    console.log(
+      `${colors.yellow}  To build Docker image later, make sure Docker is running and execute:${colors.reset}`
+    );
     console.log(`${colors.yellow}  > docker-compose build${colors.reset}\n`);
-    
+
     return false;
   }
 }
@@ -426,12 +458,14 @@ function copyDirectory(src, dest) {
  * Generate deployment instructions
  */
 function generateInstructions() {
-  console.log(`${colors.magenta}📋 Generating deployment instructions...${colors.reset}`);
-  
+  console.log(
+    `${colors.magenta}📋 Generating deployment instructions...${colors.reset}`
+  );
+
   try {
     // Check if Docker is available
     const dockerAvailable = isDockerAvailable();
-    
+
     // Read the template file or create instructions from scratch
     const instructions = `# ${config.projectName} - Customer Deployment Instructions
 
@@ -441,7 +475,9 @@ This document provides instructions for deploying the ${config.projectName} appl
 
 ## Deployment Options
 
-${dockerAvailable ? `### Option 1: Docker Deployment (Recommended)
+${
+  dockerAvailable
+    ? `### Option 1: Docker Deployment (Recommended)
 
 1. Install Docker and Docker Compose on the target machine
 2. Copy the entire project directory to the target machine
@@ -452,8 +488,10 @@ ${dockerAvailable ? `### Option 1: Docker Deployment (Recommended)
 4. Access the application at http://localhost
 
 ### Option 2: Manual Deployment
-` : `### Manual Deployment
-`}
+`
+    : `### Manual Deployment
+`
+}
 1. Install Node.js (v18 or later) and npm
 2. Copy the 'dist' directory to the target machine
 3. Navigate to the dist directory and run the helper script:
@@ -492,23 +530,21 @@ For any technical issues or questions, please contact support at:
 - Email: knkmam05@gmail.com
 - Phone: +201273481309
 `;
-    
+
     // Write instructions to file
     fs.writeFileSync('DEPLOYMENT.md', instructions);
     fs.copyFileSync('DEPLOYMENT.md', 'dist/DEPLOYMENT.md');
-    
+
     // Also copy package.json to the dist directory
     if (!fs.existsSync('dist')) {
       fs.mkdirSync('dist');
     }
 
-    
-
     if (fs.existsSync('package.json')) {
       fs.copyFileSync('package.json', 'dist/package.json');
       console.log(`  - Copied package.json to dist directory`);
     }
-    
+
     if (fs.existsSync('package-lock.json')) {
       fs.copyFileSync('package-lock.json', 'dist/package-lock.json');
       console.log(`  - Copied package-lock.json to dist directory`);
@@ -527,7 +563,7 @@ For any technical issues or questions, please contact support at:
       copyDirectory('data', path.join('dist', 'data'));
       console.log('  - Copied data to dist directory');
     }
-    
+
     // Create a basic .env file in the dist directory
     if (fs.existsSync('.env.example')) {
       const envContent = fs.readFileSync('.env.example', 'utf8');
@@ -535,7 +571,7 @@ For any technical issues or questions, please contact support at:
       fs.copyFileSync('.env.example', 'dist/.env.example');
       console.log(`  - Created .env file in dist directory`);
     }
-    
+
     // Copy the start script to dist if it exists
     if (fs.existsSync('dist/start.js')) {
       // Make it executable
@@ -543,16 +579,62 @@ For any technical issues or questions, please contact support at:
         fs.chmodSync('dist/start.js', '755');
         console.log(`  - Made start.js executable`);
       } catch (error) {
-        console.log(`  - Note: Could not make start.js executable. You may need to run it with 'node start.js'`);
+        console.log(
+          `  - Note: Could not make start.js executable. You may need to run it with 'node start.js'`
+        );
       }
     }
-    
+
     console.log(`  - Deployment instructions saved to DEPLOYMENT.md`);
-    console.log(`${colors.green}✅ Deployment instructions generated${colors.reset}\n`);
+    console.log(
+      `${colors.green}✅ Deployment instructions generated${colors.reset}\n`
+    );
   } catch (error) {
-    throw new Error(`Failed to generate deployment instructions: ${error.message}`);
+    throw new Error(
+      `Failed to generate deployment instructions: ${error.message}`
+    );
+  }
+}
+
+/**
+ * Pack dist directory into dist.rar
+ */
+async function packDistToRar() {
+  console.log(`${colors.magenta}📦 Packing dist directory to dist.rar...${colors.reset}`);
+  const distPath = path.resolve('dist');
+  const now = new Date().toISOString().split('T')[0];
+  const rarPath = path.resolve(`/dist/Alaa-Project-Obfuscated-${now}.rar`);
+  try {
+    // Try to use 'rar' or 'winrar' if available
+    let packed = false;
+    if (process.platform === 'win32') {
+      try {
+        execSync(`where winrar`, { stdio: 'ignore' });
+        execSync(`winrar a -r "${rarPath}" "${distPath}/*"`, { stdio: 'inherit' });
+        packed = true;
+      } catch (e) {
+        try {
+          execSync(`where rar`, { stdio: 'ignore' });
+          execSync(`rar a -r "${rarPath}" "${distPath}/*"`, { stdio: 'inherit' });
+          packed = true;
+        } catch (e2) {}
+      }
+    } else {
+      try {
+        execSync(`which rar`, { stdio: 'ignore' });
+        execSync(`rar a -r "${rarPath}" "${distPath}/*"`, { stdio: 'inherit' });
+        packed = true;
+      } catch (e) {}
+    }
+    if (!packed) {
+      console.log(`${colors.yellow}⚠️  RAR utility not found. Skipping dist.rar creation.${colors.reset}`);
+    } else {
+      console.log(`${colors.green}✅ dist.rar created successfully${colors.reset}`);
+    }
+  } catch (error) {
+    console.log(`${colors.red}❌ Failed to create dist.rar: ${error.message}${colors.reset}`);
   }
 }
 
 // Run the main function
-main(); 
+main();
