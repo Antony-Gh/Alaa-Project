@@ -7,34 +7,6 @@ const validateDateTime = window.validateDateTime;
 const validateEmployeeId = window.validateEmployeeId;
 const validateEmployeeName = window.validateEmployeeName;
 
-// Import Yup (assume it's loaded via CDN or bundled)
-// If using a bundler, you can: import * as Yup from 'yup';
-// For CDN, Yup is available as window.yup
-import * as Yup from 'yup';
-// const Yup = window.yup;
-
-// Example Yup schema for registration
-const registrationSchema = Yup.object().shape({
-  email: Yup.string().email('Invalid email').required('Email is required'),
-  password: Yup.string()
-    .min(8, 'Password must be at least 8 characters')
-    .matches(/[A-Z]/, 'Password must contain an uppercase letter')
-    .matches(/[a-z]/, 'Password must contain a lowercase letter')
-    .matches(/[0-9]/, 'Password must contain a number')
-    .matches(
-      /[!@#$%^&*(),.?":{}|<>]/,
-      'Password must contain a special character'
-    )
-    .required('Password is required'),
-  password_confirmation: Yup.string()
-    .oneOf([Yup.ref('password'), null], 'Passwords must match')
-    .required('Password confirmation is required'),
-  full_name: Yup.string()
-    .min(2, 'Full name must be at least 2 characters')
-    .max(100, 'Full name must be at most 100 characters')
-    .required('Full name is required'),
-});
-
 // Create element helper function
 const safeCreateElement = (tag, attributes = {}) => {
   const element = document.createElement(tag);
@@ -67,7 +39,7 @@ function validateUsername(username) {
     return { isValid: false, message: t('auth.username_required') };
   }
 
-  if (username.length < 6) {
+  if (username.length < 4) {
     return { isValid: false, message: t('auth.username_too_short') };
   }
 
@@ -211,7 +183,7 @@ function checkPasswordStrength(password) {
 }
 
 function updatePasswordStrengthIndicator(password) {
-  const strengthIndicator = document.getElementById('passwordStrength');
+  const strengthIndicator = document.getElementById('password_strength');
   if (!strengthIndicator) return;
 
   const strength = checkPasswordStrength(password);
@@ -380,24 +352,24 @@ function generateStrongPassword() {
 }
 
 function setupPasswordGenerator() {
-  const generatorBtn = document.getElementById('passwordGeneratorBtn');
+  const generatorBtn = document.getElementById('password_generator_btn');
   if (!generatorBtn) return;
 
   generatorBtn.addEventListener('click', function () {
-    const passwordInput = document.getElementById('registerPassword');
-    const password_confirmationInput = document.getElementById(
-      'registerpassword_confirmation'
+    const passwordInput = document.getElementById('register_password');
+    const passwordConfirmationInput = document.getElementById(
+      'register_password_confirmation'
     );
     if (!passwordInput) return;
-    if (!password_confirmationInput) return;
+    if (!passwordConfirmationInput) return;
 
-    const new_password = generateStrongPassword();
-    passwordInput.value = new_password;
-    password_confirmationInput.value = new_password;
+    const newPassword = generateStrongPassword();
+    passwordInput.value = newPassword;
+    passwordConfirmationInput.value = newPassword;
 
     // Trigger input event to update strength indicator
     passwordInput.dispatchEvent(new Event('input'));
-    password_confirmationInput.dispatchEvent(new Event('input'));
+    passwordConfirmationInput.dispatchEvent(new Event('input'));
 
     // Show success message
     showMessage(t('password.generated'), 'success');
@@ -415,7 +387,10 @@ function setupPasswordToggles() {
       );
       const icon = button.querySelector('i');
 
-      if (!input) return;
+      if (!input) {
+        console.log('No input found:\n', input);
+        return;
+      }
 
       if (input.type === 'password') {
         // Show password
@@ -435,7 +410,7 @@ function setupPasswordToggles() {
 function setupFormValidation() {
   // Username validation
   const usernameInputs = document.querySelectorAll(
-    '#loginUsername, #registerUsername'
+    '#login_username, #register_username'
   );
   usernameInputs.forEach(input => {
     input.addEventListener('input', function () {
@@ -451,7 +426,7 @@ function setupFormValidation() {
   });
 
   // Email validation
-  const emailInput = document.getElementById('registerEmail');
+  const emailInput = document.getElementById('register_email');
   if (emailInput) {
     emailInput.addEventListener('input', function () {
       const validation = validateEmail(this.value);
@@ -463,10 +438,12 @@ function setupFormValidation() {
         this.classList.add('error');
       }
     });
+  } else {
+    console.log('No email input found:\n', emailInput);
   }
 
   // Password validation
-  const passwordInput = document.getElementById('registerPassword');
+  const passwordInput = document.getElementById('register_password');
   if (passwordInput) {
     passwordInput.addEventListener('input', function () {
       const validation = validatePassword(this.value);
@@ -481,25 +458,32 @@ function setupFormValidation() {
       }
 
       // Update password match indicator if confirm password exists
-      const password_confirmationInput = document.getElementById(
-        'registerpassword_confirmation'
+      const password_confirmation_input = document.getElementById(
+        'register_password_confirmation'
       );
-      if (password_confirmationInput && password_confirmationInput.value) {
+      if (password_confirmation_input) {
         updatePasswordMatchIndicator(
           this.value,
-          password_confirmationInput.value
+          password_confirmation_input.value
+        );
+      } else {
+        console.log(
+          'No password confirmation input found:\n',
+          password_confirmation_input
         );
       }
     });
+  } else {
+    console.log('No password input found:\n', passwordInput);
   }
 
   // Password confirmation validation
-  const password_confirmationInput = document.getElementById(
-    'registerpassword_confirmation'
+  const password_confirmation_input = document.getElementById(
+    'register_password_confirmation'
   );
-  if (password_confirmationInput) {
-    password_confirmationInput.addEventListener('input', function () {
-      const passwordInput = document.getElementById('registerPassword');
+  if (password_confirmation_input) {
+    password_confirmation_input.addEventListener('input', function () {
+      const passwordInput = document.getElementById('register_password');
       const validation = validatePasswordConfirmation(
         passwordInput.value,
         this.value
@@ -514,6 +498,11 @@ function setupFormValidation() {
         this.classList.add('error');
       }
     });
+  } else {
+    console.log(
+      'No password confirmation input found:\n',
+      password_confirmation_input
+    );
   }
 }
 
@@ -521,8 +510,8 @@ function setupFormValidation() {
 let departments = [];
 let locations = [];
 let appointments = [];
-let currentUser = null;
-let authToken = localStorage.getItem('authToken');
+let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+let authToken = localStorage.getItem('authToken') || null;
 
 // DOM elements
 const authSection = document.getElementById('auth-section');
@@ -533,7 +522,7 @@ const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const logoutBtn = document.getElementById('logoutBtn');
 const userDisplayName = document.getElementById('userDisplayName');
-const userRole = document.getElementById('userRole');
+const userRoleDisplay = document.getElementById('userRoleDisplay');
 const adminTab = document.getElementById('adminTab');
 
 const tabBtns = document.querySelectorAll('.tab-btn');
@@ -680,6 +669,8 @@ function setupEventListeners() {
         }
       }
     });
+  } else {
+    console.log('No calendar container found:\n', calendarContainer);
   }
 
   // Mini calendar click events
@@ -753,6 +744,8 @@ function setupEventListeners() {
         }
       }
     });
+  } else {
+    console.log('No mini calendar container found:\n', miniCalendarContainer);
   }
 
   // Today button click event - only add if button exists
@@ -763,6 +756,8 @@ function setupEventListeners() {
       renderCalendar();
       renderMiniCalendar();
     });
+  } else {
+    console.log('No today button found:\n', todayBtn);
   }
 }
 
@@ -779,18 +774,23 @@ async function checkAuthStatus() {
       if (response.ok) {
         const data = await response.json();
         currentUser = data.data;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
         showAppSection();
         await loadInitialData();
       } else {
         localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
         authToken = null;
+        currentUser = null;
         showAuthSection();
       }
     }
   } catch (error) {
     console.error(t('console.error.auth_status_check'), error);
     localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
     authToken = null;
+    currentUser = null;
     showAuthSection();
   }
 }
@@ -804,15 +804,15 @@ async function handleLogin(e) {
 
   // Client-side validation
   const usernameValidation = validateUsername(loginData.username);
-  const passwordValidation = validatePassword(loginData.password);
+  const password_validation = validatePassword(loginData.password);
 
   if (!usernameValidation.isValid) {
     showMessage(usernameValidation.message, 'error');
     return;
   }
 
-  if (!passwordValidation.isValid) {
-    showMessage(passwordValidation.message, 'error');
+  if (!password_validation.isValid) {
+    showMessage(password_validation.message, 'error');
     return;
   }
 
@@ -833,13 +833,22 @@ async function handleLogin(e) {
       authToken = result.data.token;
       currentUser = result.data.user;
       localStorage.setItem('authToken', authToken);
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
       showMessage('login_success', 'success');
+      // Clear all login form inputs
+      loginForm.reset();
       showAppSection();
       await loadInitialData();
     } else {
       console.log('Login failed - Status:', response.status);
       console.log('Login failed - Response:', result);
+
+      // Handle rate limit (429 Too Many Requests)
+      if (response.status === 429) {
+        showMessage(t('too_many_requests_login'), 'error');
+        return;
+      }
 
       // Handle error response - the message from backend is a translation key
       if (result.message) {
@@ -869,35 +878,123 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
   e.preventDefault();
+
   clearAllMessages();
+
   const registerData = sanitizeFormData(new FormData(registerForm));
 
-  try {
-    await registrationSchema.validate(registerData, { abortEarly: false });
-    // If valid, proceed with registration (AJAX/fetch)
-    // ... existing registration logic ...
-  } catch (validationError) {
-    // validationError is a Yup.ValidationError
-    if (validationError.inner && validationError.inner.length > 0) {
-      validationError.inner.forEach(err => {
-        showMessage(err.message, 'error');
-        // Optionally, highlight the field: document.querySelector(`[name="${err.path}"]`).style.borderColor = 'red';
-      });
-    } else {
-      showMessage(validationError.message, 'error');
-    }
+  // console.log(registerData);
+
+  // Convert department_id to integer if provided
+  if (registerData.department_id) {
+    registerData.department_id = parseInt(registerData.department_id);
+  }
+
+  // Client-side validation
+  const usernameValidation = validateUsername(registerData.username);
+  const emailValidation = validateEmail(registerData.email);
+  const fullNameValidation = validateFullName(registerData.full_name);
+  const phoneValidation = validatePhone(registerData.phone);
+  const password_validation = validatePassword(registerData.password);
+  const password_confirmation_validation = validatePasswordConfirmation(
+    registerData.password,
+    registerData.password_confirmation
+  );
+
+  if (!usernameValidation.isValid) {
+    showMessage(usernameValidation.message, 'error');
     return;
   }
-}
 
-// Attach the handler to the form
-if (typeof registerForm !== 'undefined') {
-  registerForm.addEventListener('submit', handleRegister);
+  if (!emailValidation.isValid) {
+    showMessage(emailValidation.message, 'error');
+    return;
+  }
+
+  if (!fullNameValidation.isValid) {
+    showMessage(fullNameValidation.message, 'error');
+    return;
+  }
+
+  if (!phoneValidation.isValid) {
+    showMessage(phoneValidation.message, 'error');
+    return;
+  }
+
+  if (!password_validation.isValid) {
+    showMessage(password_validation.message, 'error');
+    return;
+  }
+
+  if (!password_confirmation_validation.isValid) {
+    showMessage(password_confirmation_validation.message, 'error');
+    return;
+  }
+
+  console.log('Register data:', registerData);
+
+  try {
+    const currentLang = localStorage.getItem('language') || 'ar';
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': currentLang,
+      },
+      body: JSON.stringify(registerData),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      authToken = result.data.token;
+      currentUser = result.data.user;
+      localStorage.setItem('authToken', authToken);
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+      // Clear all register form inputs
+      registerForm.reset();
+
+      showMessage('register_success', 'success');
+      showAppSection();
+      await loadInitialData();
+    } else {
+      console.log(result);
+
+      // Handle rate limit (429 Too Many Requests)
+      if (response.status === 429) {
+        showMessage(t('too_many_requests_register'), 'error');
+        return;
+      }
+
+      // Handle error response - the message from backend is a translation key
+      if (result.message) {
+        // The backend sends translation keys, so we need to translate them
+        const translatedMessage = t(result.message);
+        showMessage(translatedMessage, 'error');
+      } else {
+        showMessage('register_failed', 'error');
+      }
+
+      // Only show one type of error message, prioritize API errors over general message
+      if (
+        result.errors &&
+        Array.isArray(result.errors) &&
+        result.errors.length > 0
+      ) {
+        showApiErrors(result.errors);
+      }
+    }
+  } catch (error) {
+    console.error(t('console.error.register'), error);
+    showMessage('server_error', 'error');
+  }
 }
 
 function handleLogout() {
   clearAllMessages();
   localStorage.removeItem('authToken');
+  localStorage.removeItem('currentUser');
   authToken = null;
   currentUser = null;
   showAuthSection();
@@ -921,7 +1018,7 @@ function showAppSection() {
     const displayName = currentUser.full_name || currentUser.username;
     setTextContent(userDisplayName, displayName);
     setTextContent(
-      userRole,
+      userRoleDisplay,
       currentUser.role === 'admin'
         ? t('admin')
         : currentUser.role === 'manager'
@@ -985,6 +1082,7 @@ async function handleProfileUpdate(e) {
     if (response.ok) {
       showMessage('profile_update_success', 'success');
       currentUser = { ...currentUser, ...result.data };
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
     } else {
       showMessage(result.message || 'profile_update_failed', 'error');
     }
@@ -1000,7 +1098,7 @@ async function handlePasswordChange(e) {
   const passwordData = sanitizeFormData(new FormData(changePasswordForm));
   const password_confirmation = passwordData.password_confirmation;
 
-  if (passwordData.new_password !== password_confirmation) {
+  if (passwordData.newPassword !== password_confirmation) {
     showMessage('password_mismatch', 'error');
     return;
   }
@@ -1061,6 +1159,8 @@ async function loadUserProfile() {
       if (response.ok) {
         const result = await response.json();
         const user = result.data;
+        currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
         // Populate profile form
         document.getElementById('profileUsername').value = user.username || '';
@@ -1188,7 +1288,7 @@ async function loadDashboardStats() {
 function populateDepartmentSelect() {
   const select = document.getElementById('department');
   const profileSelect = document.getElementById('profileDepartment');
-  const registerSelect = document.getElementById('registerDepartment');
+  const registerSelect = document.getElementById('register_department');
 
   const options = departments
     .map(dept => `<option value="${dept.id}">${escapeHtml(dept.name)}</option>`)
@@ -1352,12 +1452,14 @@ function displayMyAppointments() {
   // Ensure appointments is an array
   const appointmentsArray = Array.isArray(appointments) ? appointments : [];
 
-  if (appointmentsArray.length === 0) {
-    container.innerHTML = `<div class="empty-state">
+  const noAppointments = `<div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
                 <h3>${t('no_appointments')}</h3>
                 <p>${t('start_booking')}</p>
             </div>`;
+
+  if (appointmentsArray == null || appointmentsArray.length === 0) {
+    container.innerHTML = noAppointments;
     return;
   }
 
@@ -1370,6 +1472,18 @@ function displayMyAppointments() {
     )
     .map(appointment => createAppointmentCard(appointment, false))
     .join('');
+
+  // console.log(appointmentCards);
+
+  if (appointmentCards == null || appointmentCards.length === 0) {
+    container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <h3>${t('no_appointments')}</h3>
+            </div>
+        `;
+    return;
+  }
 
   container.innerHTML = appointmentCards;
 }
@@ -1941,17 +2055,17 @@ function updateAllTranslatableElements() {
   });
 
   // Update user profile language if logged in
-  if (currentUser && authToken) {
-    fetch('/api/auth/profile', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${authToken}`,
-      },
-    }).catch(error => {
-      console.error(t('console.error.language_preference'), error);
-    });
-  }
+  // if (currentUser && authToken) {
+  //   fetch('/api/auth/profile', {
+  //     method: 'GET',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       Authorization: `Bearer ${authToken}`,
+  //     },
+  //   }).catch(error => {
+  //     console.error(t('console.error.language_preference'), error);
+  //   });
+  // }
 }
 
 // Utility function to clear all messages
@@ -2578,8 +2692,8 @@ async function deleteUser(userId) {
 }
 
 async function changeUserPassword(userId) {
-  const new_password = prompt(t('enter_new_password'));
-  if (!new_password) return;
+  const newPassword = prompt(t('enter_new_password'));
+  if (!newPassword) return;
 
   try {
     const response = await fetch(`/api/user-management/${userId}/password`, {
@@ -2588,7 +2702,7 @@ async function changeUserPassword(userId) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify({ new_password }),
+      body: JSON.stringify({ newPassword }),
     });
 
     const result = await response.json();

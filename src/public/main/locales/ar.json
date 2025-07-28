@@ -145,7 +145,10 @@
   "user.cannot_delete_self": "لا يمكنك حذف حسابك الخاص",
   "profile.updated": "تم تحديث الملف الشخصي بنجاح",
   "password.changed": "تم تغيير كلمة المرور بنجاح",
+  
+  
   "error.validation": "خطأ في التحقق من البيانات",
+  "validation.failed": "فشل التحقق من البيانات",
   "validation.date_time_future": "التاريخ والوقت يجب أن يكونا في المستقبل",
   "validation.date_time_max_year": "التاريخ يجب أن لا يتجاوز سنة من الآن",
   "validation.employee_id_format": "رقم الموظف يجب أن يكون 3-10 أحرف وأرقام",
@@ -179,6 +182,8 @@
   "validation.end_date_after_start": "تاريخ النهاية يجب أن يكون بعد تاريخ البداية",
   "validation.max_occurrences_min": "الحد الأقصى للتكرار يجب أن يكون على الأقل 1",
   "validation.max_occurrences_max": "الحد الأقصى للتكرار يجب أن لا يتجاوز 100",
+  
+  
   "console.error.app_initialization": "خطأ في تهيئة التطبيق",
   "console.error.auth_status_check": "خطأ في التحقق من حالة المصادقة",
   "console.error.login": "خطأ في تسجيل الدخول",
@@ -287,6 +292,9 @@
   "text_too_long": "النص طويل جداً",
   "text_invalid_characters": "النص يحتوي على أحرف غير صالحة",
   "text_valid": "النص صحيح",
+  
+  "too_many_requests_login": "تم تسجيل الدخول عدة مرات في وقت قصير. يرجى المحاولة لاحقاً.",
+  "too_many_requests_register": "تم محاولة التسجيل عدة مرات في وقت قصير. يرجى المحاولة لاحقاً.",
   
   "employee_name_required": "اسم الموظف مطلوب",
   "employee_name_too_short": "اسم الموظف قصير جداً",

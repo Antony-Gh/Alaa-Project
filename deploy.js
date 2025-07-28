@@ -13,7 +13,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const crypto = require('crypto');
 
 // Configuration
@@ -24,6 +24,7 @@ const config = {
   minifyCss: true,
   buildDocker: true,
   generateLicenseKey: true,
+  copyNodeModules: false,
 };
 
 // ANSI colors for console output
@@ -443,7 +444,7 @@ function copyDirectory(src, dest) {
     fs.mkdirSync(dest, { recursive: true });
   }
   const entries = fs.readdirSync(src, { withFileTypes: true });
-  for (let entry of entries) {
+  for (const entry of entries) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
     if (entry.isDirectory()) {
@@ -533,7 +534,10 @@ For any technical issues or questions, please contact support at:
 
     // Write instructions to file
     fs.writeFileSync('DEPLOYMENT.md', instructions);
-    fs.copyFileSync('DEPLOYMENT.md', 'dist/DEPLOYMENT.md');
+
+    if (fs.existsSync('DEPLOYMENT.md')) {
+      fs.copyFileSync('DEPLOYMENT.md', 'dist/DEPLOYMENT.md');
+    }
 
     // Also copy package.json to the dist directory
     if (!fs.existsSync('dist')) {
@@ -551,11 +555,14 @@ For any technical issues or questions, please contact support at:
     }
 
     // Copy node_modules to dist/node_modules if it exists
-    // if (fs.existsSync('node_modules')) {
-    //   console.log('  - Copying node_modules to dist/node_modules (this may take a while)...');
-    //   copyDirectory('node_modules', path.join('dist', 'node_modules'));
-    //   console.log('  - Copied node_modules to dist directory');
-    // }
+    // This is not recommended for production, but it's useful for development
+    if (config.copyNodeModules && fs.existsSync('node_modules')) {
+      console.log(
+        '  - Copying node_modules to dist/node_modules (this may take a while)...'
+      );
+      copyDirectory('node_modules', path.join('dist', 'node_modules'));
+      console.log('  - Copied node_modules to dist directory');
+    }
 
     // Copy data to dist/data if it exists
     if (fs.existsSync('data')) {
@@ -572,8 +579,15 @@ For any technical issues or questions, please contact support at:
       console.log(`  - Created .env file in dist directory`);
     }
 
+    // Copy Vite Config to dist/vite if it exists
+    if (fs.existsSync('vite.config.js')) {
+      fs.copyFileSync('vite.config.js', 'dist/vite.config.js');
+      console.log('  - Copied vite.config.js to dist directory');
+    }
+
     // Copy the start script to dist if it exists
-    if (fs.existsSync('dist/start.js')) {
+    if (fs.existsSync('texts/start.js')) {
+      fs.copyFileSync('texts/start.js', 'dist/start.js');
       // Make it executable
       try {
         fs.chmodSync('dist/start.js', '755');
@@ -583,6 +597,10 @@ For any technical issues or questions, please contact support at:
           `  - Note: Could not make start.js executable. You may need to run it with 'node start.js'`
         );
       }
+    } else {
+      console.log(
+        `${colors.yellow}⚠️  No start.js found. Skipping start.js copy.${colors.reset}`
+      );
     }
 
     console.log(`  - Deployment instructions saved to DEPLOYMENT.md`);
@@ -600,39 +618,98 @@ For any technical issues or questions, please contact support at:
  * Pack dist directory into dist.rar
  */
 async function packDistToRar() {
-  console.log(`${colors.magenta}📦 Packing dist directory to dist.rar...${colors.reset}`);
-  const distPath = path.resolve('dist');
-  const now = new Date().toISOString().split('T')[0];
-  const rarPath = path.resolve(`/dist/Alaa-Project-Obfuscated-${now}.rar`);
+  console.log(
+    `${colors.magenta}📦 Packing dist directory to dist.rar...${colors.reset}`
+  );
+  const distPath = path.resolve(__dirname, 'dist');
+  // Get current time in Cairo/Egypt timezone (UTC+2)
+  const now = new Date();
+  const cairoTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // UTC+2 for Cairo
+
+  // Format to 12-hour format with AM/PM
+  const year = cairoTime.getUTCFullYear();
+  const month = String(cairoTime.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(cairoTime.getUTCDate()).padStart(2, '0');
+  const hours = cairoTime.getUTCHours();
+  const minutes = String(cairoTime.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(cairoTime.getUTCSeconds()).padStart(2, '0');
+
+  // Convert to 12-hour format
+  const hour12 = hours % 12 || 12;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+
+  const formattedTime = `${year}-${month}-${day}_${String(hour12).padStart(2, '0')}-${minutes}-${seconds}-${ampm}`;
+
+  const rarPath = path.resolve(
+    __dirname,
+    `dist/Alaa-Project-Obfuscated-${formattedTime}.rar`
+  );
   try {
     // Try to use 'rar' or 'winrar' if available
     let packed = false;
     if (process.platform === 'win32') {
       try {
-        execSync(`where winrar`, { stdio: 'ignore' });
-        execSync(`winrar a -r "${rarPath}" "${distPath}/*"`, { stdio: 'inherit' });
+        execSync(`where.exe winrar`, { stdio: 'ignore' });
+        // execSync(`winrar a -r "${rarPath}" "${distPath}/*"`, {
+        //   stdio: 'inherit',
+        // });
+        execSync(`winrar a -r "${rarPath}" "*.*"`, {
+          cwd: distPath, // 👈 tells Node to run the command *from* inside dist/
+          stdio: 'inherit',
+        });
         packed = true;
-      } catch (e) {
+      } catch (e1) {
         try {
-          execSync(`where rar`, { stdio: 'ignore' });
-          execSync(`rar a -r "${rarPath}" "${distPath}/*"`, { stdio: 'inherit' });
+          execSync(`where.exe rar`, { stdio: 'ignore' });
+          execSync(`rar a -r "${rarPath}" "${distPath}/*"`, {
+            stdio: 'inherit',
+          });
           packed = true;
-        } catch (e2) {}
+        } catch (e2) {
+          console.log('Error 1:', e1);
+          console.log('Error 2:', e2);
+        }
       }
     } else {
       try {
         execSync(`which rar`, { stdio: 'ignore' });
         execSync(`rar a -r "${rarPath}" "${distPath}/*"`, { stdio: 'inherit' });
         packed = true;
-      } catch (e) {}
+      } catch (e3) {
+        console.log('Error 3:', e3);
+      }
     }
     if (!packed) {
-      console.log(`${colors.yellow}⚠️  RAR utility not found. Skipping dist.rar creation.${colors.reset}`);
+      console.log(
+        `${colors.yellow}⚠️  RAR utility not found. Skipping dist.rar creation.${colors.reset}`
+      );
     } else {
-      console.log(`${colors.green}✅ dist.rar created successfully${colors.reset}`);
+      console.log(
+        `${colors.green}✅ dist.rar created successfully${colors.reset}`
+      );
+      console.log(`${colors.magenta}📦 Opening dist.rar...${colors.reset}`);
+      // Assume this is the full path to your RAR/ZIP file
+      // Open File Explorer and select the archive
+      if (fs.existsSync(rarPath)) {
+        // execSync(`explorer.exe /select,"${rarPath}"`);
+        spawn('explorer.exe', ['/select,', rarPath.replace(/\//g, '\\')], {
+          detached: true,
+          stdio: 'ignore',
+        }).unref();
+      } else {
+        console.log(
+          `${colors.yellow}⚠️  dist.rar not found. Skipping opening.${colors.reset}`
+        );
+      }
+      console.log(
+        `${colors.green}✅ dist.rar opened successfully${colors.reset}`
+      );
     }
   } catch (error) {
-    console.log(`${colors.red}❌ Failed to create dist.rar: ${error.message}${colors.reset}`);
+    // console.log(error);
+    console.log(
+      `${colors.red}❌ Failed to create dist.rar: ${error.message}${colors.reset}`
+    );
   }
 }
 

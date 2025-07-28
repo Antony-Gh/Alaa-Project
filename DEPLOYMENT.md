@@ -6,17 +6,7 @@ This document provides instructions for deploying the Scheduling System applicat
 
 ## Deployment Options
 
-### Option 1: Docker Deployment (Recommended)
-
-1. Install Docker and Docker Compose on the target machine
-2. Copy the entire project directory to the target machine
-3. Start the application:
-   ```
-   docker-compose up -d
-   ```
-4. Access the application at http://localhost
-
-### Option 2: Manual Deployment
+### Manual Deployment
 
 1. Install Node.js (v18 or later) and npm
 2. Copy the 'dist' directory to the target machine
@@ -47,7 +37,7 @@ This document provides instructions for deploying the Scheduling System applicat
 ## Security Measures
 
 - The application code is obfuscated and protected
-- The Docker deployment includes additional security hardening
+
 - Do NOT modify any application files as this will invalidate the license
 
 ## Support

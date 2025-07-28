@@ -305,7 +305,7 @@ class DatabaseMigration {
             1,
           ],
           ['system_version', '2.0.0', 'string', 'System version', 1],
-          ['default_timezone', 'Asia/Riyadh', 'string', 'Default timezone', 1],
+          ['default_timezone', 'Egypt/Cairo', 'string', 'Default timezone', 1],
           [
             'appointment_duration',
             '60',

@@ -295,7 +295,10 @@ class DatabaseManager {
 
     // Insert default admin user
     const bcrypt = require('bcryptjs');
-    const adminPasswordHash = await bcrypt.hash('admin123', 10);
+    const adminPasswordHash = await bcrypt.hash(
+      'admin123',
+      config.security.bcryptRounds
+    );
 
     await this.run(
       `INSERT INTO users (username, password_hash, email, full_name, role, department_id, email_verified) VALUES 
@@ -304,7 +307,10 @@ class DatabaseManager {
     );
 
     // Insert sample moderator user
-    const moderatorPasswordHash = await bcrypt.hash('moderator123', 10);
+    const moderatorPasswordHash = await bcrypt.hash(
+      'moderator123',
+      config.security.bcryptRounds
+    );
 
     await this.run(
       `INSERT INTO users (username, password_hash, email, full_name, role, department_id, email_verified) VALUES 
@@ -313,7 +319,10 @@ class DatabaseManager {
     );
 
     // Insert sample employee users
-    const employeePasswordHash = await bcrypt.hash('Employee123', 10);
+    const employeePasswordHash = await bcrypt.hash(
+      'Employee123',
+      config.security.bcryptRounds
+    );
 
     await this.run(
       `INSERT INTO users (username, password_hash, email, full_name, role, department_id, email_verified) VALUES 
@@ -336,7 +345,7 @@ class DatabaseManager {
         1,
       ],
       ['system_version', '2.0.0', 'string', 'System version', 1],
-      ['default_timezone', 'Asia/Riyadh', 'string', 'Default timezone', 1],
+      ['default_timezone', 'Egypt/Cairo', 'string', 'Default timezone', 1],
       [
         'appointment_duration',
         '60',

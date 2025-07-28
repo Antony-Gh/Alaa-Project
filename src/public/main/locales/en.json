@@ -145,7 +145,11 @@
   "user.cannot_delete_self": "You cannot delete your own account",
   "profile.updated": "Profile updated successfully",
   "password.changed": "Password changed successfully",
+
+
+
   "error.validation": "Validation error",
+  "validation.failed": "Validation failed",
   "validation.date_time_future": "Date and time must be in the future",
   "validation.date_time_max_year": "Date must not exceed one year from now",
   "validation.employee_id_format": "Employee ID must be 3-10 letters and numbers",
@@ -179,6 +183,8 @@
   "validation.end_date_after_start": "End date must be after start date",
   "validation.max_occurrences_min": "Max occurrences must be at least 1",
   "validation.max_occurrences_max": "Max occurrences must not exceed 100",
+
+
   "console.error.app_initialization": "Error initializing application",
   "console.error.auth_status_check": "Error checking auth status",
   "console.error.login": "Login error",
@@ -287,6 +293,11 @@
   "text_too_long": "Text is too long",
   "text_invalid_characters": "Text contains invalid characters",
   "text_valid": "Text is valid",
+
+  
+  "too_many_requests_login": "Login attempts too frequent. Please try again later.",
+  "too_many_requests_register": "Registration attempts too frequent. Please try again later.",
+  
   
   "employee_name_required": "Employee name is required",
   "employee_name_too_short": "Employee name is too short",

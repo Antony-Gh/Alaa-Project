@@ -579,7 +579,7 @@ CMD ["npm", "start"]
 | `LOG_LEVEL`                      | Logging level                  | info                          |
 | `LOG_MAX_FILES`                  | Max log files                  | 5                             |
 | `LOG_MAX_SIZE`                   | Max log file size              | 5m                            |
-| `DEFAULT_TIMEZONE`               | Default timezone               | Asia/Riyadh                   |
+| `DEFAULT_TIMEZONE`               | Default timezone               | Egypt/Cairo                   |
 | `FEATURE_RECURRING_APPOINTMENTS` | Enable recurring appts         | true                          |
 | `FEATURE_DARK_MODE`              | Enable dark mode               | true                          |
 | `FEATURE_ACCESSIBILITY`          | Enable accessibility features  | true                          |

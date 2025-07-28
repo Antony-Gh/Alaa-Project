@@ -4,6 +4,7 @@ const dbManager = require('../utils/database');
 const ResponseHandler = require('../utils/responseHandler');
 const { generateToken } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const { config } = require('dotenv');
 
 // Validation functions for user management (without password confirmation)
 const validateUsername = username => {
@@ -198,7 +199,10 @@ const createUser = asyncHandler(async (req, res) => {
   }
 
   // Hash password
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(
+    password,
+    config.security.bcryptRounds
+  );
 
   // Insert new user
   const result = await dbManager.run(
@@ -395,7 +399,10 @@ const changeUserPassword = asyncHandler(async (req, res) => {
   }
 
   // Hash new password
-  const new_passwordHash = await bcrypt.hash(new_password, 10);
+  const new_passwordHash = await bcrypt.hash(
+    new_password,
+    config.security.bcryptRounds
+  );
 
   // Update password
   const result = await dbManager.run(

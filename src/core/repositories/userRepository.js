@@ -314,7 +314,10 @@ class UserRepository extends BaseRepository {
    * @returns {Promise<string>} - Hashed password
    */
   async hashPassword(password) {
-    return bcrypt.hash(password, this.bcryptRounds);
+    return bcrypt.hash(
+      password,
+      config.security.bcryptRounds || this.bcryptRounds
+    );
   }
 
   /**

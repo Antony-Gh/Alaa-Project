@@ -13,7 +13,7 @@
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>"
     /> -->
     <link rel="icon" type="image/x-icon" href="icons/favicon.ico" />
-    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/main.css?v=__APP_VERSION__" />
     <link
       href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
       rel="stylesheet"
@@ -68,31 +68,33 @@
           <div class="auth-content active" id="login-content">
             <form id="loginForm" class="auth-form">
               <div class="form-group">
-                <label for="loginUsername" data-i18n="username"></label>
+                <label for="login_username" data-i18n="username"></label>
                 <input
                   type="text"
-                  id="loginUsername"
+                  id="login_username"
                   name="username"
                   required
                   placeholder="username"
                   data-i18n-placeholder="username_placeholder"
+                  autocomplete="username"
                 />
               </div>
               <div class="form-group">
-                <label for="loginPassword" data-i18n="password_title"></label>
+                <label for="login_password" data-i18n="password_title"></label>
                 <div class="password-field-container">
                   <input
                     type="password"
-                    id="loginPassword"
+                    id="login_password"
                     name="password"
                     required
                     placeholder="password"
                     data-i18n-placeholder="password_placeholder"
+                    autocomplete="current-password"
                   />
                   <button
                     type="button"
                     class="password-toggle-btn"
-                    id="loginPasswordToggle"
+                    id="login_password_toggle"
                     title="Toggle password visibility"
                   >
                     <i class="fas fa-eye"></i>
@@ -110,67 +112,72 @@
           <div class="auth-content" id="register-content">
             <form id="registerForm" class="auth-form">
               <div class="form-group">
-                <label for="registerUsername" data-i18n="username"></label>
+                <label for="register_username" data-i18n="username"></label>
                 <input
                   type="text"
-                  id="registerUsername"
+                  id="register_username"
                   name="username"
                   required
                   placeholder="username"
                   data-i18n-placeholder="username_placeholder"
+                  autocomplete="username"
                 />
               </div>
               <div class="form-group">
-                <label for="registerEmail" data-i18n="email"></label>
+                <label for="register_email" data-i18n="email"></label>
                 <input
                   type="email"
-                  id="registerEmail"
+                  id="register_email"
                   name="email"
                   placeholder="email"
                   data-i18n-placeholder="email_placeholder"
+                  autocomplete="email"
                 />
               </div>
               <div class="form-group">
-                <label for="registerFullName" data-i18n="full_name"
+                <label for="register_full_name" data-i18n="full_name"
                   >Full Name</label
                 >
                 <input
                   type="text"
-                  id="registerFullName"
+                  id="register_full_name"
                   name="full_name"
                   required
                   placeholder="full_name"
                   data-i18n-placeholder="full_name_placeholder"
+                  autocomplete="name"
                 />
               </div>
               <div class="form-group">
-                <label for="registerPhone" data-i18n="phone">Phone</label>
+                <label for="register_phone" data-i18n="phone">Phone</label>
                 <input
                   type="tel"
-                  id="registerPhone"
+                  id="register_phone"
                   name="phone"
                   placeholder="phone"
                   data-i18n-placeholder="phone_placeholder"
+                  autocomplete="tel"
                 />
               </div>
               <div class="form-group">
                 <label
-                  for="registerPassword"
+                  for="register_password"
                   data-i18n="password_title"
                 ></label>
                 <div class="password-field-container">
                   <input
                     type="password"
-                    id="registerPassword"
+                    id="register_password"
                     name="password"
                     required
                     placeholder="password"
                     data-i18n-placeholder="password_placeholder"
+                    autocomplete="new-password"
                   />
                   <button
                     type="button"
                     class="password-generator-btn"
-                    id="passwordGeneratorBtn"
+                    id="password_generator_btn"
                     title="Generate strong password"
                   >
                     <i class="fas fa-magic"></i>
@@ -178,7 +185,7 @@
                   <button
                     type="button"
                     class="password-toggle-btn"
-                    id="registerPasswordToggle"
+                    id="register_password_toggle"
                     title="Toggle password visibility"
                   >
                     <i class="fas fa-eye"></i>
@@ -186,27 +193,28 @@
                 </div>
                 <div
                   class="password-strength empty"
-                  id="passwordStrength"
+                  id="password_strength"
                 ></div>
               </div>
               <div class="form-group">
                 <label
-                  for="registerpassword_confirmation"
+                  for="register_password_confirmation"
                   data-i18n="confirm_password"
                 ></label>
                 <div class="password-field-container">
                   <input
                     type="password"
-                    id="registerpassword_confirmation"
+                    id="register_password_confirmation"
                     name="password_confirmation"
                     required
                     placeholder="confirm_password"
                     data-i18n-placeholder="confirm_password_placeholder"
+                    autocomplete="new-password"
                   />
                   <button
                     type="button"
                     class="password-toggle-btn"
-                    id="registerpassword_confirmationToggle"
+                    id="register_password_confirmation_toggle"
                     title="Toggle password visibility"
                   >
                     <i class="fas fa-eye"></i>
@@ -215,9 +223,9 @@
                 <div class="password-match empty" id="passwordMatch"></div>
               </div>
               <div class="form-group">
-                <label for="registerDepartment" data-i18n="department"></label>
+                <label for="register_department" data-i18n="department"></label>
                 <select
-                  id="registerDepartment"
+                  id="register_department"
                   name="department_id"
                   title="department"
                 >
@@ -252,9 +260,9 @@
           <div class="user-info">
             <div>
               <span data-i18n="welcome_user">مرحباً {username}</span>
-              <span id="userDisplayName">Anthony</span>
-            </div>
-            <span id="userRole" class="user-role"></span>
+                          <span id="userDisplayName">Anthony</span>
+          </div>
+          <span id="userRoleDisplay" class="user-role"></span>
           </div>
           <button id="logoutBtn" class="btn btn-danger" title="logout">
             <i class="fas fa-sign-out-alt"></i> <span data-i18n="logout"></span>
@@ -719,6 +727,7 @@
                     placeholder="username"
                     data-i18n-placeholder="username_placeholder"
                     title="username"
+                    autocomplete="username"
                   />
                 </div>
                 <div class="form-group">
@@ -730,6 +739,7 @@
                     placeholder="email"
                     data-i18n-placeholder="email_placeholder"
                     title="email"
+                    autocomplete="email"
                   />
                 </div>
                 <div class="form-group">
@@ -760,6 +770,16 @@
                 <span data-i18n="change_password"></span>
               </h3>
               <form id="changePasswordForm" class="password-form">
+                <!-- Hidden username field for accessibility -->
+                <input
+                  type="text"
+                  name="username"
+                  value=""
+                  class="visually-hidden"
+                  tabindex="-1"
+                  autocomplete="username"
+                  aria-hidden="true"
+                />
                 <div class="form-group">
                   <label
                     for="currentPassword"
@@ -774,6 +794,7 @@
                       placeholder="current_password_placeholder"
                       data-i18n-placeholder="current_password_placeholder"
                       title="current_password"
+                      autocomplete="off"
                     />
                     <button
                       type="button"
@@ -796,6 +817,7 @@
                       placeholder="new_password_placeholder"
                       data-i18n-placeholder="new_password_placeholder"
                       title="new_password"
+                      autocomplete="new-password"
                     />
                     <button
                       type="button"
@@ -821,6 +843,7 @@
                       placeholder="confirm_password_placeholder"
                       data-i18n-placeholder="confirm_password_placeholder"
                       title="confirm_password"
+                      autocomplete="new-password"
                     />
                     <button
                       type="button"
@@ -946,6 +969,7 @@
               required
               placeholder="username"
               title="username"
+              autocomplete="username"
             />
           </div>
           <div class="form-group">
@@ -956,6 +980,7 @@
               name="email"
               placeholder="email"
               title="email"
+              autocomplete="email"
             />
           </div>
           <div class="form-group">
@@ -966,11 +991,12 @@
               name="full_name"
               placeholder="full_name"
               title="full_name"
+              autocomplete="name"
             />
           </div>
           <div class="form-group">
             <label for="userRole" data-i18n="role"></label>
-            <select id="userRole" name="role" required title="role">
+            <select id="userRole" name="role" required title="role" autocomplete="off">
               <option value="employee" data-i18n="employee"></option>
               <option value="manager" data-i18n="manager"></option>
               <option
@@ -995,6 +1021,7 @@
                 name="password"
                 placeholder="password"
                 title="password"
+                autocomplete="current-password"
               />
               <button
                 type="button"
@@ -1024,7 +1051,7 @@
       </div>
     </div>
 
-    <script type="module" src="scripts/utils/sanitize.js?v=1.0.4"></script>
-    <script type="module" src="scripts/main.js?v=1.0.4"></script>
+    <script type="module" src="scripts/utils/sanitize.js?v=__APP_VERSION__"></script>
+    <script type="module" src="scripts/main.js?v=__APP_VERSION__"></script>
   </body>
 </html>

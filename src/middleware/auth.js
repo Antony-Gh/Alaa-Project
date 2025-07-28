@@ -170,7 +170,10 @@ const requireEmployee = (req, res, next) => {
 // Hash password
 const hashPassword = async password => {
   const saltRounds = 10;
-  return await bcrypt.hash(password, saltRounds);
+  return await bcrypt.hash(
+    password,
+    config.security.bcryptRounds || saltRounds
+  );
 };
 
 // Compare password

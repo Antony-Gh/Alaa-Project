@@ -768,7 +768,17 @@ const getAppointmentStats = asyncHandler(async (req, res) => {
     );
   }
 
+  // Convert stats to the format expected by frontend
+  const statsArray = [
+    { status: 'pending', count: stats.pending || 0 },
+    { status: 'approved', count: stats.approved || 0 },
+    { status: 'rejected', count: stats.rejected || 0 },
+    { status: 'done', count: stats.done || 0 },
+    { status: 'missed', count: stats.missed || 0 },
+  ];
+
   const result = {
+    stats: statsArray,
     overview: stats,
     byDepartment: departmentStats,
     byLocation: locationStats,

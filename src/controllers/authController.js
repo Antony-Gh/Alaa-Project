@@ -31,7 +31,7 @@ const validateUsername = username => {
     throw new ValidationError('Username is required', 'auth.username_required');
   }
 
-  if (username.length < 6) {
+  if (username.length < 4) {
     throw new ValidationError(
       'Username must be at least 6 characters',
       'auth.username_too_short'
@@ -58,7 +58,7 @@ const validatePassword = password => {
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);
   const hasNumbers = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const hasSpecialChar = /[!@#$%*?&+=]/.test(password);
 
   if (password.length < minLength) {
     throw new ValidationError(

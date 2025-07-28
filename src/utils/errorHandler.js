@@ -177,11 +177,14 @@ const asyncHandler = fn => (req, res, next) => {
  * @param {Function} next - Express next function
  */
 const globalErrorHandler = (err, req, res, next) => {
+  console.log(err);
   // Default error status and message
   let statusCode = err.statusCode || 500;
   let errorMessage = err.message || 'Something went wrong';
   let translationKey = err.translationKey || 'errors.server_error';
   const errorData = err.data || {};
+
+  console.log('Error Data: ', JSON.stringify(errorData));
 
   // For development, log the error
   if (process.env.NODE_ENV === 'development') {
@@ -227,6 +230,15 @@ const globalErrorHandler = (err, req, res, next) => {
 
   // Handle API errors with JSON response
   if (isApiRequest) {
+    // Special handling for validation errors to match frontend expectations
+    if (err.name === 'ValidationError' && errorData.errors) {
+      return res.status(statusCode).json({
+        success: false,
+        message: req.t ? req.t(translationKey) : errorMessage,
+        errors: errorData.errors,
+      });
+    }
+
     return res.status(statusCode).json({
       success: false,
       error: {

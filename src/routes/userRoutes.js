@@ -6,6 +6,7 @@ const dbManager = require('../utils/database');
 const ResponseHandler = require('../utils/responseHandler');
 const logger = require('../utils/logger');
 const bcrypt = require('bcryptjs');
+const config = require('../config/config');
 
 // Get user profile
 router.get('/profile', authenticateToken, generalLimiter, async (req, res) => {
@@ -139,7 +140,10 @@ router.put(
       }
 
       // Hash new password
-      const new_passwordHash = await bcrypt.hash(new_password, 10);
+      const new_passwordHash = await bcrypt.hash(
+        new_password,
+        config.security.bcryptRounds
+      );
 
       // Update password
       await dbManager.run(
